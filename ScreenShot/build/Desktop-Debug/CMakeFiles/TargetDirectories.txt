@@ -1,0 +1,9 @@
+/home/vivek/Codes/Qt/ScreenShot/build/Desktop-Debug/CMakeFiles/ScreenShot.dir
+/home/vivek/Codes/Qt/ScreenShot/build/Desktop-Debug/CMakeFiles/edit_cache.dir
+/home/vivek/Codes/Qt/ScreenShot/build/Desktop-Debug/CMakeFiles/rebuild_cache.dir
+/home/vivek/Codes/Qt/ScreenShot/build/Desktop-Debug/CMakeFiles/list_install_components.dir
+/home/vivek/Codes/Qt/ScreenShot/build/Desktop-Debug/CMakeFiles/install.dir
+/home/vivek/Codes/Qt/ScreenShot/build/Desktop-Debug/CMakeFiles/install/local.dir
+/home/vivek/Codes/Qt/ScreenShot/build/Desktop-Debug/CMakeFiles/install/strip.dir
+/home/vivek/Codes/Qt/ScreenShot/build/Desktop-Debug/CMakeFiles/ScreenShot_autogen_timestamp_deps.dir
+/home/vivek/Codes/Qt/ScreenShot/build/Desktop-Debug/CMakeFiles/ScreenShot_autogen.dir
