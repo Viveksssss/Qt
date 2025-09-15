@@ -4,11 +4,6 @@
 #include <QSpinBox>
 #include <QLabel>
 
-#include <QDBusMessage>
-#include <QDBusPendingCallWatcher>
-#include <QUrl>
-#include <QTemporaryFile>
-#include <QImageReader>
 
 
 Screenshot::Screenshot()
@@ -18,7 +13,7 @@ Screenshot::Screenshot()
     screenshotLabel->setAlignment(Qt::AlignCenter);
 
     const QRect screenGeometry = this->screen()->geometry();
-    screenshotLabel->setMinimumSize(screenGeometry.width() / 8,screenGeometry.height() /8);
+    screenshotLabel->setMinimumSize(screenGeometry.width() /8,screenGeometry.height()/8);
 
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout -> addWidget(screenshotLabel);
@@ -172,6 +167,7 @@ void Screenshot::shootScreen()
         QApplication::beep();
     }
 
+
     originalPixmap = screen->grabWindow(0);
     updateScreenshotLabel();
     newScreenshotButton->setDisabled(false);
@@ -182,11 +178,12 @@ void Screenshot::shootScreen()
 
 void Screenshot::updateCheckBox(int value)
 {
-    if(delaySpinBox->value() == 0){
+    if(value == 0){
         hideThisWindowCheckBox->setDisabled(true);
         hideThisWindowCheckBox->setChecked(false);
     }else{
         hideThisWindowCheckBox->setDisabled(false);
+        hideThisWindowCheckBox->setChecked(true);
     }
 }
 
