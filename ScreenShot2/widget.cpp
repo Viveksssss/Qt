@@ -5,12 +5,6 @@
 Widget::Widget(QWidget *parent)
     : QWidget{parent}
 {
-    // 设置无边框窗口
-    // setWindowFlags(Qt::FramelessWindowHint);
-
-    // 可选：设置窗口始终在最前面
-    // setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
-
 }
 
 void Widget::showPix(QPixmap pix)
