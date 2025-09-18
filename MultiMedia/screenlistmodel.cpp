@@ -1,0 +1,43 @@
+#include "screenlistmodel.h"
+
+ScreenListModel::ScreenListModel(QObject *parent)
+    : QAbstractListModel{parent}
+{
+    auto *app = qApp;
+    connect(app, &QGuiApplication::screenAdded, this, &ScreenListModel::screensChanged);
+    connect(app, &QGuiApplication::screenRemoved, this, &ScreenListModel::screensChanged);
+    connect(app, &QGuiApplication::primaryScreenChanged, this, &ScreenListModel::screensChanged);
+}
+
+int ScreenListModel::rowCount(const QModelIndex &parent) const
+{
+    return QGuiApplication::screens().size();
+}
+
+QVariant ScreenListModel::data(const QModelIndex &index, int role) const
+{
+    const auto screenList = QGuiApplication::screens();
+    Q_ASSERT(index.isValid());
+    Q_ASSERT(index.row() <= screenList.size());
+    if(role == Qt::DisplayRole){
+        auto *screen = screenList.at(index.row());
+        QString description;
+        QTextStream str(&description);
+        str << '"' << screen->name() <<"\" " << screen->size().width() <<"x"
+            <<screen->size().height() <<"," << screen->logicalDotsPerInch() <<"DPI";
+        return description;
+    }
+    return {};
+}
+
+QScreen *ScreenListModel::screen(const QModelIndex &index)
+{
+    return QGuiApplication::screens().at(index.row());
+}
+
+void ScreenListModel::screensChanged()
+{
+    beginResetModel();          // 通知视图“我要全换数据”
+
+    endResetModel();
+}
