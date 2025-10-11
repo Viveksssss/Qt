@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.19)
 project(ScreenShot2 LANGUAGES CXX)
 
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets)
-find_package(Qt6 REQUIRED COMPONENTS Core)
-find_package(Qt6 REQUIRED COMPONENTS Widgets)
 find_package(Qt6 REQUIRED COMPONENTS Widgets)
 find_package(Qt6 REQUIRED COMPONENTS Core)
 
@@ -13,10 +11,10 @@ qt_add_executable(ScreenShot2
     WIN32 MACOSX_BUNDLE
     main.cpp
     snipater.h snipater.cpp
-    icons.qrc
     widget.h widget.cpp
     overlaywidget.h overlaywidget.cpp
     tools.h tools.cpp
+    icons.qrc
 )
 
 target_link_libraries(ScreenShot2
@@ -26,8 +24,6 @@ target_link_libraries(ScreenShot2
 )
 target_link_libraries(ScreenShot2 PRIVATE Qt6::Core)
 target_link_libraries(ScreenShot2 PRIVATE Qt6::Widgets)
-target_link_libraries(ScreenShot2 PRIVATE Qt6::Widgets)
-target_link_libraries(ScreenShot2 PRIVATE Qt6::Core)
 
 include(GNUInstallDirs)
 

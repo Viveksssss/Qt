@@ -1,0 +1,106 @@
+/* Light Theme */
+#loginScreen, #registerScreen {
+  border-image: url(:/Resources/loginBackground-light.png) 0 0 0 0 stretch stretch;
+}
+
+#headerLabel {
+  border: 2px solid #E0E0E0;
+  border-radius: 40px;
+  background: #FFFFFF;
+  color: #333333;
+}
+
+#accountEdit, #passwordEdit, #mailEdit, #passwordSure, #securityCode {
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  background: #FFFFFF;
+  color: #333333;
+  padding: 8px;
+}
+
+#accountEdit:focus, #passwordEdit:focus, #mailEdit:focus, #passwordSure:focus, #securityCode:focus {
+  border: 1px solid #129dd9;
+  background: #F8FBFE;
+}
+
+#agreeCheck {
+  font-size: 10px;
+  color: #666666;
+}
+
+#agreeCheck::indicator {
+  width: 16px;
+  height: 16px;
+}
+
+#agreeCheck::indicator:unchecked {
+  image: url(:/Resources/unchecked-light.png);
+}
+
+#agreeCheck::indicator:checked {
+  image: url(:/Resources/checked-light.png);
+}
+
+#agreeCheck::indicator:unchecked:hover {
+  image: url(:/Resources/unchecked-hover-light.png);
+}
+
+#agreeCheck::indicator:checked:hover {
+  image: url(:/Resources/checked-hover-light.png);
+}
+
+#loginBtn, #registerBtn2, #cancelBtn {
+  text-align: center;
+  border-radius: 8px;
+  background-color: #129dd9;
+  color: #FFFFFF;
+  font-size: 14px;
+  border: none;
+  padding: 10px;
+}
+
+#loginBtn:hover, #registerBtn2:hover, #cancelBtn:hover {
+  background-color: #48b2e5;
+  color: #FFFFFF;
+}
+
+#loginBtn:pressed, #registerBtn2:pressed, #cancelBtn:pressed {
+  background-color: #034ec4;
+  color: #FFFFFF;
+}
+
+#registerBtn1, #forgotLabel {
+  background-color: transparent;
+  border: none;
+  color: #12a1d9;
+  font-weight: bold;
+}
+
+#registerBtn1:hover {
+  color: #d3509b;
+}
+
+#forgotLabel:hover {
+  color: #d91288;
+}
+
+#getSecurityCode {
+  text-align: center;
+  width: 50px;
+  height: 27px;
+  border-radius: 5px;
+  background-color: #c5ddd7;
+  color: #333333;
+  font-size: 14px;
+  border: none;
+}
+
+#getSecurityCode:hover {
+  background-color: #bdc284;
+  color: #333333;
+}
+
+#getSecurityCode:pressed {
+  background-color: #ebeec9;
+  color: #333333;
+}

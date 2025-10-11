@@ -1,0 +1,14 @@
+<RCC>
+    <qresource prefix="/icons"/>
+    <qresource prefix="/">
+        <file>Resources/QQ.png</file>
+        <file>Resources/loginBackground.png</file>
+        <file>Resources/unchecked.png</file>
+        <file>Resources/unchecked-hover.png</file>
+        <file>Resources/checked.png</file>
+        <file>Resources/checked-hover.png</file>
+        <file>Styles/stylesheetBlue.qss</file>
+        <file>Styles/stylesheetDark.qss</file>
+        <file>Styles/stylesheetLight.qss</file>
+    </qresource>
+</RCC>

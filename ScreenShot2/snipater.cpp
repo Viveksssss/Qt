@@ -17,7 +17,7 @@ Snipater::Snipater(QObject *parent)
 {
     initSysMenu();
 
-    this->sys->setIcon(QIcon("/home/vivek/Codes/Qt/ScreenShot2/resources/icon.png"));
+    this->sys->setIcon(QIcon(":/resources/icon.png"));
     this->sys->show();
 
     overlay = new OverlayWidget;
