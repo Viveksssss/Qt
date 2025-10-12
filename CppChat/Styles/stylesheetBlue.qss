@@ -154,3 +154,25 @@ color: #cefdec;
 color: #cefdec;
        font-size: 15px;
 }
+#closeBtn{
+  image: url(:/Resources/close.png);
+}
+#closeBtn:hover{
+  image: url(:/Resources/close-hover.png);
+}
+#registerTitle[state='normal']{
+  font-size:16px;
+  color:#0cb800;
+}
+#registerTitle[state='error']{
+  font-size:16px;
+  color:#ff302e;
+}
+QToolTip {
+  border-radius: 6px;
+  color:#b82800;
+}
+
+#ForgotScreen{
+  border-image: url(:/Resources/loginBackground.png) 0 0 0 0 stretch stretch;
+}

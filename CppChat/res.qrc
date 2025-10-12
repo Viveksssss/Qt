@@ -10,5 +10,7 @@
         <file>Styles/stylesheetBlue.qss</file>
         <file>Styles/stylesheetDark.qss</file>
         <file>Styles/stylesheetLight.qss</file>
+        <file>Resources/close.png</file>
+        <file>Resources/close-hover.png</file>
     </qresource>
 </RCC>

@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     // 加载样式表
-    auto res = StyleManager::changeStyleSheet(Styles::DARK);
+    auto res = StyleManager::changeStyleSheet(Styles::BLUE);
 
     MainWindow w;
     w.show();

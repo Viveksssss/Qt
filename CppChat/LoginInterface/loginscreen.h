@@ -13,6 +13,7 @@ class QPushButton;
 class QStackedWidget;
 class RegisterScreen;
 class LoginScreen;
+class ForgotScreen;
 
 class AuthStack:public QWidget
 {
@@ -22,7 +23,15 @@ public:
 private:
     QStackedWidget*stackWidget;
     LoginScreen*loginScreen;
-    RegisterScreen* registerScreen;
+    RegisterScreen*registerScreen;
+    ForgotScreen*forgotScreen;
+
+    QLabel *closeBtn;
+signals:
+    void closeWindow();
+    // QObject interface
+public:
+    bool eventFilter(QObject *watched, QEvent *event);
 };
 
 

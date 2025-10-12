@@ -1,14 +1,11 @@
 cmake_minimum_required(VERSION 3.19)
 project(CppChat LANGUAGES CXX)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets)
-find_package(Qt6 REQUIRED COMPONENTS Widgets)
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
-find_package(Qt6 REQUIRED COMPONENTS Widgets)
-find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(PkgConfig REQUIRED)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets Network)
+
 
 qt_standard_project_setup()
-
 
 # 这里资源文件qrc需要手动的显示添加:qt_add_resources,否则默认找不到
 qt_add_resources(QT_RESOURCES "res.qrc")
@@ -18,21 +15,29 @@ qt_add_executable(CppChat
     main.cpp
     ${QT_RESOURCES}
     mainwindow.h mainwindow.cpp
-    loginscreen.h loginscreen.cpp
-    registerscreen.h registerscreen.cpp
     stylemanager.h stylemanager.cpp
-
+    LoginInterface/forgotscreen.cpp LoginInterface/forgotscreen.h LoginInterface/loginscreen.cpp LoginInterface/loginscreen.h LoginInterface/registerscreen.cpp LoginInterface/registerscreen.h
+    Properties/singleton.h
+    Properties/global.h
+    Properties/global.cpp
+    httpmanager.h httpmanager.cpp
 )
+
+
+
+
+
 
 target_link_libraries(CppChat
     PRIVATE
-        Qt::Core
-        Qt::Widgets
+        Qt6::Core
+        Qt6::Widgets
+        Qt6::Network
 )
-target_link_libraries(CppChat PRIVATE Qt6::Widgets)
-target_link_libraries(CppChat PRIVATE Qt6::Core Qt6::Widgets)
-target_link_libraries(CppChat PRIVATE Qt6::Widgets)
-target_link_libraries(CppChat PRIVATE Qt6::Core)
+
+
+target_include_directories(CppChat PRIVATE ${ASIO_INCLUDE_DIR})
+
 
 include(GNUInstallDirs)
 

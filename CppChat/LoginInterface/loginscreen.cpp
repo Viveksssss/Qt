@@ -10,14 +10,16 @@
 #include <QLineEdit>
 #include <QPainter>
 #include <QStackedWidget>
+#include <QRect>
+#include <qevent.h>
 
+#include "forgotscreen.h"
 #include "registerscreen.h"
 
 LoginScreen::LoginScreen(QWidget *parent)
     : QWidget{parent}
 {
     setupUI();
-    // setupStyles();
     setupConnections();
 
     // 设置窗口属性
@@ -114,103 +116,6 @@ void LoginScreen::setupUI()
     mainLayout->addLayout(bottomLayout);
 }
 
-void LoginScreen::setupStyles()
-{
-    setStyleSheet(R"(
-        #loginScreen {
-            border-image: url(:/Resources/loginBackground.png) 0 0 0 0 stretch stretch;
-        }
-
-        #headerLabel {
-            border: 2px solid #E0E0E0;
-            border-radius: 40px;
-            background: #F8F8F8;
-        }
-
-        #accountEdit, #passwordEdit {
-            border: 0px;
-            border-radius: 8px;
-        }
-
-        #agreeCheck {
-            font-size: 10px;
-            color: #7e7f81;
-        }
-
-        #agreeCheck::indicator {
-            width: 16px;
-            height: 16px;
-        }
-
-        #agreeCheck::indicator:unchecked {
-            image: url(:/Resources/unchecked.png);
-        }
-
-        #agreeCheck::indicator:checked {
-            image: url(:/Resources/checked.png);
-        }
-
-        #agreeCheck::indicator:unchecked:hover {
-            image: url(:/Resources/unchecked-hover.png);
-        }
-
-        #agreeCheck::indicator:checked:hover {
-            image: url(:/Resources/checked-hover.png);
-        }
-
-        #loginBtn {
-            text-align: center;
-            border-radius: 8px;
-            background-color: #129dd9;
-            color: #f9faf0;
-            font-size: 14px;
-        }
-
-        #loginBtn:hover {
-            text-align: center;
-            border-radius: 8px;
-            background-color: #48b2e5;
-            color: #cefdec;
-            font-size: 14px;
-        }
-
-        #loginBtn:pressed {
-            text-align: center;
-            border-radius: 8px;
-            background-color: #034ec4;
-            color: #cefdec;
-            font-size: 14px;
-        }
-
-        #registerBtn {
-            background-color: transparent;
-            border: none;
-            color: #12a1d9;
-            font-weight: bold;
-        }
-
-        #registerBtn:hover {
-            background-color: transparent;
-            border: none;
-            color: #d3509b;
-            font-weight: bold;
-        }
-
-        #forgotLabel {
-            background-color: transparent;
-            border: none;
-            color: #12a1d9;
-            font-weight: bold;
-        }
-
-        #forgotLabel:hover {
-            background-color: transparent;
-            border: none;
-            color: #d91288;
-            font-weight: bold;
-        }
-    )");
-}
 
 void LoginScreen::setupConnections()
 {
@@ -253,9 +158,11 @@ AuthStack::AuthStack(QWidget *parent)
     stackWidget = new QStackedWidget(this);
     loginScreen = new LoginScreen(this);
     registerScreen = new RegisterScreen(this);
+    forgotScreen = new ForgotScreen(this);
 
     stackWidget->addWidget(loginScreen);
     stackWidget->addWidget(registerScreen);
+    stackWidget->addWidget(forgotScreen);
 
     stackWidget->setCurrentIndex(0);
 
@@ -263,10 +170,37 @@ AuthStack::AuthStack(QWidget *parent)
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->addWidget(stackWidget);
 
+    closeBtn = new QLabel(this);
+    closeBtn->installEventFilter(this);
+    closeBtn->setObjectName("closeBtn");
+    closeBtn->setFixedSize(20,20);
+    closeBtn->setGeometry(sizeHint().width()-40,15,15,15);
+
     connect(loginScreen,&LoginScreen::goRegsiter,this,[=](){
         stackWidget->setCurrentIndex(1);
+    });
+    connect(loginScreen,&LoginScreen::goForgotPassword,this,[=](){
+        stackWidget->setCurrentIndex(2);
     });
     connect(registerScreen,&RegisterScreen::goLogin,this,[=](){
         stackWidget->setCurrentIndex(0);
     });
+    connect(forgotScreen,&ForgotScreen::goLogin,this,[=](){
+        stackWidget->setCurrentIndex(0);
+    });
+    connect(this,&AuthStack::closeWindow,this,[=](){
+        qApp->closeAllWindows();
+    });
+}
+
+bool AuthStack::eventFilter(QObject *obj, QEvent *event)
+{
+    if (obj == closeBtn && event->type() == QEvent::MouseButtonPress) {
+        QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+        if (mouseEvent->button() == Qt::LeftButton) {
+            emit closeWindow();
+            return true;
+        }
+    }
+    return QWidget::eventFilter(obj, event);
 }

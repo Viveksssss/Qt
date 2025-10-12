@@ -3,6 +3,7 @@
 
 #include <QObject>
 
+
 enum class Styles{
     BLUE,
     LIGHT,
@@ -17,9 +18,10 @@ public:
     explicit StyleManager(QObject *parent = nullptr);
 private:
     static bool changeStyleSheet(const QString&path);
+
 public:
     static bool changeStyleSheet(Styles style);
-
+    static void repolish(QWidget*);
 
 signals:
 };

@@ -2,6 +2,11 @@
 #include <QFile>
 #include <QDebug>
 #include <QApplication>
+#include <QWidget>
+#include <QStyle>
+
+
+
 StyleManager::StyleManager(QObject *parent)
     : QObject{parent}
 {}
@@ -42,4 +47,10 @@ bool StyleManager::changeStyleSheet(Styles style)
         break;
     }
     return changeStyleSheet(stylePath);
+}
+
+void StyleManager::repolish(QWidget *w)
+{
+    w->style()->unpolish(w);
+    w->style()->polish(w);
 }
