@@ -19,17 +19,12 @@ public:
 private:
     friend class Singleton<HttpManager>;
     HttpManager();
-
 public:
     void PostHttp(const QUrl&url,const QJsonObject&json,RequestType request_id,Modules mod);
-
-
 private:
     QNetworkAccessManager _manager;
 private slots:
     void do_http_finished(RequestType requestType,const QString&res,ErrorCodes errorCode,Modules mod);
-
-
 signals:
     void on_http_finished(RequestType requestType,const QString&res,ErrorCodes errorCode,Modules mod);
     void on_get_code_finished(RequestType requestType,const QString&res,ErrorCodes errorCode);
