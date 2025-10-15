@@ -29,4 +29,7 @@ enum class ErrorCodes {
     RPCFAILED = 1002
 };
 
+class ConfigManager;
+extern ConfigManager cfgMgr;
+
 #endif // CONST_H

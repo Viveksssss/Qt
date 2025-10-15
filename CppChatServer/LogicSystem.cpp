@@ -1,5 +1,6 @@
 #include "LogicSystem.h"
 #include "Session.h"
+#include "VerifyClient.h"
 #include <iostream>
 #include <regex>
 
@@ -38,18 +39,20 @@ LogicSystem::LogicSystem()
             return true; // 返回true表示请求处理完成
         };
 
-        std::cout << "parse json: " << j.dump() << std::endl;
         if (!j.contains("email")) {
             return sendError(ErrorCodes::RPCFAILED, "email is required");
         }
 
         auto email = j["email"].get<std::string>();
-        std::cout << email << std::endl;
+
         // 验证格式
         std::regex email_regex(R"(\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b)");
         if (!std::regex_match(email, email_regex)) {
             return sendError(ErrorCodes::RPCFAILED, "email format error");
         }
+
+        GetSecurityCodeResponse response = VerifyClient::GetInstance()->GetSecurityCode(email);
+
         // 发送验证码
         json returnJson = {
             { "success", true },

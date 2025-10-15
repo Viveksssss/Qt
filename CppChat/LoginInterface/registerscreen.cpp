@@ -74,13 +74,13 @@ void RegisterScreen::setupUI()
     formLayout->addRow("账号:",accountEdit);
 
     // 邮箱
-    mailEdit = new QLineEdit();
-    mailEdit->setObjectName("mailEdit");
-    mailEdit->setFixedHeight(30);
-    mailEdit->setAlignment(Qt::AlignHCenter);
-    mailEdit->setPlaceholderText("请输入邮箱");
-    mailEdit->clearFocus();
-    formLayout->addRow("邮箱:",mailEdit);
+    emailEdit = new QLineEdit();
+    emailEdit->setObjectName("emailEdit");
+    emailEdit->setFixedHeight(30);
+    emailEdit->setAlignment(Qt::AlignHCenter);
+    emailEdit->setPlaceholderText("请输入邮箱");
+    emailEdit->clearFocus();
+    formLayout->addRow("邮箱:",emailEdit);
 
     // 密码
     passwordEdit = new QLineEdit();
@@ -189,19 +189,19 @@ int RegisterScreen::doVerify(bool includingSecurityCode)
 
 
     // 邮箱
-    auto email = mailEdit->text();
+    auto email = emailEdit->text();
     QRegularExpression reg(R"(^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$)");
     bool matched = reg.match(email).hasMatch();
 
     if(!matched){
-        mailEdit->setToolTip("邮箱格式不正确");
-        mailEdit->setStyleSheet("border: 1px solid red;");
+        emailEdit->setToolTip("邮箱格式不正确");
+        emailEdit->setStyleSheet("border: 1px solid red;");
         return 1; // 邮箱格式
     }else if(!allFilled){
         return 2;// 有未填写完毕的
     }
 
-    mailEdit->setStyleSheet("");
+    emailEdit->setStyleSheet("");
 
     return 0;
 }
@@ -215,28 +215,10 @@ void RegisterScreen::initHttpHandlers()
             showTip(3,"注册失败");
             return;
         }
-        auto email = obj["email"].toString();
-
-        timer = new QTimer(this);
-        countdown = 60;
-
-        getSecurityCode->setEnabled(false);
-        getSecurityCode->setText(QString("%1s").arg(countdown));
-
-        // 获取按钮的文字变化
-        QObject::connect(timer,&QTimer::timeout,this,&RegisterScreen::do_change_get_code_btn);
-        timer->start(1000);
-        // 60s之后恢复
-        QTimer::singleShot(60000,this,[this](){
-            if (timer) {
-                timer->stop();
-                timer->deleteLater();
-                timer = nullptr;
-            }
-            getSecurityCode->setText("获取");
-            getSecurityCode->setEnabled(true);
-        });
-
+        auto success = obj["success"].toBool();
+        auto message = obj["message"].toString();
+        qDebug() << "success:" << success;
+        qDebug() << "message:" << message ;
     };
 }
 
@@ -244,14 +226,37 @@ void RegisterScreen::do_get_code_clicked()
 {
     auto res= doVerify();
     if(!res){
-        showTip(1);
+        showTip(1,"请注意查收邮箱");
     }else if(res == 1){
         showTip(0,tr("邮箱地址不正确"));
     }else if(res == 2){
         showTip(0,tr("请填写完整的内容"));
     }
-    // HttpManager::PostHttp();
+    QJsonObject json_obj;
+    json_obj["email"] = emailEdit->text().trimmed();
+    HttpManager::GetInstance()->PostHttp(QUrl(gate_url_prefix+"/getSecurityCode"),json_obj,RequestType::GET_SECURITY_CODE,Modules::REGISTERMOD);
 
+
+
+    timer = new QTimer(this);
+    countdown = 60;
+
+    getSecurityCode->setEnabled(false);
+    getSecurityCode->setText(QString("%1s").arg(countdown));
+
+    // 获取按钮的文字变化
+    QObject::connect(timer,&QTimer::timeout,this,&RegisterScreen::do_change_get_code_btn);
+    timer->start(1000);
+    // 60s之后恢复
+    QTimer::singleShot(60000,this,[this](){
+        if (timer) {
+            timer->stop();
+            timer->deleteLater();
+            timer = nullptr;
+        }
+        getSecurityCode->setText("获取");
+        getSecurityCode->setEnabled(true);
+    });
 }
 
 void RegisterScreen::do_get_code_finished(RequestType requestType,const QString&res,ErrorCodes errorCode)
@@ -262,8 +267,9 @@ void RegisterScreen::do_get_code_finished(RequestType requestType,const QString&
     }
     // 解析json字符串
     QJsonDocument jsonDoc = QJsonDocument::fromJson(res.toUtf8());
+    qDebug() << jsonDoc.toJson();
     if(jsonDoc.isEmpty()){
-        showTip(3,"接收数据异常,无法解析");
+        showTip(3,"接收数据异常为空,无法解析");
         return;
     }
     if(!jsonDoc.isObject()){

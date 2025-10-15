@@ -50,7 +50,7 @@ private:
     QLineEdit *passwordSure;
 
     // 邮箱
-    QLineEdit *mailEdit;
+    QLineEdit *emailEdit;
 
     // 获取验证码
     QPushButton *getSecurityCode;

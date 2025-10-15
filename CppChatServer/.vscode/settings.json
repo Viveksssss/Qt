@@ -86,6 +86,8 @@
         "typeinfo": "cpp",
         "valarray": "cpp",
         "variant": "cpp",
-        "regex": "cpp"
+        "regex": "cpp",
+        "*.inc": "cpp",
+        "filesystem": "cpp"
     }
 }

@@ -2,10 +2,16 @@
 #include <boost/asio.hpp>
 #include <iostream>
 #include <nlohmann/json.hpp>
+#include "ConfigManager.h"
+#include "VerifyClient.h"
+
 using json = nlohmann::json;
 
 int main(int, char**)
 {
+    ConfigManager cfgMgr("../config.ini");
+    std::cout << cfgMgr["GateWayServer"]["port"] << std::endl; // prints 9999
+
     try {
         unsigned short port = 9999;
         net::io_context ioc;

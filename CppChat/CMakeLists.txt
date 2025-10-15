@@ -21,7 +21,13 @@ qt_add_executable(CppChat
     Properties/global.h
     Properties/global.cpp
     httpmanager.h httpmanager.cpp
+    config.ini
 )
+
+
+
+configure_file(${CMAKE_SOURCE_DIR}/config.ini
+               ${CMAKE_BINARY_DIR}/config.ini COPYONLY)
 
 
 

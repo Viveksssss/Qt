@@ -18,7 +18,8 @@ void HttpManager::PostHttp(const QUrl &url, const QJsonObject &json, RequestType
         if(reply->error()!=QNetworkReply::NoError){
             res = "";
         }
-        emit self->on_http_finished(request_type,res,errorCode,mod);
+        // emit self->on_http_finished(request_type,res,errorCode,mod);
+        emit self->on_get_code_finished(request_type,res,errorCode);
         reply->deleteLater();
         return;
     });
