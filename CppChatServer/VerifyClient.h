@@ -36,7 +36,7 @@ private:
     VerifyClient()
     {
         std::cout << "sdasd" << std::endl;
-        std::shared_ptr<grpc::Channel> _channel = grpc::CreateChannel("0.0.0.0:50051", grpc::InsecureChannelCredentials());
+        std::shared_ptr<grpc::Channel> _channel = grpc::CreateChannel("127.0.0.1:50051", grpc::InsecureChannelCredentials());
         _stub = message::VarifyService::NewStub(_channel);
     }
 
