@@ -60,13 +60,14 @@ std::string UrlDecode(const std::string& str)
     return temp;
 }
 
-Session::Session(net::ip::tcp::socket socket)
-    : _socket(std::move(socket))
+Session::Session(boost::asio::io_context& ioc)
+    : _socket(ioc)
 {
 }
 
 void Session::Start()
 {
+
     http::async_read(_socket, _buffer, _request, [self = shared_from_this()](const boost::system::error_code& ec, std::size_t bytes_transferred) {
         try {
             if (ec) {
@@ -81,6 +82,11 @@ void Session::Start()
             std::cerr << e.what() << std::endl;
         }
     });
+}
+
+net::ip::tcp::socket& Session::GetSocket()
+{
+    return _socket;
 }
 
 void Session::CheckDeadLine()

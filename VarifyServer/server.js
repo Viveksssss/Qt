@@ -83,7 +83,6 @@ function main() {
     var server = new grpc.Server()
     server.addService(message_proto.VarifyService.service, { GetSecurityCode: GetSecurityCode })
     server.bindAsync('0.0.0.0:50051', grpc.ServerCredentials.createInsecure(), () => {
-        server.start()
         console.log('grpc server started')        
     })
 }

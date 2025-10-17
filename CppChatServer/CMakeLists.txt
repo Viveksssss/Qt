@@ -24,6 +24,7 @@ add_executable(GateWayServer
     message.pb.cc
     VerifyClient.h
     ConfigManager.h
+    AsioPool.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE Boost::headers)

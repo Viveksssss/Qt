@@ -1,15 +1,15 @@
+#include "ConfigManager.h"
 #include "GateWayServer.h"
+#include "VerifyClient.h"
 #include <boost/asio.hpp>
 #include <iostream>
 #include <nlohmann/json.hpp>
-#include "ConfigManager.h"
-#include "VerifyClient.h"
 
 using json = nlohmann::json;
 
 int main(int, char**)
 {
-    ConfigManager cfgMgr("../config.ini");
+    auto& cfgMgr = ConfigManager::GetInstance();
     std::cout << cfgMgr["GateWayServer"]["port"] << std::endl; // prints 9999
 
     try {

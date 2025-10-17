@@ -51,6 +51,24 @@ public:
         _config_map.clear();
     }
 
+    static ConfigManager& GetInstance()
+    {
+        static ConfigManager cfg;
+        return cfg;
+    }
+    Items operator[](const std::string& key)
+    {
+        auto it = _config_map.find(key);
+        if (it == _config_map.end()) {
+            return Items();
+        }
+        return it->second;
+    }
+
+    ConfigManager(const ConfigManager&) = delete;
+    ConfigManager& operator=(const ConfigManager&) = delete;
+
+private:
     ConfigManager(const std::string& path)
     {
         fs::path current_path = fs::current_path();
@@ -72,30 +90,8 @@ public:
         }
     }
     ConfigManager()
-        : ConfigManager("config.ini")
+        : ConfigManager("../config.ini")
     {
-    }
-
-    ConfigManager(const ConfigManager& src)
-    {
-        _config_map = src._config_map;
-    }
-    ConfigManager& operator=(const ConfigManager& src)
-    {
-        if (this == &src) {
-            return *this;
-        }
-        _config_map = src._config_map;
-        return *this;
-    }
-
-    Items operator[](const std::string& key)
-    {
-        auto it = _config_map.find(key);
-        if (it == _config_map.end()) {
-            return Items();
-        }
-        return it->second;
     }
 
 private:

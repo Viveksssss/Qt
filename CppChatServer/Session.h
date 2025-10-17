@@ -8,8 +8,9 @@ class Session : public std::enable_shared_from_this<Session> {
     friend class LogicSystem;
 
 public:
-    Session(net::ip::tcp::socket socket);
+    Session(boost::asio::io_context& ioc);
     void Start();
+    net::ip::tcp::socket& GetSocket();
 
 private:
     void CheckDeadLine();
