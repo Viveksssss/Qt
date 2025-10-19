@@ -1,4 +1,5 @@
 #include "LogicSystem.h"
+#include "RedisManager.h"
 #include "Session.h"
 #include "VerifyClient.h"
 #include <iostream>
@@ -60,6 +61,47 @@ LogicSystem::LogicSystem()
             { "message", "okle!" }
         };
         beast::ostream(session->_response.body()) << returnJson.dump(4);
+        return true;
+    });
+
+    RegistHandlers("/userRegister", RequestType::POST, [this](std::shared_ptr<Session> session) {
+        auto body_str = beast::buffers_to_string(session->_request.body().data());
+        std::cout << "receive userRegister request, body: " << body_str << std::endl;
+        session->_response.set(http::field::content_type, "text/json");
+        json j = json::parse(body_str);
+        if (j.is_null() || j.is_discarded()) {
+            std::cout << "无效json" << std::endl;
+            j["error"] = ErrorCodes::ERROR_JSON;
+            std::string str = j.dump(4);
+            beast::ostream(session->_response.body()) << str;
+            return true;
+        }
+        std::string code;
+        bool get_code_success = RedisManager::GetInstance()->Get(EMAIL_PREFIX + j["email"].get<std::string>(), code);
+        if (!get_code_success) {
+            std::cout << "验证码获取失败" << std::endl;
+            j["error"] = ErrorCodes::ERROR_SECURITYCODE_EXPIRED;
+            std::string str = j.dump(4);
+            beast::ostream(session->_response.body()) << str;
+            return true;
+        } else if (code != j["securityCode"].get<std::string>()) {
+            std::cout << "验证码错误" << std::endl;
+            j["error"] = ErrorCodes::ERROR_SECURITYCODE_NOTFOUND;
+            std::string str = j.dump(4);
+            beast::ostream(session->_response.body()) << str;
+            return true;
+        }
+
+        // 先查找用户是否存在
+        // 这里简单测试注册功能
+        json jj;
+        jj["error"] = ErrorCodes::SUCCESS;
+        jj["email"] = j["email"].get<std::string>();
+        jj["user"] = j["user"].get<std::string>();
+        jj["password"] = j["password"].get<std::string>();
+        jj["securityCode"] = j["securityCode"].get<std::string>();
+        std::string str = jj.dump(4);
+        beast::ostream(session->_response.body()) << str;
         return true;
     });
 }

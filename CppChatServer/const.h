@@ -4,14 +4,7 @@
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include <boost/beast/http.hpp>
-
-#if __has_include(<nlohmann/json.hpp>)
 #include <nlohmann/json.hpp>
-#elif __has_include(<nlohmann_json/json.hpp>)
-#include <nlohmann_json/json.hpp>
-#else
-#error "nlohmann/json library not found!"
-#endif
 
 namespace beast = boost::beast;
 namespace http = beast::http;
@@ -25,11 +18,16 @@ enum class RequestType {
 
 enum class ErrorCodes {
     SUCCESS = 0,
-    ERROR_JSON = 1001,
-    RPCFAILED = 1002
+    ERROR_NETWORK = 1001,
+    ERROR_JSON = 1002,
+    RPCFAILED = 1003,
+    ERROR_SECURITYCODE_EXPIRED = 1004,
+    ERROR_SECURITYCODE_NOTFOUND = 1005
 };
 
 class ConfigManager;
 extern ConfigManager cfgMgr;
 
+#define EMAIL_PREFIX "email_"
+#define USER_PREFIX "user_"
 #endif // CONST_H

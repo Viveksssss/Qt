@@ -26,12 +26,18 @@ private:
     void setupUI();
     void setupConnections();
     void showTip(int code,const QString &str="注册账号");
-    int doVerify(bool includingSecurityCode=false);
+    bool doVerify(bool includingSecurityCode=false);
     void initHttpHandlers();
 private slots:
+    // 定时改变获取按钮的文字
+    void do_change_get_code_btn();
+
+    // 获取验证码
     void do_get_code_clicked();
     void do_get_code_finished(RequestType requestType,const QString&res,ErrorCodes errorCode);
-    void do_change_get_code_btn();
+    // 注册
+    void do_register_clicked();
+    void do_register_finished(RequestType requestType,const QString&res,ErrorCodes errorCode);
 private:
 
     QHash<RequestType,std::function<void(const QJsonObject&)>> _handlers;

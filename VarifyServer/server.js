@@ -4,11 +4,26 @@ const message_proto = require('./proto')
 const const_module = require('./const')
 const {v4:uuidv4} = require('uuid')
 const emailModule = require('./email')
+const redis_module = require('./redis')
 
 async function GetSecurityCode(call, callback) {
     console.log("Email is:", call.request.email)
     try{
-        uniqueId = uuidv4().toUpperCase().substring(0,4);
+        let redis_res = await redis_module.GetRedis(const_module.email_prefix+call.request.email);
+        let uniqueId = "";
+        if (redis_res == null){
+            uniqueId = uuidv4().toUpperCase().substring(0,4);
+            let bres = await redis_module.SetRedisExpire(const_module.email_prefix+call.request.email, uniqueId, 180);
+            if(!bres){
+                callback(null, { email:  call.request.email,
+                    error:const_module.Errors.RedisError
+                });
+                return;
+            }
+        }
+        else{
+            uniqueId = redis_res;
+        }
         console.log("UniqueId is ", uniqueId)
                 let html_str = `
                 <!DOCTYPE html>
@@ -64,9 +79,11 @@ async function GetSecurityCode(call, callback) {
         let send_res = await emailModule.SendMail(mailOptions);
         console.log("Send Result Is ", send_res)
 
-        callback(null, { email:  call.request.email,
-            error:const_module.Errors.Success
-        }); 
+        if (!send_res){
+            callback(null, { email:  call.request.email,
+                error:const_module.Errors.Success
+            }); 
+        }
 
 
     }catch(error){

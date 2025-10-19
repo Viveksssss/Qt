@@ -145,11 +145,17 @@ void RegisterScreen::setupUI()
 
 void RegisterScreen::setupConnections()
 {
-    connect(cancelBtn,&QPushButton::clicked,this,[=](){
-        emit goLogin();
-    });
+    // 取消返回登陆节目
+    connect(cancelBtn,&QPushButton::clicked,this,[=](){emit goLogin();});
+    // 点击获取验证码按钮
     connect(getSecurityCode,&QPushButton::clicked,this,&RegisterScreen::do_get_code_clicked);
+    // 点击注册按钮
+    connect(registerBtn,&QPushButton::clicked,this,&RegisterScreen::do_register_clicked);
+
+    // 验证码
     connect(HttpManager::GetInstance().get(),&HttpManager::on_get_code_finished,this,&RegisterScreen::do_get_code_finished);
+    // 注册
+    connect(HttpManager::GetInstance().get(),&HttpManager::on_register_finished,this,&RegisterScreen::do_register_finished);
 }
 
 void RegisterScreen::showTip(int code,const QString&str)
@@ -165,7 +171,7 @@ void RegisterScreen::showTip(int code,const QString&str)
     }
 }
 
-int RegisterScreen::doVerify(bool includingSecurityCode)
+bool RegisterScreen::doVerify(bool includingSecurityCode)
 {
     // 是否未填写
     bool allFilled = true;
@@ -193,17 +199,38 @@ int RegisterScreen::doVerify(bool includingSecurityCode)
     QRegularExpression reg(R"(^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$)");
     bool matched = reg.match(email).hasMatch();
 
-    if(!matched){
-        emailEdit->setToolTip("邮箱格式不正确");
-        emailEdit->setStyleSheet("border: 1px solid red;");
-        return 1; // 邮箱格式
+    RegisterVarify rv;
+    rv = RegisterVarify::SUCCESS;
+    if (!matched){
+        rv = RegisterVarify::EMAIL_INCORRECTFORMAT;
+    }else if(passwordEdit->text().trimmed()!=passwordSure->text().trimmed()){
+        rv = RegisterVarify::PASSWORD_NOTSURE;
     }else if(!allFilled){
-        return 2;// 有未填写完毕的
+        rv = RegisterVarify::CONTENT_INCOMPLETE;
     }
 
-    emailEdit->setStyleSheet("");
-
-    return 0;
+    bool ok = false;
+    switch(rv)
+    {
+    case RegisterVarify::CONTENT_INCOMPLETE:
+        showTip(0,"请填写完整内容");
+        break;
+    case RegisterVarify::EMAIL_INCORRECTFORMAT:
+        showTip(0,"邮箱格式不正确");
+        break;
+    case RegisterVarify::PASSWORD_NOTSURE:
+        showTip(0,"两次输入密码不同");
+        passwordEdit->setStyleSheet("border: 1px solid red;");
+        passwordEdit->setToolTip("此项不能为空");
+        passwordSure->setStyleSheet("border: 1px solid red;");
+        passwordSure->setToolTip("此项不能为空");
+        break;
+    case RegisterVarify::SUCCESS:
+        showTip(1,"请注意查收");
+        ok = true;
+        break;
+    }
+    return ok;
 }
 
 void RegisterScreen::initHttpHandlers()
@@ -220,23 +247,26 @@ void RegisterScreen::initHttpHandlers()
         qDebug() << "success:" << success;
         qDebug() << "message:" << message ;
     };
+    _handlers[RequestType::REG_USER] = [this](const QJsonObject&obj){
+        int error = obj["error"].toInt();
+        if(error !=static_cast<int>(ErrorCodes::SUCCESS)){
+            showTip(0,tr("参数错误"));
+            return;
+        }
+        auto email = obj["email"].toString();
+        showTip(1,tr("用户注册成功"));
+        qDebug()<< "Email is " << email ;
+    };
 }
 
 void RegisterScreen::do_get_code_clicked()
 {
     auto res= doVerify();
-    if(!res){
-        showTip(1,"请注意查收邮箱");
-    }else if(res == 1){
-        showTip(0,tr("邮箱地址不正确"));
-    }else if(res == 2){
-        showTip(0,tr("请填写完整的内容"));
-    }
+    if (!res) return;
+
     QJsonObject json_obj;
     json_obj["email"] = emailEdit->text().trimmed();
     HttpManager::GetInstance()->PostHttp(QUrl(gate_url_prefix+"/getSecurityCode"),json_obj,RequestType::GET_SECURITY_CODE,Modules::REGISTERMOD);
-
-
 
     timer = new QTimer(this);
     countdown = 60;
@@ -262,18 +292,18 @@ void RegisterScreen::do_get_code_clicked()
 void RegisterScreen::do_get_code_finished(RequestType requestType,const QString&res,ErrorCodes errorCode)
 {
     if(errorCode!=ErrorCodes::SUCCESS){
-        showTip(3,tr("网络请求错误"));
+        showTip(0,tr("网络请求错误"));
         return;
     }
     // 解析json字符串
     QJsonDocument jsonDoc = QJsonDocument::fromJson(res.toUtf8());
     qDebug() << jsonDoc.toJson();
     if(jsonDoc.isEmpty()){
-        showTip(3,"接收数据异常为空,无法解析");
+        showTip(0,"接收数据异常为空,无法解析");
         return;
     }
     if(!jsonDoc.isObject()){
-        showTip(3,"接收数据异常,无法解析");
+        showTip(0,"接收数据异常,无法解析");
         return;
     }
     // 调用对应的回调解析
@@ -287,4 +317,51 @@ void RegisterScreen::do_change_get_code_btn()
         countdown--;
         getSecurityCode->setText(QString("(%1s)").arg(countdown));
     }
+}
+
+void RegisterScreen::do_register_clicked()
+{
+    auto res= doVerify();
+    if(!res){
+        return;
+    }
+    if (securityCode->text().trimmed().isEmpty()){
+        securityCode->setStyleSheet("border: 1px solid red;");
+        securityCode->setToolTip("此项不能为空");
+    }else{
+        securityCode->setStyleSheet("");
+    }
+
+    QJsonObject j;
+    j["user"] = accountEdit->text().trimmed();
+    j["password"] = passwordEdit->text().trimmed();
+    j["email"] = emailEdit->text().trimmed();
+    j["securityCode"] = securityCode->text().trimmed();
+
+    HttpManager::GetInstance()->PostHttp(QUrl(gate_url_prefix+"/userRegister"),
+                                        j, RequestType::REG_USER,Modules::REGISTERMOD);
+
+}
+
+void RegisterScreen::do_register_finished(RequestType requestType,const QString&res,ErrorCodes errorCode)
+{
+    qDebug() << static_cast<int>(errorCode);
+    qDebug() << static_cast<int>(ErrorCodes::SUCCESS);
+    if(errorCode!=ErrorCodes::SUCCESS){
+        showTip(0,tr("网络请求错误"));
+        return;
+    }
+    QJsonDocument jsonDoc = QJsonDocument::fromJson(res.toUtf8());
+    qDebug() << jsonDoc.toJson();
+    if(jsonDoc.isEmpty()){
+        showTip(0,"接收数据异常为空,无法解析");
+        return;
+    }
+    if(!jsonDoc.isObject()){
+        showTip(0,"接收数据异常,无法解析");
+        return;
+    }
+
+    _handlers[requestType](jsonDoc.object());
+    return;
 }

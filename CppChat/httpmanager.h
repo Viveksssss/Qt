@@ -27,7 +27,10 @@ private slots:
     void do_http_finished(RequestType requestType,const QString&res,ErrorCodes errorCode,Modules mod);
 signals:
     void on_http_finished(RequestType requestType,const QString&res,ErrorCodes errorCode,Modules mod);
+    // 获取验证码
     void on_get_code_finished(RequestType requestType,const QString&res,ErrorCodes errorCode);
+    // 注册
+    void on_register_finished(RequestType requestType,const QString&res,ErrorCodes errorCode);
 };
 
 #endif // HTTPMANAGER_H

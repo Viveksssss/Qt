@@ -15,10 +15,20 @@ enum class Modules{
     REGISTERMOD = 0,
 };
 
-enum class ErrorCodes{
+enum class ErrorCodes {
     SUCCESS = 0,
-    ERROR_JSON = 1,
-    ERROR_NETWORK = 2
+    ERROR_NETWORK = 1001,
+    ERROR_JSON = 1002,
+    RPCFAILED = 1003,
+    ERROR_SECURITYCODE_EXPIRED = 1004,
+    ERROR_SECURITYCODE_NOTFOUND = 1005
+};
+
+enum class RegisterVarify{
+    CONTENT_INCOMPLETE,
+    EMAIL_INCORRECTFORMAT,
+    PASSWORD_NOTSURE,
+    SUCCESS
 };
 
 extern QString gate_url_prefix;
