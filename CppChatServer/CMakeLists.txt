@@ -11,7 +11,7 @@ find_package(PkgConfig REQUIRED)
 find_package(Boost REQUIRED)
 find_package(Boost 1.70 REQUIRED COMPONENTS filesystem system)
 
-
+pkg_check_modules(MYSQL REQUIRED REQUIRED IMPORTED_TARGET mariadb)
 pkg_check_modules(REDIS REQUIRED REQUIRED IMPORTED_TARGET hiredis)
 pkg_check_modules(JSON REQUIRED REQUIRED IMPORTED_TARGET nlohmann_json)
 pkg_check_modules(GRPC REQUIRED REQUIRED IMPORTED_TARGET grpc)
@@ -22,15 +22,17 @@ pkg_check_modules(ABSL REQUIRED IMPORTED_TARGET absl_strings)
 
 add_executable(GateWayServer 
     main.cpp
-    GateWayServer.cpp
-    Session.cpp
-    LogicSystem.cpp
-    message.grpc.pb.cc
-    message.pb.cc
-    VerifyClient.h
-    ConfigManager.h
-    AsioPool.cpp
-    RedisManager.cpp
+    server/GateWayServer.cpp
+    session/Session.cpp
+    server/LogicSystem.cpp
+    grpc/message.grpc.pb.cc
+    grpc/message.pb.cc
+    grpc/VerifyClient.h
+    global/ConfigManager.h
+    server/AsioPool.cpp
+    redis/RedisManager.cpp
+    mysql/MysqlManager.cpp
+    mysql/MysqlDao.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE Boost::headers)
@@ -41,7 +43,19 @@ target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::PROTOBUF)
 target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::ABSL)
 target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::REDIS)
 target_link_libraries(${PROJECT_NAME} PRIVATE Boost::filesystem Boost::system)
+target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::MYSQL)
 
 
 
-    
+set(NO_WARNING_FILES
+    grpc/message.grpc.cc
+    grpc/message.grpc.h
+    grpc/message.pb.h
+    grpc/message.pb.cc
+)
+
+foreach(file ${NO_WARNING_FILES})
+    set_source_files_properties(${file}
+        COMPILE_FLAGS "-Wno-unused-variable -Wno-deprecated"
+    )
+endforeach()

@@ -1,7 +1,7 @@
-#include "ConfigManager.h"
-#include "GateWayServer.h"
-#include "RedisManager.h"
-#include "VerifyClient.h"
+#include "./global/ConfigManager.h"
+#include "./grpc/VerifyClient.h"
+#include "./redis/RedisManager.h"
+#include "./server/GateWayServer.h"
 #include <boost/asio.hpp>
 #include <hiredis/hiredis.h>
 #include <iostream>
