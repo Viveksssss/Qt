@@ -9,6 +9,7 @@ MysqlManager::MysqlManager()
 
 int MysqlManager::RegisterUser(const std::string& name, const std::string& email, const std::string& password)
 {
+    return _dao.RegisterUser(name, email, password);
 }
 
 // bool MysqlManager::CheckEmail(const std::string& name, const std::string& email)

@@ -1,9 +1,11 @@
 #include "../server/LogicSystem.h"
+#include "../grpc/VerifyClient.h"
 #include "../redis/RedisManager.h"
 #include "../session/Session.h"
-#include "../grpc/VerifyClient.h"
 #include <iostream>
 #include <regex>
+
+#include "../mysql/MysqlManager.h"
 
 LogicSystem::LogicSystem()
 {
@@ -76,31 +78,43 @@ LogicSystem::LogicSystem()
             beast::ostream(session->_response.body()) << str;
             return true;
         }
+
+        // 先查找用户是否存在
+        // 这里简单测试注册功能
+        auto email = j["email"].get<std::string>();
+        auto name = j["user"].get<std::string>();
+        auto password = j["password"].get<std::string>();
+        auto securityCode = j["securityCode"].get<std::string>();
+
         std::string code;
-        bool get_code_success = RedisManager::GetInstance()->Get(EMAIL_PREFIX + j["email"].get<std::string>(), code);
+        bool get_code_success = RedisManager::GetInstance()->Get(EMAIL_PREFIX + email, code);
         if (!get_code_success) {
             std::cout << "验证码获取失败" << std::endl;
             j["error"] = ErrorCodes::ERROR_SECURITYCODE_EXPIRED;
             std::string str = j.dump(4);
             beast::ostream(session->_response.body()) << str;
             return true;
-        } else if (code != j["securityCode"].get<std::string>()) {
+        } else if (code != securityCode) {
+
             std::cout << "验证码错误" << std::endl;
             j["error"] = ErrorCodes::ERROR_SECURITYCODE_NOTFOUND;
             std::string str = j.dump(4);
             beast::ostream(session->_response.body()) << str;
             return true;
         }
+        int uid = MysqlManager::GetInstance()->RegisterUser(name, email, password);
+        if (uid == 0 || uid == -1) {
+            std::cout << "注册失败" << std::endl;
+            j["error"] = ErrorCodes::RPCFAILED;
+            std::string str = j.dump(4);
+            beast::ostream(session->_response.body()) << str;
+            return true;
+        }
 
-        // 先查找用户是否存在
-        // 这里简单测试注册功能
-        json jj;
-        jj["error"] = ErrorCodes::SUCCESS;
-        jj["email"] = j["email"].get<std::string>();
-        jj["user"] = j["user"].get<std::string>();
-        jj["password"] = j["password"].get<std::string>();
-        jj["securityCode"] = j["securityCode"].get<std::string>();
-        std::string str = jj.dump(4);
+        j["success"] = true;
+        j["error"] = ErrorCodes::SUCCESS;
+        j["message"] = "注册成功";
+        std::string str = j.dump(4);
         beast::ostream(session->_response.body()) << str;
         return true;
     });

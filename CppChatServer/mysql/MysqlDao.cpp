@@ -112,61 +112,43 @@ int MysqlDao::RegisterUser(const std::string& name, const std::string& email, co
             return false;
         }
 
-        std::string callSql = "CALL register_user(?, ?, ?), @result";
         MYSQL_STMT* stmt = mysql_stmt_init(conn.get());
-        if (stmt == nullptr) {
-            _pool->ReturnConnection(std::move(conn));
-            return -1;
-        }
-        if (mysql_stmt_prepare(stmt, callSql.c_str(), callSql.size()) != 0) {
-            mysql_stmt_close(stmt);
-            _pool->ReturnConnection(std::move(conn));
-            return -1;
-        }
-        MYSQL_BIND bind[3];
-        std::string name_str = name;
-        std::string email_str = email;
-        std::string password_str = password;
+        std::string query = "select * from user where name = ? or email =?";
 
-        // 绑定 name 参数
-        bind[0].buffer_type = MYSQL_TYPE_STRING;
-        bind[0].buffer = (char*)name_str.c_str();
-        bind[0].buffer_length = name_str.length();
-        bind[0].length = &bind[0].buffer_length;
-
-        // 绑定 email 参数
-        bind[1].buffer_type = MYSQL_TYPE_STRING;
-        bind[1].buffer = (char*)email_str.c_str();
-        bind[1].buffer_length = email_str.length();
-        bind[1].length = &bind[1].buffer_length;
-
-        // 绑定 password 参数
-        bind[2].buffer_type = MYSQL_TYPE_STRING;
-        bind[2].buffer = (char*)password_str.c_str();
-        bind[2].buffer_length = password_str.length();
-        bind[2].length = &bind[2].buffer_length;
-
-        if (mysql_stmt_bind_param(stmt, bind) != 0) {
+        if (mysql_stmt_prepare(stmt, query.c_str(), query.size()) != 0) {
+            std::cout << mysql_error(conn.get()) << std::endl;
             mysql_stmt_close(stmt);
             _pool->ReturnConnection(std::move(conn));
             return -1;
         }
 
-        // 执行存储过程
+        MYSQL_BIND params[2];
+
+        memset(params, 0, sizeof(params));
+        params[0].buffer_type = MYSQL_TYPE_STRING;
+        params[0].buffer = (char*)name.c_str();
+        params[0].buffer_length = name.size();
+        params[0].length = &params[0].buffer_length;
+
+        params[1].buffer_type = MYSQL_TYPE_STRING;
+        params[1].buffer = (char*)email.c_str();
+        params[1].buffer_length = email.size();
+        params[1].length = &params[1].buffer_length;
+
+        if (mysql_stmt_bind_param(stmt, params) != 0) {
+            std::cout << mysql_stmt_error(stmt) << std::endl;
+            mysql_stmt_close(stmt);
+            _pool->ReturnConnection(std::move(conn));
+            return -1;
+        }
+
         if (mysql_stmt_execute(stmt) != 0) {
             mysql_stmt_close(stmt);
             _pool->ReturnConnection(std::move(conn));
             return -1;
         }
 
-        // 清理语句
         mysql_stmt_close(stmt);
-
-        // 获取输出参数 @result
-        if (mysql_query(conn.get(), "SELECT @result AS result") != 0) {
-            _pool->ReturnConnection(std::move(conn));
-            return -1;
-        }
 
         MYSQL_RES* result = mysql_store_result(conn.get());
         if (result == nullptr) {
@@ -174,19 +156,66 @@ int MysqlDao::RegisterUser(const std::string& name, const std::string& email, co
             return -1;
         }
 
-        MYSQL_ROW row = mysql_fetch_row(result);
-        if (row == nullptr) {
-            mysql_free_result(result);
+        my_ulonglong row_count = mysql_stmt_num_rows(stmt);
+        mysql_stmt_close(stmt);
+
+        // 如果存在记录，返回 -1 表示用户已存在
+        if (row_count > 0) {
             _pool->ReturnConnection(std::move(conn));
             return -1;
         }
 
-        int reg_result = std::stoi(row[0]);
+        stmt = mysql_stmt_init(conn.get());
+        query = "INSERT INTO user (name, email, password) VALUES (?, ?, ?)";
 
-        mysql_free_result(result);
+        if (mysql_stmt_prepare(stmt, query.c_str(), query.size()) != 0) {
+            std::cout << "Insert prepare failed: " << mysql_error(conn.get()) << std::endl;
+            mysql_stmt_close(stmt);
+            _pool->ReturnConnection(std::move(conn));
+            return -1;
+        }
+
+        // 绑定插入参数
+        MYSQL_BIND insert_params[3];
+        memset(insert_params, 0, sizeof(insert_params));
+
+        unsigned long name_len = name.size();
+        insert_params[0].buffer_type = MYSQL_TYPE_STRING;
+        insert_params[0].buffer = (char*)name.c_str();
+        insert_params[0].buffer_length = name_len;
+        insert_params[0].length = &name_len;
+
+        unsigned long email_len = email.size();
+        insert_params[1].buffer_type = MYSQL_TYPE_STRING;
+        insert_params[1].buffer = (char*)email.c_str();
+        insert_params[1].buffer_length = email_len;
+        insert_params[1].length = &email_len;
+
+        unsigned long password_len = password.size();
+        insert_params[2].buffer_type = MYSQL_TYPE_STRING;
+        insert_params[2].buffer = (char*)password.c_str();
+        insert_params[2].buffer_length = password_len;
+        insert_params[2].length = &password_len;
+
+        if (mysql_stmt_bind_param(stmt, insert_params) != 0) {
+            std::cout << "Insert bind failed: " << mysql_stmt_error(stmt) << std::endl;
+            mysql_stmt_close(stmt);
+            _pool->ReturnConnection(std::move(conn));
+            return -1;
+        }
+
+        if (mysql_stmt_execute(stmt) != 0) {
+            std::cout << "Insert execute failed: " << mysql_stmt_error(stmt) << std::endl;
+            mysql_stmt_close(stmt);
+            _pool->ReturnConnection(std::move(conn));
+            return -1;
+        }
+
+        mysql_stmt_close(stmt);
         _pool->ReturnConnection(std::move(conn));
 
-        return reg_result;
+        return 1; // 返回1表示注册成功
+
     } catch (const std::exception& e) {
         if (conn != nullptr) {
             _pool->ReturnConnection(std::move(conn));

@@ -250,7 +250,7 @@ void RegisterScreen::initHttpHandlers()
     _handlers[RequestType::REG_USER] = [this](const QJsonObject&obj){
         int error = obj["error"].toInt();
         if(error !=static_cast<int>(ErrorCodes::SUCCESS)){
-            showTip(0,tr("参数错误"));
+            showTip(0,tr("账号或邮箱已被占用"));
             return;
         }
         auto email = obj["email"].toString();
