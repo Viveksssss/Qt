@@ -174,7 +174,7 @@ AuthStack::AuthStack(QWidget *parent)
     closeBtn->installEventFilter(this);
     closeBtn->setObjectName("closeBtn");
     closeBtn->setFixedSize(20,20);
-    closeBtn->setGeometry(sizeHint().width()-40,15,15,15);
+    closeBtn->setGeometry(sizeHint().width()-70,15,15,15);
 
     connect(loginScreen,&LoginScreen::goRegsiter,this,[=](){
         stackWidget->setCurrentIndex(1);

@@ -40,5 +40,7 @@ void HttpManager::do_http_finished(RequestType requestType, const QString &res, 
     case RequestType::REG_USER:
         emit on_register_finished(requestType,res,errorCode);
         break;
+    case RequestType::FORGOT_PWD:
+        emit on_forgot_finished(requestType,res,errorCode);
     }
 }

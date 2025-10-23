@@ -12,7 +12,9 @@ class MysqlManager : public Singleton<MysqlManager> {
 public:
     ~MysqlManager();
 
+    int TestEmail(const std::string& email);
     int RegisterUser(const std::string& name, const std::string& email, const std::string& password);
+    int ResetPassword( const std::string& email, const std::string& password);
     // bool CheckEmail(const std::string& name, const std::string& email);
     // bool UpdatePassword(const std::string& name, const std::string& email);
     // bool CheckPassword(const std::string& email, const std::string& pwd, UserInfo& userInfo);

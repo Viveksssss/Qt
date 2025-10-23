@@ -61,7 +61,9 @@ class MysqlDao {
 public:
     MysqlDao();
     ~MysqlDao();
+    int TestEmail(const std::string& email);
     int RegisterUser(const std::string& name, const std::string& email, const std::string& password);
+    int ResetPassword(const std::string& email, const std::string& password);
 
 private:
     std::unique_ptr<MysqlPool> _pool;

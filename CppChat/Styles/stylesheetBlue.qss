@@ -176,3 +176,153 @@ QToolTip {
 #ForgotScreen{
   border-image: url(:/Resources/loginBackground.png) 0 0 0 0 stretch stretch;
 }
+
+
+
+#msgBox {
+    background: white;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    font-family: "Microsoft YaHei", "PingFang SC";
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+#msgBox QLabel {
+    color: #475569;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 16px 20px;
+    background: transparent;
+    line-height: 1.4;
+    text-align: center;
+}
+
+#msgBox QDialogButtonBox {
+    background: #F8FAFC;
+    border-top: 1px solid #F1F5F9;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    padding: 10px 20px;
+}
+
+#msgBox QPushButton {
+    background: #3B82F6;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 6px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 60px;
+    min-height: 28px;
+}
+
+#msgBox QPushButton:hover {
+    background: #2563EB;
+}
+
+#msgBox QPushButton:pressed {
+    background: #1D4ED8;
+}
+
+
+#labelForHeader[state='normal']{
+  font-size:16px;
+  color:#0cb800;
+}
+#labelForHeader[state='error']{
+  font-size:16px;
+  color:#ff302e;
+}
+
+
+/* 忘记密码界面样式 */
+#FotgotScreen {
+  border-image: url(:/Resources/loginBackground.png) 0 0 0 0 stretch stretch;
+}
+
+#headerLabel {
+  border: 2px solid #E0E0E0;
+  border-radius: 40px;
+  background: #F8F8F8;
+}
+
+#labelForHeader[state='normal']{
+  font-size:16px;
+  color:#0cb800;
+}
+
+#labelForHeader[state='error']{
+  font-size:16px;
+  color:#ff302e;
+}
+
+/* 输入框样式 */
+#accountEdit, #emailEdit, #securityCode, #newPasswordEdit, #confirmNewPasswordEdit {
+  border: 0px;
+  border-radius: 8px;
+}
+
+/* 验证码获取按钮 */
+#getSecurityCode {
+  text-align: center;
+  width: 80px;
+  height: 30px;
+  border-radius: 5px;
+  background-color: #c5ddd7;
+  color: #f9faf0;
+  font-size: 12px;
+}
+
+#getSecurityCode:hover {
+  text-align: center;
+  border-radius: 5px;
+  background-color: #bdc284;
+  color: #cefdec;
+  font-size: 12px;
+}
+
+#getSecurityCode:pressed {
+  text-align: center;
+  border-radius: 5px;
+  background-color: #ebeec9;
+  color: #cefdec;
+  font-size: 12px;
+}
+
+/* 密码显示/隐藏按钮 */
+#showNewPwdAction, #showConfirmPwdAction {
+  background: transparent;
+  border: none;
+}
+
+/* 确定和取消按钮 */
+#acceptBtn, #cancleBtn {
+  text-align: center;
+  border-radius: 5px;
+  background-color: #129dd9;
+  color: #f9faf0;
+  font-size: 15px;
+}
+
+#acceptBtn:hover, #cancleBtn:hover {
+  text-align: center;
+  border-radius: 5px;
+  background-color: #48b2e5;
+  color: #cefdec;
+  font-size: 15px;
+}
+
+#acceptBtn:pressed, #cancleBtn:pressed {
+  text-align: center;
+  border-radius: 5px;
+  background-color: #034ec4;
+  color: #cefdec;
+  font-size: 15px;
+}
+
+/* 工具提示样式 */
+QToolTip {
+  border-radius: 6px;
+  color:#b82800;
+}

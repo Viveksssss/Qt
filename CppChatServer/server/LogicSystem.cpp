@@ -16,7 +16,6 @@ LogicSystem::LogicSystem()
             i++;
             beast::ostream(session->_response.body()) << i <<"\t" << ele.first << ":" << ele.second << "\n";
         } });
-
     RegistHandlers("/getSecurityCode", RequestType::POST, [this](std::shared_ptr<Session> session) {
         auto body_str = beast::buffers_to_string(session->_request.body().data());
         std::cout << "receive getSecurityCode request, body: " << body_str << std::endl;
@@ -114,6 +113,63 @@ LogicSystem::LogicSystem()
         j["success"] = true;
         j["error"] = ErrorCodes::SUCCESS;
         j["message"] = "注册成功";
+        std::string str = j.dump(4);
+        beast::ostream(session->_response.body()) << str;
+        return true;
+    });
+    RegistHandlers("/resetPassword", RequestType::POST, [this](std::shared_ptr<Session> session) {
+        auto body_str = beast::buffers_to_string(session->_request.body().data());
+        std::cout << "receive userRegister request, body: " << body_str << std::endl;
+        session->_response.set(http::field::content_type, "text/json");
+        json j = json::parse(body_str);
+        if (j.is_null() || j.is_discarded()) {
+            std::cout << "无效json" << std::endl;
+            j["error"] = ErrorCodes::ERROR_JSON;
+            std::string str = j.dump(4);
+            beast::ostream(session->_response.body()) << str;
+            return true;
+        }
+
+        auto email = j["email"].get<std::string>();
+        auto password = j["password"].get<std::string>();
+        auto securityCode = j["securityCode"].get<std::string>();
+
+        int uid = MysqlManager::GetInstance()->TestEmail(email);
+        if (uid == 0 || uid == -1) {
+            std::cout << "邮箱不存在" << std::endl;
+            j["error"] = ErrorCodes::ERROR_EMAIL_NOTFOUND;
+            std::string str = j.dump(4);
+            beast::ostream(session->_response.body()) << str;
+            return true;
+        }
+
+        std::string code;
+        bool get_code_success = RedisManager::GetInstance()->Get(EMAIL_PREFIX + email, code);
+        if (!get_code_success) {
+            std::cout << "验证码获取失败" << std::endl;
+            j["error"] = ErrorCodes::ERROR_SECURITYCODE_EXPIRED;
+            std::string str = j.dump(4);
+            beast::ostream(session->_response.body()) << str;
+            return true;
+        } else if (code != securityCode) {
+            std::cout << "验证码错误" << std::endl;
+            j["error"] = ErrorCodes::ERROR_SECURITYCODE_NOTFOUND;
+            std::string str = j.dump(4);
+            beast::ostream(session->_response.body()) << str;
+            return true;
+        }
+        uid = MysqlManager::GetInstance()->ResetPassword(email, password);
+        if (uid == 0 || uid == -1) {
+            std::cout << "注册失败" << std::endl;
+            j["error"] = ErrorCodes::RPCFAILED;
+            std::string str = j.dump(4);
+            beast::ostream(session->_response.body()) << str;
+            return true;
+        }
+
+        j["success"] = true;
+        j["error"] = ErrorCodes::SUCCESS;
+        j["message"] = "密码修改成功";
         std::string str = j.dump(4);
         beast::ostream(session->_response.body()) << str;
         return true;

@@ -12,5 +12,9 @@
         <file>Styles/stylesheetLight.qss</file>
         <file>Resources/close.png</file>
         <file>Resources/close-hover.png</file>
+        <file>Resources/see-hover.png</file>
+        <file>Resources/see.png</file>
+        <file>Resources/nosee-hover.png</file>
+        <file>Resources/nosee.png</file>
     </qresource>
 </RCC>

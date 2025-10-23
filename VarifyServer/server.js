@@ -13,7 +13,7 @@ async function GetSecurityCode(call, callback) {
         let uniqueId = "";
         if (redis_res == null){
             uniqueId = uuidv4().toUpperCase().substring(0,4);
-            let bres = await redis_module.SetRedisExpire(const_module.email_prefix+call.request.email, uniqueId, 180);
+            let bres = await redis_module.SetRedisExpire(const_module.email_prefix+call.request.email, uniqueId, 600);
             if(!bres){
                 callback(null, { email:  call.request.email,
                     error:const_module.Errors.RedisError
@@ -93,7 +93,7 @@ async function GetSecurityCode(call, callback) {
             error:const_module.Errors.Exception
         }); 
     }
-
+ 
 }
 
 function main() {

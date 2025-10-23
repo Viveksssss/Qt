@@ -21,6 +21,7 @@ public:
 
 signals:
     void goLogin();
+    void readyGoLogin();
 
 private:
     void setupUI();
@@ -54,6 +55,8 @@ private:
     QLineEdit *accountEdit;
     QLineEdit *passwordEdit;
     QLineEdit *passwordSure;
+    QAction *labelForPwd;
+    QAction *labelForPwdSure;
 
     // 邮箱
     QLineEdit *emailEdit;
@@ -66,8 +69,6 @@ private:
     QPushButton *registerBtn;
     QPushButton *cancelBtn;
 
-
-signals:
 };
 
 #endif // REGISTERSCREEN_H

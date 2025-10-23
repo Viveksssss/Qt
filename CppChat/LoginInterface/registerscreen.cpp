@@ -10,6 +10,7 @@
 #include <QFormLayout>
 #include <QRegularExpression>
 #include <QTimer>
+#include <QMessageBox>
 #include "../stylemanager.h"
 #include "../httpmanager.h"
 
@@ -71,7 +72,7 @@ void RegisterScreen::setupUI()
     accountEdit->setAlignment(Qt::AlignHCenter);
     accountEdit->setPlaceholderText("输入用户名");
     accountEdit->clearFocus();
-    formLayout->addRow("账号:",accountEdit);
+    formLayout->addRow("用户名:",accountEdit);
 
     // 邮箱
     emailEdit = new QLineEdit();
@@ -90,6 +91,11 @@ void RegisterScreen::setupUI()
     passwordEdit->setPlaceholderText("输入密码");
     passwordEdit->setEchoMode(QLineEdit::Password);
     passwordEdit->setDragEnabled(false);
+    labelForPwd = new QAction;
+    labelForPwd->setCheckable(true);
+    labelForPwd->setObjectName("labelForPwd");
+    labelForPwd->setIcon(QIcon(":/Resources/nosee.png"));
+    passwordEdit->addAction(labelForPwd,QLineEdit::TrailingPosition);
     formLayout->addRow("密码:",passwordEdit);
 
     // 确认密码
@@ -97,10 +103,15 @@ void RegisterScreen::setupUI()
     passwordSure->setObjectName("passwordSure");
     passwordSure->setFixedHeight(30);
     passwordSure->setAlignment(Qt::AlignHCenter);
-    passwordSure->setPlaceholderText("确认输入QuickChat密码");
+    passwordSure->setPlaceholderText("确认输入密码");
     passwordSure->setEchoMode(QLineEdit::Password);
     passwordSure->setDragEnabled(false);
-    formLayout->addRow("确认密码:",passwordSure);
+    labelForPwdSure = new QAction;
+    labelForPwdSure->setCheckable(true);
+    labelForPwdSure->setObjectName("labelForPwdSure");
+    labelForPwdSure->setIcon(QIcon(":/Resources/nosee.png"));
+    passwordSure->addAction(labelForPwdSure ,QLineEdit::TrailingPosition);
+    formLayout->addRow("密码:",passwordSure);
 
     // 验证码
     securityCode = new QLineEdit();
@@ -140,6 +151,7 @@ void RegisterScreen::setupUI()
     mainLayout->addLayout(headerLayout);
     mainLayout->addLayout(formLayout);
     mainLayout->addLayout(registerAndCancelLayout);
+
 }
 
 
@@ -156,6 +168,41 @@ void RegisterScreen::setupConnections()
     connect(HttpManager::GetInstance().get(),&HttpManager::on_get_code_finished,this,&RegisterScreen::do_get_code_finished);
     // 注册
     connect(HttpManager::GetInstance().get(),&HttpManager::on_register_finished,this,&RegisterScreen::do_register_finished);
+    // 可见性
+    connect(labelForPwd, &QAction::toggled, [this](bool checked) {
+        if (checked){
+            passwordEdit->setEchoMode(QLineEdit::Normal);
+            labelForPwd->setIcon(QIcon(":/Resources/see.png"));
+        }else{
+            passwordEdit->setEchoMode(QLineEdit::Password);
+            labelForPwd->setIcon(QIcon(":/Resources/nosee.png"));
+        }
+    });
+    connect(labelForPwdSure, &QAction::toggled, [this](bool checked) {
+        if (checked){
+            passwordSure->setEchoMode(QLineEdit::Normal);
+            labelForPwdSure->setIcon(QIcon(":/Resources/see.png"));
+        }else{
+            passwordSure->setEchoMode(QLineEdit::Password);
+            labelForPwdSure->setIcon(QIcon(":/Resources/nosee.png"));
+        }
+    });
+    // 切换界面
+    connect(this,&RegisterScreen::readyGoLogin,this,[this](){
+        QMessageBox *msgBox = new QMessageBox(this);
+        msgBox->setWindowTitle("注册成功");
+        msgBox->setAttribute(Qt::WA_DeleteOnClose); // 自动删除
+        msgBox->setText("2秒之后将会自动跳转到登录界面");
+        msgBox->setIcon(QMessageBox::Information);
+        msgBox->setStandardButtons(QMessageBox::Ok);
+        msgBox->show();  // 使用 show() 而不是 exec()
+
+        QTimer::singleShot(2000, this, [this,msgBox]() {
+            // 在这里写切换界面的代码
+            msgBox->accept();
+            emit goLogin();
+        });
+    });
 }
 
 void RegisterScreen::showTip(int code,const QString&str)
@@ -176,8 +223,8 @@ bool RegisterScreen::doVerify(bool includingSecurityCode)
     // 是否未填写
     bool allFilled = true;
     // 是否包括验证码?分别用户获取验证码和登陆两个按钮的逻辑
-    std::size_t count= formLayout->rowCount() -(includingSecurityCode?0:1);
-    for(int i = 0;i<count;++i){
+    std::size_t count= formLayout->rowCount() -1;
+    for(int i = 0;i<=count;++i){
         QLayoutItem*item = formLayout->itemAt(i,QFormLayout::FieldRole);
         if(item&&item->widget()){
             QLineEdit*lineEdit = static_cast<QLineEdit*>(item->widget());
@@ -193,6 +240,18 @@ bool RegisterScreen::doVerify(bool includingSecurityCode)
         }
     }
 
+    // 邮箱的布局不同单独处理
+    if(includingSecurityCode){
+        if(securityCode && securityCode->text().trimmed().isEmpty()){
+            securityCode->setToolTip("此项不能为空");
+            securityCode->setStyleSheet("border: 1px solid red;");
+            allFilled = false;
+        }
+        else{
+            securityCode->setToolTip("");
+            securityCode->setStyleSheet("");
+        }
+    }
 
     // 邮箱
     auto email = emailEdit->text();
@@ -201,29 +260,42 @@ bool RegisterScreen::doVerify(bool includingSecurityCode)
 
     RegisterVarify rv;
     rv = RegisterVarify::SUCCESS;
+    QString passwordStr = passwordEdit->text().trimmed();
+    QString passwordSureStr = passwordSure->text().trimmed();
+
+
     if (!matched){
-        rv = RegisterVarify::EMAIL_INCORRECTFORMAT;
-    }else if(passwordEdit->text().trimmed()!=passwordSure->text().trimmed()){
-        rv = RegisterVarify::PASSWORD_NOTSURE;
-    }else if(!allFilled){
-        rv = RegisterVarify::CONTENT_INCOMPLETE;
+        rv = RegisterVarify::ERROR_EMAIL_INCORRECTFORMAT;
+    }else if(passwordStr != passwordSureStr){
+        rv = RegisterVarify::ERROR_PASSWORD_NOTSURE;
+    }else if(passwordStr.size()<6 || passwordStr.size()>12){
+        rv = RegisterVarify::ERROR_PASSWORD_LEN;
+    }
+    else if(!allFilled){
+        rv = RegisterVarify::ERROR_CONTENT_INCOMPLETE;
     }
 
     bool ok = false;
     switch(rv)
     {
-    case RegisterVarify::CONTENT_INCOMPLETE:
-        showTip(0,"请填写完整内容");
-        break;
-    case RegisterVarify::EMAIL_INCORRECTFORMAT:
+    case RegisterVarify::ERROR_EMAIL_INCORRECTFORMAT:
         showTip(0,"邮箱格式不正确");
         break;
-    case RegisterVarify::PASSWORD_NOTSURE:
+    case RegisterVarify::ERROR_PASSWORD_NOTSURE:
         showTip(0,"两次输入密码不同");
         passwordEdit->setStyleSheet("border: 1px solid red;");
         passwordEdit->setToolTip("此项不能为空");
         passwordSure->setStyleSheet("border: 1px solid red;");
         passwordSure->setToolTip("此项不能为空");
+        break;
+    case RegisterVarify::ERROR_PASSWORD_LEN:
+        showTip(0,"密码长度在6-12位");
+        break;
+    case RegisterVarify::ERROR_CONTENT_INCOMPLETE:
+        showTip(0,"请填写完整内容");
+        break;
+    case RegisterVarify::ERROR_SECURITY_EMPTY:
+        showTip(0,"验证码为空");
         break;
     case RegisterVarify::SUCCESS:
         showTip(1,"请注意查收");
@@ -235,17 +307,14 @@ bool RegisterScreen::doVerify(bool includingSecurityCode)
 
 void RegisterScreen::initHttpHandlers()
 {
-    // 注册
     _handlers[RequestType::GET_SECURITY_CODE] = [this](const QJsonObject&obj){
         ErrorCodes error = static_cast<ErrorCodes>(obj["error"].toInt());
         if(error!=ErrorCodes::SUCCESS){
-            showTip(3,"注册失败");
+            showTip(0,"验证码获取失败");
             return;
         }
         auto success = obj["success"].toBool();
         auto message = obj["message"].toString();
-        qDebug() << "success:" << success;
-        qDebug() << "message:" << message ;
     };
     _handlers[RequestType::REG_USER] = [this](const QJsonObject&obj){
         int error = obj["error"].toInt();
@@ -256,6 +325,7 @@ void RegisterScreen::initHttpHandlers()
         auto email = obj["email"].toString();
         showTip(1,tr("用户注册成功"));
         qDebug()<< "Email is " << email ;
+        emit readyGoLogin();
     };
 }
 
@@ -278,7 +348,7 @@ void RegisterScreen::do_get_code_clicked()
     QObject::connect(timer,&QTimer::timeout,this,&RegisterScreen::do_change_get_code_btn);
     timer->start(1000);
     // 60s之后恢复
-    QTimer::singleShot(60000,this,[this](){
+    QTimer::singleShot(30000,this,[this](){
         if (timer) {
             timer->stop();
             timer->deleteLater();
@@ -321,20 +391,14 @@ void RegisterScreen::do_change_get_code_btn()
 
 void RegisterScreen::do_register_clicked()
 {
-    auto res= doVerify();
+    auto res= doVerify(true);
     if(!res){
         return;
-    }
-    if (securityCode->text().trimmed().isEmpty()){
-        securityCode->setStyleSheet("border: 1px solid red;");
-        securityCode->setToolTip("此项不能为空");
-    }else{
-        securityCode->setStyleSheet("");
     }
 
     QJsonObject j;
     j["user"] = accountEdit->text().trimmed();
-    j["password"] = passwordEdit->text().trimmed();
+    j["password"] = cryptoString(passwordEdit->text().trimmed());
     j["email"] = emailEdit->text().trimmed();
     j["securityCode"] = securityCode->text().trimmed();
 
