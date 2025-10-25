@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QWidget>
+#include "../Properties/global.h"
 
 
 class QComboBox;
@@ -45,14 +46,17 @@ public:
 signals:
     void goRegsiter();
     void goForgotPassword();
+    void loginSuccess(ServerInfo si);
 
 private:
     void setupUI();
     void setupStyles();
     void setupConnections();
+    void initHandlers();
 
 private slots:
-    // void onLoginClicked();
+    void do_login_clicked();
+    void do_login_finished(RequestType requestType,const QString&res,ErrorCodes errorCode);
     // void onRememberStateChanged(int state);
     // void onAutoLoginStateChanged(int state);
 
@@ -79,6 +83,7 @@ private:
     QPushButton *forgotLabel;
 
     // QWidget interface
+    QHash<RequestType,std::function<void(const QJsonObject&)>> _handlers;
 protected:
     void paintEvent(QPaintEvent *event);
     void showEvent(QShowEvent *event);

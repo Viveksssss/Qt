@@ -5,6 +5,9 @@
 #include <boost/beast.hpp>
 #include <boost/beast/http.hpp>
 #include <nlohmann/json.hpp>
+#include <spdlog/spdlog.h>
+
+#include <utility>
 
 namespace beast = boost::beast;
 namespace http = beast::http;
@@ -24,9 +27,28 @@ enum class ErrorCodes {
     ERROR_SECURITYCODE_EXPIRED = 1004,
     ERROR_SECURITYCODE_NOTFOUND = 1005,
     ERROR_EMAIL_NOTFOUND = 1006,
+    ERROR_USER_OR_PASSWORD_INCORRECT = 1007,
 };
 
 class ConfigManager;
+
+class Defer {
+public:
+    template <typename F>
+    Defer(F&& f) noexcept
+        : m_func(std::forward<F>(f))
+    {
+    }
+
+    ~Defer()
+    {
+        m_func();
+    }
+
+private:
+    std::function<void()> m_func;
+};
+
 extern ConfigManager cfgMgr;
 
 #define EMAIL_PREFIX "email_"

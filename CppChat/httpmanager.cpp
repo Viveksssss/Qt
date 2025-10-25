@@ -42,5 +42,9 @@ void HttpManager::do_http_finished(RequestType requestType, const QString &res, 
         break;
     case RequestType::FORGOT_PWD:
         emit on_forgot_finished(requestType,res,errorCode);
+        break;
+    case RequestType::LOGIN_USER:
+        emit on_login_finished(requestType,res,errorCode);
+        break;
     }
 }

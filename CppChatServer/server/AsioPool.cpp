@@ -1,5 +1,4 @@
 #include "AsioPool.h"
-#include <iostream>
 #include <memory>
 
 AsioPool::AsioPool(std::size_t size)
@@ -39,5 +38,4 @@ void AsioPool::Stop()
 AsioPool::~AsioPool()
 {
     Stop();
-    std::cout << "The AsioPool Destruct" << std::endl;
 }
