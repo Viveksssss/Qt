@@ -11,8 +11,12 @@
 #include <QPainter>
 #include <QStackedWidget>
 #include <QRect>
+#include <QToolTip>
 #include <qevent.h>
 
+
+#include "../Properties/global.h"
+#include "../httpmanager.h"
 #include "forgotscreen.h"
 #include "registerscreen.h"
 
@@ -21,6 +25,7 @@ LoginScreen::LoginScreen(QWidget *parent)
 {
     setupUI();
     setupConnections();
+    initHandlers();
 
     // 设置窗口属性
     setWindowFlags(Qt::FramelessWindowHint|Qt::WindowMinimizeButtonHint);
@@ -126,6 +131,101 @@ void LoginScreen::setupConnections()
     connect(forgotLabel, &QPushButton::clicked, this, [=](){
         emit goForgotPassword();
     });
+
+    connect(loginBtn,&QPushButton::clicked,this,&LoginScreen::do_login_clicked);
+    connect(HttpManager::GetInstance().get(),&HttpManager::on_login_finished,this,&LoginScreen::do_login_finished);
+}
+
+void LoginScreen::initHandlers()
+{
+    _handlers[RequestType::LOGIN_USER] = [this](QJsonObject json){
+        int error = json["error"].toInt();
+        if(error != static_cast<int>(ErrorCodes::SUCCESS)){
+            showToolTip(loginBtn,"参数错误");
+            return;
+        }
+        showToolTip(loginBtn,"登陆成功");
+
+        auto email = json["email"].toString();
+        ServerInfo si;
+        si.uid = json["uid"].toInt();
+        si.host = json["host"].toString();
+        si.port = json["port"].toString();
+        si.token = json["token"].toString();
+        si.email = json["email"].toString();
+
+        emit loginSuccess(si);
+    };
+}
+
+void LoginScreen::do_login_clicked()
+{
+    QString accountStr = accountEdit->text().trimmed();
+    QString passwordStr = passwordEdit->text().trimmed();
+    bool clicked = agreeCheck->isChecked();
+    bool allFilled = true;
+    // 账号框
+    if (accountStr.isEmpty()){
+        showToolTip(accountEdit,"此项不能为空");
+        accountEdit->setStyleSheet("border: 1px solid red;");
+        allFilled = false;
+    }else{
+        accountEdit->setStyleSheet("");
+    }
+
+    // 密码框
+    if (passwordStr.isEmpty()){
+        showToolTip(passwordEdit,"此项不能为空");
+        passwordEdit->setStyleSheet("border: 1px solid red;");
+        allFilled = false;
+    }else if(passwordStr.size()<6 || passwordStr.size()>12){
+        showToolTip(passwordEdit,"长度在6-12位");
+        passwordEdit->setStyleSheet("border: 1px solid red;");
+        allFilled = false;
+    }else{
+        passwordEdit->setStyleSheet("");
+    }
+
+    // 同意协议
+    if (!clicked){
+        showToolTip(agreeCheck,"请勾选同意协议");
+        allFilled = false;
+    }
+
+    if (!allFilled)return;
+
+    // 发送json
+    QJsonObject json;
+    json["user"] = accountStr;
+    json["password"] = cryptoString(passwordStr);
+    HttpManager::GetInstance()->PostHttp(QUrl(gate_url_prefix+"/userLogin"),json,RequestType::LOGIN_USER,Modules::LOGINMOD);
+}
+
+
+
+void LoginScreen::do_login_finished(RequestType requestType,const QString&res,ErrorCodes errorCode)
+{
+    if (errorCode != ErrorCodes::SUCCESS){
+        showToolTip(loginBtn,"网络请求错误");
+        return;
+    }
+    QJsonDocument doc = QJsonDocument::fromJson(res.toUtf8());
+    if (doc.isNull()){
+        showToolTip(loginBtn,"解析错误");
+        return;
+    }
+    if (!doc.isObject()){
+        showToolTip(loginBtn,"解析错误");
+        return;
+    }
+    // _handlers[requestType](doc.object());
+    // 安全检查：确保处理器存在
+    auto it = _handlers.find(requestType);
+    if (it == _handlers.end()) {
+        showToolTip(loginBtn, "未知的请求类型");
+        return;
+    }
+    it.value()(doc.object());
 }
 
 void LoginScreen::paintEvent(QPaintEvent *event)

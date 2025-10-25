@@ -408,6 +408,7 @@ void ForgotScreen::do_forgot_clicked()
     }
 
     QJsonObject j;
+    j["uid"] = accountEdit->text().trimmed();
     j["email"] = emailEdit->text().trimmed();
     j["password"] = cryptoString(newPasswordEdit->text().trimmed());
     j["securityCode"] = securityCode->text().trimmed();

@@ -1,6 +1,5 @@
 #include "../session/Session.h"
 #include "../server/LogicSystem.h"
-#include <iostream>
 
 // 10进制转16进制（字符串形式）
 unsigned char ToHex(int x)
@@ -71,7 +70,7 @@ void Session::Start()
     http::async_read(_socket, _buffer, _request, [self = shared_from_this()](const boost::system::error_code& ec, std::size_t bytes_transferred) {
         try {
             if (ec) {
-                std::cerr << "Error reading request: " << ec.message() << std::endl;
+                SPDLOG_ERROR("Error reading request: {}", ec.message());
                 return;
             }
             boost::ignore_unused(bytes_transferred);
@@ -79,7 +78,7 @@ void Session::Start()
             self->CheckDeadLine();
 
         } catch (std::exception& e) {
-            std::cerr << e.what() << std::endl;
+            SPDLOG_ERROR("Exception: {}", e.what());
         }
     });
 }

@@ -33,6 +33,8 @@ signals:
     void on_register_finished(RequestType requestType,const QString&res,ErrorCodes errorCode);
     // 忘记密码
     void on_forgot_finished(RequestType requestType,const QString&res,ErrorCodes errorCode);
+    // 登陆
+    void on_login_finished(RequestType requestType,const QString&res,ErrorCodes errorCode);
 };
 
 #endif // HTTPMANAGER_H

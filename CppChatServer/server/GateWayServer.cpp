@@ -1,7 +1,6 @@
 #include "GateWayServer.h"
 #include "../session/Session.h"
 #include "AsioPool.h"
-#include <iostream>
 
 GateWayServer::GateWayServer(net::io_context& ioc, unsigned short port)
     : _ioc(ioc)
@@ -22,7 +21,7 @@ void GateWayServer::Start()
             conn->Start();
             self->Start();
         } catch (std::exception& e) {
-            std::cerr << "Exception: " << e.what() << std::endl;
+            SPDLOG_ERROR("Exception: {}", e.what());
         }
     });
 }

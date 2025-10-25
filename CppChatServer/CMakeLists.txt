@@ -12,6 +12,7 @@ find_package(Boost REQUIRED)
 find_package(Boost 1.70 REQUIRED COMPONENTS filesystem system)
 
 pkg_check_modules(MYSQL REQUIRED REQUIRED IMPORTED_TARGET mariadb)
+pkg_check_modules(SPEEDLOG REQUIRED REQUIRED IMPORTED_TARGET spdlog)
 pkg_check_modules(REDIS REQUIRED REQUIRED IMPORTED_TARGET hiredis)
 pkg_check_modules(JSON REQUIRED REQUIRED IMPORTED_TARGET nlohmann_json)
 pkg_check_modules(GRPC REQUIRED REQUIRED IMPORTED_TARGET grpc)
@@ -27,8 +28,10 @@ add_executable(GateWayServer
     server/LogicSystem.cpp
     grpc/message.grpc.pb.cc
     grpc/message.pb.cc
-    grpc/VerifyClient.h
+    grpc/VerifyClient.cpp
+    grpc/StatusClient.cpp
     global/ConfigManager.h
+    global/const.cpp
     server/AsioPool.cpp
     redis/RedisManager.cpp
     mysql/MysqlManager.cpp
@@ -44,6 +47,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::ABSL)
 target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::REDIS)
 target_link_libraries(${PROJECT_NAME} PRIVATE Boost::filesystem Boost::system)
 target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::MYSQL)
+target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::SPEEDLOG)
 
 
 

@@ -1,6 +1,7 @@
 #ifndef MYSQLDAO_H
 #define MYSQLDAO_H
 
+
 #include <atomic>
 #include <condition_variable>
 #include <memory>
@@ -57,13 +58,23 @@ private:
     std::atomic<bool> _stop;
 };
 
+struct UserInfo {
+    std::string host;
+    std::string port;
+    std::string token;
+    std::string email;
+    std::string name;
+    int uid;
+};
+
 class MysqlDao {
 public:
     MysqlDao();
     ~MysqlDao();
-    int TestEmail(const std::string& email);
+    int TestUidAndEmail(const std::string& uid, const std::string& email);
     int RegisterUser(const std::string& name, const std::string& email, const std::string& password);
     int ResetPassword(const std::string& email, const std::string& password);
+    bool CheckPwd(const std::string& user, const std::string& password, UserInfo& userInfo);
 
 private:
     std::unique_ptr<MysqlPool> _pool;
