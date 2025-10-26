@@ -308,7 +308,7 @@ bool ForgotScreen::doVerify(bool includingSecurityCode)
 
 void ForgotScreen::initHttpHandlers()
 {
-    _handlers[RequestType::GET_SECURITY_CODE] = [this](const QJsonObject&obj){
+    _handlers[RequestType::ID_GET_VARIFY_CODE] = [this](const QJsonObject&obj){
         ErrorCodes error = static_cast<ErrorCodes>(obj["error"].toInt());
         if(error!=ErrorCodes::SUCCESS){
             showTip(0,"验证码获取失败");
@@ -316,7 +316,7 @@ void ForgotScreen::initHttpHandlers()
         }
     };
 
-    _handlers[RequestType::FORGOT_PWD] = [this](const QJsonObject&obj){
+    _handlers[RequestType::ID_RESET_PWD] = [this](const QJsonObject&obj){
         int error = obj["error"].toInt();
         if(error !=static_cast<int>(ErrorCodes::SUCCESS)){
             showTip(0,tr("注册失败"));
@@ -346,7 +346,7 @@ void ForgotScreen::do_get_code_clicked()
 
     QJsonObject json_obj;
     json_obj["email"] = emailEdit->text().trimmed();
-    HttpManager::GetInstance()->PostHttp(QUrl(gate_url_prefix+"/getSecurityCode"),json_obj,RequestType::GET_SECURITY_CODE,Modules::REGISTERMOD);
+    HttpManager::GetInstance()->PostHttp(QUrl(gate_url_prefix+"/getSecurityCode"),json_obj,RequestType::ID_GET_VARIFY_CODE,Modules::REGISTERMOD);
 
     timer = new QTimer(this);
     countdown = 30;
@@ -414,7 +414,7 @@ void ForgotScreen::do_forgot_clicked()
     j["securityCode"] = securityCode->text().trimmed();
 
     HttpManager::GetInstance()->PostHttp(QUrl(gate_url_prefix+"/resetPassword"),
-                                         j, RequestType::FORGOT_PWD,Modules::FORGOTMOD);
+                                         j, RequestType::ID_RESET_PWD,Modules::FORGOTMOD);
 
 }
 

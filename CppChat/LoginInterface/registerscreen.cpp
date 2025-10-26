@@ -307,7 +307,7 @@ bool RegisterScreen::doVerify(bool includingSecurityCode)
 
 void RegisterScreen::initHttpHandlers()
 {
-    _handlers[RequestType::GET_SECURITY_CODE] = [this](const QJsonObject&obj){
+    _handlers[RequestType::ID_GET_VARIFY_CODE] = [this](const QJsonObject&obj){
         ErrorCodes error = static_cast<ErrorCodes>(obj["error"].toInt());
         if(error!=ErrorCodes::SUCCESS){
             showTip(0,"验证码获取失败");
@@ -316,7 +316,7 @@ void RegisterScreen::initHttpHandlers()
         auto success = obj["success"].toBool();
         auto message = obj["message"].toString();
     };
-    _handlers[RequestType::REG_USER] = [this](const QJsonObject&obj){
+    _handlers[RequestType::ID_REG_USER] = [this](const QJsonObject&obj){
         int error = obj["error"].toInt();
         if(error !=static_cast<int>(ErrorCodes::SUCCESS)){
             showTip(0,tr("账号或邮箱已被占用"));
@@ -336,7 +336,7 @@ void RegisterScreen::do_get_code_clicked()
 
     QJsonObject json_obj;
     json_obj["email"] = emailEdit->text().trimmed();
-    HttpManager::GetInstance()->PostHttp(QUrl(gate_url_prefix+"/getSecurityCode"),json_obj,RequestType::GET_SECURITY_CODE,Modules::REGISTERMOD);
+    HttpManager::GetInstance()->PostHttp(QUrl(gate_url_prefix+"/getSecurityCode"),json_obj,RequestType::ID_GET_VARIFY_CODE,Modules::REGISTERMOD);
 
     timer = new QTimer(this);
     countdown = 60;
@@ -403,7 +403,7 @@ void RegisterScreen::do_register_clicked()
     j["securityCode"] = securityCode->text().trimmed();
 
     HttpManager::GetInstance()->PostHttp(QUrl(gate_url_prefix+"/userRegister"),
-                                        j, RequestType::REG_USER,Modules::REGISTERMOD);
+                                        j, RequestType::ID_REG_USER,Modules::REGISTERMOD);
 
 }
 

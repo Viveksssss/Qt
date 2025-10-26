@@ -45,7 +45,7 @@ StatusServiceImpl::StatusServiceImpl()
 {
     auto& cfg = ConfigManager::GetInstance();
     ChatServer server;
-    server.port = cfg["StatusServer"]["port"];
-    server.host = cfg["StatusServer"]["host"];
+    server.port = cfg["ChatServer"]["port"];
+    server.host = cfg["ChatServer"]["host"];
     _servers.push(server);
 }

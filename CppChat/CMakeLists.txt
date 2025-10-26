@@ -3,6 +3,7 @@ project(CppChat LANGUAGES CXX)
 
 find_package(PkgConfig REQUIRED)
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets Network)
+find_package(Qt6 REQUIRED COMPONENTS Core)
 
 
 qt_standard_project_setup()
@@ -21,6 +22,7 @@ qt_add_executable(CppChat
     Properties/global.h
     Properties/global.cpp
     httpmanager.h httpmanager.cpp
+    tcpmanager.h tcpmanager.cpp
     config.ini
 )
 
@@ -29,17 +31,13 @@ qt_add_executable(CppChat
 configure_file(${CMAKE_SOURCE_DIR}/config.ini
                ${CMAKE_BINARY_DIR}/config.ini COPYONLY)
 
-
-
-
-
-
 target_link_libraries(CppChat
     PRIVATE
         Qt6::Core
         Qt6::Widgets
         Qt6::Network
 )
+target_link_libraries(CppChat PRIVATE Qt6::Core)
 
 
 target_include_directories(CppChat PRIVATE ${ASIO_INCLUDE_DIR})

@@ -1,4 +1,10 @@
 #include "loginscreen.h"
+#include "forgotscreen.h"
+#include "registerscreen.h"
+#include "../Properties/global.h"
+#include "../httpmanager.h"
+#include "../tcpmanager.h"
+
 #include <QApplication>
 #include <QScreen>
 #include <QVBoxLayout>
@@ -15,10 +21,6 @@
 #include <qevent.h>
 
 
-#include "../Properties/global.h"
-#include "../httpmanager.h"
-#include "forgotscreen.h"
-#include "registerscreen.h"
 
 LoginScreen::LoginScreen(QWidget *parent)
     : QWidget{parent}
@@ -35,6 +37,21 @@ LoginScreen::LoginScreen(QWidget *parent)
     QScreen *screen = QApplication::primaryScreen();
     QRect screenGeometry = screen->geometry();
     move(screenGeometry.width() - width()/2,screenGeometry.height() - height()/2);
+}
+
+void LoginScreen::do_connect_success(bool success)
+{
+    if (success){
+        showToolTip(loginBtn,"登陆成功");
+        QJsonObject json;
+        json["uid"] = _uid;
+        json["token"] = _token;
+        QJsonDocument doc(json);
+        QString str = doc.toJson(QJsonDocument::Indented);
+        emit TcpManager::GetInstance()->on_send_data(RequestType::ID_REG_USER,str);
+    }else{
+        showToolTip(loginBtn,"网络异常");
+    }
 }
 
 void LoginScreen::setupUI()
@@ -124,27 +141,31 @@ void LoginScreen::setupUI()
 
 void LoginScreen::setupConnections()
 {
+    // 跳转注册
     connect(registerBtn, &QPushButton::clicked, this, [=](){
         emit goRegsiter();
     });
-
+    // 跳转忘记
     connect(forgotLabel, &QPushButton::clicked, this, [=](){
         emit goForgotPassword();
     });
-
+    // 点击登陆
     connect(loginBtn,&QPushButton::clicked,this,&LoginScreen::do_login_clicked);
+    // 登陆回包
     connect(HttpManager::GetInstance().get(),&HttpManager::on_login_finished,this,&LoginScreen::do_login_finished);
+    // 连接服务器
+    connect(this,&LoginScreen::on_tcp_connect,TcpManager::GetInstance().get(),&TcpManager::do_tcp_connect);
 }
 
 void LoginScreen::initHandlers()
 {
-    _handlers[RequestType::LOGIN_USER] = [this](QJsonObject json){
+    _handlers[RequestType::ID_LOGIN_USER] = [this](QJsonObject json){
         int error = json["error"].toInt();
         if(error != static_cast<int>(ErrorCodes::SUCCESS)){
             showToolTip(loginBtn,"参数错误");
             return;
         }
-        showToolTip(loginBtn,"登陆成功");
+        showToolTip(loginBtn,"正在连接服务器");
 
         auto email = json["email"].toString();
         ServerInfo si;
@@ -153,8 +174,14 @@ void LoginScreen::initHandlers()
         si.port = json["port"].toString();
         si.token = json["token"].toString();
         si.email = json["email"].toString();
+        si.name = json["name"].toString();
 
-        emit loginSuccess(si);
+        _uid = si.uid;
+        _token = si.token;
+
+        qDebug() << si.uid <<"\t" << si.host << "\t" << si.token << "\t" << si.email <<"\t" << si.name;
+
+        emit on_tcp_connect(si);
     };
 }
 
@@ -198,7 +225,7 @@ void LoginScreen::do_login_clicked()
     QJsonObject json;
     json["user"] = accountStr;
     json["password"] = cryptoString(passwordStr);
-    HttpManager::GetInstance()->PostHttp(QUrl(gate_url_prefix+"/userLogin"),json,RequestType::LOGIN_USER,Modules::LOGINMOD);
+    HttpManager::GetInstance()->PostHttp(QUrl(gate_url_prefix+"/userLogin"),json,RequestType::ID_LOGIN_USER,Modules::LOGINMOD);
 }
 
 

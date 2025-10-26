@@ -44,9 +44,11 @@ public:
     explicit LoginScreen(QWidget *parent = nullptr);
 
 signals:
-    void goRegsiter();
-    void goForgotPassword();
-    void loginSuccess(ServerInfo si);
+    void goRegsiter();  // to AuthStack::
+    void goForgotPassword();    // to AuthStack::
+    void on_tcp_connect(ServerInfo si); // to TcpManager::do_tcp_connect
+public slots:
+    void do_connect_success(bool success); // from TcpManager::on_connect_success
 
 private:
     void setupUI();
@@ -84,6 +86,11 @@ private:
 
     // QWidget interface
     QHash<RequestType,std::function<void(const QJsonObject&)>> _handlers;
+
+
+    int _uid;
+    QString _token;
+
 protected:
     void paintEvent(QPaintEvent *event);
     void showEvent(QShowEvent *event);

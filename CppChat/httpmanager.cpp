@@ -34,16 +34,16 @@ void HttpManager::do_http_finished(RequestType requestType, const QString &res, 
 {
     switch(requestType)
     {
-    case RequestType::GET_SECURITY_CODE:
+    case RequestType::ID_GET_VARIFY_CODE:
         emit on_get_code_finished(requestType,res,errorCode);
         break;
-    case RequestType::REG_USER:
+    case RequestType::ID_REG_USER:
         emit on_register_finished(requestType,res,errorCode);
         break;
-    case RequestType::FORGOT_PWD:
+    case RequestType::ID_RESET_PWD:
         emit on_forgot_finished(requestType,res,errorCode);
         break;
-    case RequestType::LOGIN_USER:
+    case RequestType::ID_LOGIN_USER:
         emit on_login_finished(requestType,res,errorCode);
         break;
     }
