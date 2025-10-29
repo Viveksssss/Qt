@@ -4,6 +4,7 @@ project(CppChat LANGUAGES CXX)
 find_package(PkgConfig REQUIRED)
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets Network)
 find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(Qt6 REQUIRED COMPONENTS Core)
 
 
 qt_standard_project_setup()
@@ -24,6 +25,7 @@ qt_add_executable(CppChat
     httpmanager.h httpmanager.cpp
     tcpmanager.h tcpmanager.cpp
     config.ini
+    usermanager.h usermanager.cpp
 )
 
 
@@ -37,6 +39,7 @@ target_link_libraries(CppChat
         Qt6::Widgets
         Qt6::Network
 )
+target_link_libraries(CppChat PRIVATE Qt6::Core)
 target_link_libraries(CppChat PRIVATE Qt6::Core)
 
 

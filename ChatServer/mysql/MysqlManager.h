@@ -5,7 +5,6 @@
 #include "MysqlDao.h"
 #include <mysql/mysql.h>
 
-struct UserInfo;
 class MysqlManager : public Singleton<MysqlManager> {
     friend class Singleton<MysqlManager>;
 
@@ -16,6 +15,8 @@ public:
     int RegisterUser(const std::string& name, const std::string& email, const std::string& password);
     int ResetPassword(const std::string& email, const std::string& password);
     bool CheckPwd(const std::string& user, const std::string& password, UserInfo& userInfo);
+    std::shared_ptr<UserInfo>GetUser(int uid);
+    std::shared_ptr<UserInfo>GetUser(const std::string&);
 
 private:
     MysqlManager();

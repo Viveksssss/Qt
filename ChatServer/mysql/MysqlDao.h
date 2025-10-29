@@ -28,6 +28,8 @@
  *
  */
 
+
+
 class MysqlPool {
 public:
     struct conn_deleter {
@@ -57,13 +59,7 @@ private:
     std::atomic<bool> _stop;
 };
 
-struct UserInfo {
-    std::string name;
-    std::string pwd;
-    int uid;
-    std::string email;
-};
-
+struct UserInfo;
 class MysqlDao {
 public:
     MysqlDao();
@@ -72,7 +68,8 @@ public:
     int RegisterUser(const std::string& name, const std::string& email, const std::string& password);
     int ResetPassword(const std::string& email, const std::string& password);
     bool CheckPwd(const std::string& user, const std::string& password, UserInfo& userInfo);
-
+    std::shared_ptr<UserInfo>GetUser(int uid);
+    std::shared_ptr<UserInfo>GetUser(const std::string& name);
 private:
     std::unique_ptr<MysqlPool> _pool;
 };

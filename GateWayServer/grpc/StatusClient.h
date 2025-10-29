@@ -16,6 +16,7 @@ class StatusClient : public Singleton<StatusClient> {
 public:
     ~StatusClient() = default;
     GetChatServerResponse GetChatServer(int uid);
+    LoginResponse Login(int uid, const std::string& token);
 
 private:
     StatusClient();

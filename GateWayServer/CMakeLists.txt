@@ -9,7 +9,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR})
 cmake_policy(SET CMP0167 NEW)
 find_package(PkgConfig REQUIRED)
 find_package(Boost REQUIRED)
-find_package(Boost 1.70 REQUIRED COMPONENTS filesystem system)
+# find_package(Boost 1.89.0 REQUIRED COMPONENTS system)
 
 pkg_check_modules(MYSQL REQUIRED REQUIRED IMPORTED_TARGET mariadb)
 pkg_check_modules(SPEEDLOG REQUIRED REQUIRED IMPORTED_TARGET spdlog)
@@ -21,7 +21,7 @@ pkg_check_modules(PROTOBUF REQUIRED IMPORTED_TARGET protobuf)
 pkg_check_modules(ABSL REQUIRED IMPORTED_TARGET absl_strings)
 
 
-add_executable(GateWayServer 
+add_executable(GateWayServer
     main.cpp
     server/GateWayServer.cpp
     session/Session.cpp
@@ -45,7 +45,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::GRPCPP)
 target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::PROTOBUF)
 target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::ABSL)
 target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::REDIS)
-target_link_libraries(${PROJECT_NAME} PRIVATE Boost::filesystem Boost::system)
+# target_link_libraries(${PROJECT_NAME} PRIVATE Boost::filesystem Boost::system)
 target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::MYSQL)
 target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::SPEEDLOG)
 

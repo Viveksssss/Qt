@@ -9,7 +9,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR})
 cmake_policy(SET CMP0167 NEW)
 find_package(PkgConfig REQUIRED)
 find_package(Boost REQUIRED)
-find_package(Boost 1.70 REQUIRED COMPONENTS filesystem system)
+# find_package(Boost 1.70 REQUIRED COMPONENTS filesystem system)
 
 pkg_check_modules(MYSQL REQUIRED REQUIRED IMPORTED_TARGET mariadb)
 pkg_check_modules(SPEEDLOG REQUIRED REQUIRED IMPORTED_TARGET spdlog)
@@ -25,6 +25,7 @@ add_executable(ChatServer
     main.cpp
     grpc/message.grpc.pb.cc
     grpc/message.pb.cc
+    grpc/StatusClient.cpp
     global/ConfigManager.h
     global/const.cpp
     server/AsioPool.cpp
@@ -44,7 +45,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::GRPCPP)
 target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::PROTOBUF)
 target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::ABSL)
 target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::REDIS)
-target_link_libraries(${PROJECT_NAME} PRIVATE Boost::filesystem Boost::system)
 target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::MYSQL)
 target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::SPEEDLOG)
 

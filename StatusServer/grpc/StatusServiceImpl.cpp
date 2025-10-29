@@ -5,6 +5,7 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <mutex>
+#include <spdlog/spdlog.h>
 
 std::string generate_unique_string()
 {
@@ -22,6 +23,7 @@ grpc::Status StatusServiceImpl::GetChatServer(grpc::ServerContext* context, cons
     response->set_error(static_cast<int>(ErrorCodes::SUCCESS));
     response->set_token(generate_unique_string());
     insertToken(request->uid(), response->token());
+    SPDLOG_INFO("{} uid:{}, token:{}, host:{}, port:{}", prefix, request->uid(), response->token(), server.host, server.port);
     return grpc::Status::OK;
 }
 
@@ -39,6 +41,20 @@ ChatServer StatusServiceImpl::GetChatServer()
 
 grpc::Status StatusServiceImpl::Login(grpc::ServerContext* context, const message::LoginRequest* request, message::LoginResponse* response)
 {
+    auto uid = request->uid();
+    auto token = request->token();
+
+    std::lock_guard<std::mutex> lock(_token_mutex);
+    auto it = _tokens.find(uid);
+    if (it == _tokens.end()) {
+        response->set_error(static_cast<int>(ErrorCodes::ERROR_UID_INVALID));
+    } else if (it->second != token) {
+        response->set_error(static_cast<int>(ErrorCodes::ERROR_TOKEN_INVALID));
+    }
+    response->set_error(static_cast<int>(ErrorCodes::SUCCESS));
+    response->set_uid(uid);
+    response->set_token(token);
+    return grpc::Status::OK;
 }
 
 StatusServiceImpl::StatusServiceImpl()

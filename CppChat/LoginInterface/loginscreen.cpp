@@ -48,9 +48,10 @@ void LoginScreen::do_connect_success(bool success)
         json["token"] = _token;
         QJsonDocument doc(json);
         QString str = doc.toJson(QJsonDocument::Indented);
-        emit TcpManager::GetInstance()->on_send_data(RequestType::ID_REG_USER,str);
+        emit TcpManager::GetInstance()->on_send_data(RequestType::ID_CHAT_LOGIN,str);
     }else{
         showToolTip(loginBtn,"网络异常");
+        loginBtn->setEnabled(true);
     }
 }
 
@@ -155,6 +156,10 @@ void LoginScreen::setupConnections()
     connect(HttpManager::GetInstance().get(),&HttpManager::on_login_finished,this,&LoginScreen::do_login_finished);
     // 连接服务器
     connect(this,&LoginScreen::on_tcp_connect,TcpManager::GetInstance().get(),&TcpManager::do_tcp_connect);
+    // 连接服务器成功
+    connect(TcpManager::GetInstance().get(),&TcpManager::on_connect_success,this,&LoginScreen::do_connect_success);
+    // 登陆失败
+    connect(TcpManager::GetInstance().get(),&TcpManager::on_login_failed,this,&LoginScreen::do_login_failed);
 }
 
 void LoginScreen::initHandlers()
@@ -163,6 +168,7 @@ void LoginScreen::initHandlers()
         int error = json["error"].toInt();
         if(error != static_cast<int>(ErrorCodes::SUCCESS)){
             showToolTip(loginBtn,"参数错误");
+            loginBtn->setEnabled(true);
             return;
         }
         showToolTip(loginBtn,"正在连接服务器");
@@ -226,6 +232,7 @@ void LoginScreen::do_login_clicked()
     json["user"] = accountStr;
     json["password"] = cryptoString(passwordStr);
     HttpManager::GetInstance()->PostHttp(QUrl(gate_url_prefix+"/userLogin"),json,RequestType::ID_LOGIN_USER,Modules::LOGINMOD);
+    loginBtn->setEnabled(false);
 }
 
 
@@ -234,15 +241,18 @@ void LoginScreen::do_login_finished(RequestType requestType,const QString&res,Er
 {
     if (errorCode != ErrorCodes::SUCCESS){
         showToolTip(loginBtn,"网络请求错误");
+        loginBtn->setEnabled(false);
         return;
     }
     QJsonDocument doc = QJsonDocument::fromJson(res.toUtf8());
     if (doc.isNull()){
         showToolTip(loginBtn,"解析错误");
+        loginBtn->setEnabled(false);
         return;
     }
     if (!doc.isObject()){
         showToolTip(loginBtn,"解析错误");
+        loginBtn->setEnabled(false);
         return;
     }
     // _handlers[requestType](doc.object());
@@ -250,9 +260,17 @@ void LoginScreen::do_login_finished(RequestType requestType,const QString&res,Er
     auto it = _handlers.find(requestType);
     if (it == _handlers.end()) {
         showToolTip(loginBtn, "未知的请求类型");
+        loginBtn->setEnabled(false);
         return;
     }
     it.value()(doc.object());
+}
+
+void LoginScreen::do_login_failed(int error)
+{
+    QString result = QString("登陆失败，Error %1").arg(error);
+    showToolTip(loginBtn,result);
+    loginBtn->setEnabled(true);
 }
 
 void LoginScreen::paintEvent(QPaintEvent *event)

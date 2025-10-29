@@ -89,7 +89,7 @@ private:
         }
     }
     ConfigManager()
-        : ConfigManager("../config.ini")
+        : ConfigManager("./config.ini")
     {
     }
 

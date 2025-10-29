@@ -10,8 +10,10 @@
 #include <thread>
 #include <unordered_map>
 
+
 typedef std::function<void(std::shared_ptr<Session>, uint16_t msg_id, const std::string& msg)> FuncBack;
 
+struct UserInfo;
 class LogicSystem : public Singleton<LogicSystem> {
     friend class Singleton<LogicSystem>;
 
@@ -19,6 +21,7 @@ public:
     void PostMsgToQueue(std::shared_ptr<LogicNode> msg);
     void RegisterCallBacks();
     void DealMsg();
+    bool GetBaseInfo(std::string base_key,int uid,std::shared_ptr<UserInfo>&userinfo);
 
 public:
     LogicSystem(std::size_t size = std::thread::hardware_concurrency());

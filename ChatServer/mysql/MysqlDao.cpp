@@ -1,6 +1,11 @@
 #include "MysqlDao.h"
+#include "../data/UserInfo.h"
 #include "../global/ConfigManager.h"
+#include "../global/const.h"
+#include <exception>
 #include <iostream>
+#include <mariadb_com.h>
+#include <mysql.h>
 MysqlPool::MysqlPool(const std::string& url, const std::string& user, const std::string& password, const std::string& schedma, int poolSize)
     : _url(url)
     , _user(user)
@@ -247,7 +252,6 @@ int MysqlDao::RegisterUser(const std::string& name, const std::string& email, co
             return -1;
         }
 
-        // 绑定插入参数
         MYSQL_BIND insert_params[3];
         memset(insert_params, 0, sizeof(insert_params));
 
@@ -440,4 +444,184 @@ bool MysqlDao::CheckPwd(const std::string& user, const std::string& password, Us
         return false;
     }
     return false;
+}
+
+std::shared_ptr<UserInfo> MysqlDao::GetUser(int uid)
+{
+    auto conn = _pool->GetConnection();
+    std::shared_ptr<UserInfo> user_info = nullptr;
+    MYSQL_STMT* stmt = mysql_stmt_init(conn.get());
+    Defer defer([this, &conn, stmt]() {
+        _pool->ReturnConnection(std::move(conn));
+        mysql_stmt_close(stmt);
+    });
+    try {
+        if (conn == nullptr || stmt == nullptr) {
+            return user_info;
+        }
+
+        std::string query = "select name,email,password from user where uid = ?";
+
+        if (mysql_stmt_prepare(stmt, query.c_str(), query.size()) != 0) {
+            return user_info;
+        }
+
+        MYSQL_BIND params[1];
+        std::string uid_str = std::to_string(uid);
+        memset(params, 0, sizeof(params));
+        params[0].buffer_type = MYSQL_TYPE_STRING;
+        params[0].buffer = (char*)uid_str.c_str();
+        params[0].buffer_length = uid_str.size();
+        params[0].length = &params[0].buffer_length;
+
+        if (mysql_stmt_bind_param(stmt, params) != 0) {
+            return user_info;
+        }
+
+        if (mysql_stmt_execute(stmt) != 0) {
+            return user_info;
+        }
+
+        if (mysql_stmt_store_result(stmt) != 0) {
+            return user_info;
+        }
+
+        int count = mysql_stmt_num_rows(stmt);
+        if (count != 1) {
+            return user_info;
+        }
+
+        const unsigned int field_count = mysql_stmt_field_count(stmt);
+        if (field_count != 3) // pwd, name, email 暂时，之后添加
+        {
+            return user_info;
+        }
+
+        MYSQL_BIND result[3] = {};
+        char res_name[70] = { 0 };
+        char res_email[70] = { 0 };
+        char res_password[70] = { 0 };
+        result[0].buffer_type = MYSQL_TYPE_STRING;
+        result[0].buffer = &res_name;
+        result[0].buffer_length = sizeof(res_name);
+        result[0].length = &result[0].buffer_length;
+        // email
+        result[1].buffer_type = MYSQL_TYPE_STRING;
+        result[1].buffer = &res_email;
+        result[1].buffer_length = sizeof(res_email);
+        result[1].length = &result[1].buffer_length;
+        // password
+        result[2].buffer_type = MYSQL_TYPE_STRING;
+        result[2].buffer = &res_password;
+        result[2].buffer_length = sizeof(res_password);
+        result[2].length = &result[2].buffer_length;
+
+        if (mysql_stmt_bind_result(stmt, result) != 0) {
+            return user_info;
+        }
+
+        if (mysql_stmt_fetch(stmt) == 0) {
+            user_info = std::make_shared<UserInfo>();
+            user_info->name = std::string(res_name);
+            user_info->email = std::string(res_email);
+            user_info->password = std::string(res_password);
+        }
+
+    } catch (const std::exception& e) {
+        if (conn != nullptr) {
+            _pool->ReturnConnection(std::move(conn));
+        }
+        std::cerr << "Exception: " << e.what() << std::endl;
+        return nullptr;
+    }
+    return user_info;
+}
+std::shared_ptr<UserInfo> MysqlDao::GetUser(const std::string& name)
+{
+    auto conn = _pool->GetConnection();
+    std::shared_ptr<UserInfo> user_info = nullptr;
+    MYSQL_STMT* stmt = mysql_stmt_init(conn.get());
+    Defer defer([this, &conn, stmt]() {
+        _pool->ReturnConnection(std::move(conn));
+        mysql_stmt_close(stmt);
+    });
+    try {
+        if (conn == nullptr) {
+            _pool->ReturnConnection(std::move(conn));
+            return user_info;
+        }
+
+        std::string query = "select name,email,password from user where uid = ?";
+
+        if (mysql_stmt_prepare(stmt, query.c_str(), query.size()) != 0) {
+            return user_info;
+        }
+
+        MYSQL_BIND params[1];
+        memset(params, 0, sizeof(params));
+        params[0].buffer_type = MYSQL_TYPE_STRING;
+        params[0].buffer = (char*)name.c_str();
+        params[0].buffer_length = name.size();
+        params[0].length = &params[0].buffer_length;
+
+        if (mysql_stmt_bind_param(stmt, params) != 0) {
+            return user_info;
+        }
+
+        if (mysql_stmt_execute(stmt) != 0) {
+            return user_info;
+        }
+
+        if (mysql_stmt_store_result(stmt) != 0) {
+            return user_info;
+        }
+
+        int count = mysql_stmt_num_rows(stmt);
+        if (count != 1) {
+            return user_info;
+        }
+
+        const unsigned int field_count = mysql_stmt_field_count(stmt);
+        if (field_count != 3) // pwd, name, email 暂时，之后添加
+        {
+            return user_info;
+        }
+
+        MYSQL_BIND result[3] = {};
+        char res_name[70] = { 0 };
+        char res_email[70] = { 0 };
+        char res_password[70] = { 0 };
+        result[0].buffer_type = MYSQL_TYPE_STRING;
+        result[0].buffer = &res_name;
+        result[0].buffer_length = sizeof(res_name);
+        result[0].length = &result[0].buffer_length;
+        // email
+        result[1].buffer_type = MYSQL_TYPE_STRING;
+        result[1].buffer = &res_email;
+        result[1].buffer_length = sizeof(res_email);
+        result[1].length = &result[1].buffer_length;
+        // password
+        result[2].buffer_type = MYSQL_TYPE_STRING;
+        result[2].buffer = &res_password;
+        result[2].buffer_length = sizeof(res_password);
+        result[2].length = &result[2].buffer_length;
+
+        if (mysql_stmt_bind_result(stmt, result) != 0) {
+            return user_info;
+        }
+
+        if (mysql_stmt_fetch(stmt) == 0) {
+            user_info->name = res_name;
+            user_info->email = res_email;
+            user_info->password = res_password;
+        }
+
+    } catch (const std::exception& e) {
+        if (conn != nullptr) {
+            _pool->ReturnConnection(std::move(conn));
+        }
+        std::cerr << "Exception: " << e.what() << std::endl;
+        return nullptr;
+    }
+    return user_info;
 }

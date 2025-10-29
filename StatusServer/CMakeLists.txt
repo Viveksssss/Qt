@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.10.0)
 project(StatusServer VERSION 0.1.0 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 20)
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR})
 
 add_executable(StatusServer main.cpp
     grpc/message.grpc.pb.cc
@@ -15,14 +18,12 @@ add_executable(StatusServer main.cpp
     mysql/MysqlDao.cpp
 )
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR})
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR})
+
 
 cmake_policy(SET CMP0167 NEW)
 find_package(PkgConfig REQUIRED)
 find_package(Boost REQUIRED)
-find_package(Boost 1.70 REQUIRED COMPONENTS filesystem system)
-find_package(Boost 1.70 REQUIRED COMPONENTS filesystem system)
+# find_package(Boost  REQUIRED COMPONENTS  system)
 
 pkg_check_modules(MYSQL REQUIRED REQUIRED IMPORTED_TARGET mariadb)
 pkg_check_modules(SPEEDLOG REQUIRED REQUIRED IMPORTED_TARGET spdlog)
@@ -41,7 +42,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::GRPCPP)
 target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::PROTOBUF)
 target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::ABSL)
 target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::REDIS)
-target_link_libraries(${PROJECT_NAME} PRIVATE Boost::filesystem Boost::system)
+# target_link_libraries(${PROJECT_NAME} PRIVATE Boost::filesystem Boost::system)
 target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::MYSQL)
 target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::SPEEDLOG)
 

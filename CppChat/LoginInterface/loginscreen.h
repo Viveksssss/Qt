@@ -47,8 +47,6 @@ signals:
     void goRegsiter();  // to AuthStack::
     void goForgotPassword();    // to AuthStack::
     void on_tcp_connect(ServerInfo si); // to TcpManager::do_tcp_connect
-public slots:
-    void do_connect_success(bool success); // from TcpManager::on_connect_success
 
 private:
     void setupUI();
@@ -58,9 +56,9 @@ private:
 
 private slots:
     void do_login_clicked();
+    void do_connect_success(bool success); // from TcpManager::on_connect_success
     void do_login_finished(RequestType requestType,const QString&res,ErrorCodes errorCode);
-    // void onRememberStateChanged(int state);
-    // void onAutoLoginStateChanged(int state);
+    void do_login_failed(int error); // from TcpManager::on_login_failed
 
 
 private:

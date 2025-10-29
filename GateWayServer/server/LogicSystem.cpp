@@ -38,8 +38,8 @@ LogicSystem::LogicSystem()
 
 void LogicSystem::initHandlers()
 {
-    RegistHandlers("/get_test", RequestType::GET, [this](std::shared_ptr<Session> session) { 
-            beast::ostream(session->_response.body()) << "receive login request\n"; 
+    RegistHandlers("/get_test", RequestType::GET, [this](std::shared_ptr<Session> session) {
+            beast::ostream(session->_response.body()) << "receive login request\n";
             int i = 0;
             for(const auto&ele:session->_get_params ){
                 i++;
@@ -83,6 +83,7 @@ void LogicSystem::initHandlers()
         }
 
         GetSecurityCodeResponse response = VerifyClient::GetInstance()->GetSecurityCode(email);
+
 
         // 发送验证码
         json returnJson = {
@@ -250,9 +251,8 @@ void LogicSystem::initHandlers()
         j["name"] = userInfo.name;
         j["email"] = userInfo.email;
 
-        j["error"] = ErrorCodes::SUCCESS;
+        j["error"] = reply.error();
         j["message"] = "登录成功";
-
 
         beast::ostream(session->_response.body()) << j.dump(4);
         return true;

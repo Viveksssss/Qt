@@ -1,4 +1,5 @@
 #include "tcpmanager.h"
+#include "usermanager.h"
 #include <QAbstractSocket>
 #include <QDataStream>
 #include <QJsonObject>
@@ -39,6 +40,10 @@ void TcpManager::initHandlers()
             return;
         }
 
+        UserManager::GetInstance()->SetName(jsonObj["name"].toString());
+        UserManager::GetInstance()->SetEmail(jsonObj["email"].toString());
+        UserManager::GetInstance()->SetToken(jsonObj["token"].toString());
+
         emit on_switch_interface();
     };
 }
@@ -47,7 +52,7 @@ void TcpManager::connections()
 {
     // 连接成功
     connect(&_socket,&QTcpSocket::connected,[&](){
-        qDebug() << "Connected to Server.";
+        qDebug() << "Connected to Server " << _socket.peerAddress().toString() << ":" << _socket.peerPort();
         emit on_connect_success(true);
     });
     // 读取数据
@@ -55,30 +60,32 @@ void TcpManager::connections()
         _buffer.append(_socket.readAll());
         QDataStream stream(&_buffer,QIODevice::ReadOnly);
         stream.setByteOrder(QDataStream::BigEndian);
+        qDebug() << _buffer;
         forever{
             if (!_recv_pending){
                 if (_buffer.size() < static_cast<int>(sizeof(qint16)*2)){
                     return;
                 }
                 stream >> _msg_id >> _msg_len;
-                _buffer.remove(0,4);
                 qDebug() << "Message Id:" << _msg_id << " len:" << _msg_len ;
             }
 
+            qDebug() << _buffer.size() << ":" << _msg_len;
             if (_buffer.size() < _msg_len){
                 _recv_pending = true;
                 return;
             }
             _recv_pending = false;
-            QByteArray msgBody = _buffer.mid(_msg_len);
+            QByteArray msgBody = _buffer.mid(4,_msg_len);
             qDebug() << "Receive body:" <<msgBody;
-            _buffer.remove(0,_msg_len);
+            _buffer.remove(0,4+_msg_len);
             handleMessage(RequestType(_msg_id),_msg_len,msgBody);
         }
     });
     // 错误
     connect(&_socket,&QTcpSocket::errorOccurred,[&](QTcpSocket::SocketError socketError){
         qDebug() << "Socket Error["<<socketError<< "]:" << _socket.errorString();
+        emit on_login_failed(static_cast<int>(ErrorCodes::ERROR_NETWORK));
     });
     // 断开连接
     connect(&_socket,&QTcpSocket::disconnected,[&](){
@@ -100,7 +107,7 @@ void TcpManager::handleMessage(RequestType requestType, int len, QByteArray data
 
 void TcpManager::do_tcp_connect(ServerInfo si)
 {
-    qDebug() << "Connecting to server...";
+    qDebug() << "Connecting to server " << si.host << ":" << si.port ;
     _host = si.host;
     _port = static_cast<uint16_t>(si.port.toInt());
     _socket.connectToHost(_host,_port);

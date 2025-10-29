@@ -55,6 +55,8 @@ enum class ErrorCodes {
     ERROR_SECURITYCODE_NOTFOUND = 1005,
     ERROR_EMAIL_NOTFOUND = 1006,
     ERROR_USER_OR_PASSWORD_INCORRECT = 1007,
+    ERROR_UID_INVALID = 1008,
+    ERROR_TOKEN_INVALID = 1009,
 };
 
 class ConfigManager;
@@ -72,4 +74,6 @@ extern ConfigManager cfgMgr;
 
 #define EMAIL_PREFIX "email_"
 #define USER_PREFIX "user_"
+#define USER_TOKEN_PROFIX "utoken_"
+#define USER_BASE_INFO "ubaseinfo_"
 #endif // CONST_H

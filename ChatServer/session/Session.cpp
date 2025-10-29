@@ -42,13 +42,13 @@ void Session::Close()
     }
 
     // 安全关闭socket
-    boost::system::error_code ec;
+    boost::system::error_code ec =
     _socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
     if (ec) {
         SPDLOG_WARN("Socket shutdown error: {}", ec.message());
     }
 
-    _socket.close(ec);
+    ec = _socket.close(ec);
     if (ec) {
         SPDLOG_WARN("Socket close error: {}", ec.message());
     }

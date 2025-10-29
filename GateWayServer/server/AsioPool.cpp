@@ -1,4 +1,6 @@
 #include "AsioPool.h"
+#include <boost/asio/io_context.hpp>
+#include <iostream>
 #include <memory>
 
 AsioPool::AsioPool(std::size_t size)
