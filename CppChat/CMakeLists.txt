@@ -5,6 +5,17 @@ find_package(PkgConfig REQUIRED)
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets Network)
 find_package(Qt6 REQUIRED COMPONENTS Core)
 find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(Qt6 REQUIRED COMPONENTS Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Widgets)
 
 
 qt_standard_project_setup()
@@ -26,6 +37,16 @@ qt_add_executable(CppChat
     tcpmanager.h tcpmanager.cpp
     config.ini
     usermanager.h usermanager.cpp
+    MainInterface/mainscreen.h MainInterface/mainscreen.cpp
+    MainInterface/toptitlepart.h MainInterface/toptitlepart.cpp
+    MainInterface/sidebarpart.h MainInterface/sidebarpart.cpp
+    MainInterface/FriendsList//friendslistpart.h MainInterface//FriendsList/friendslistpart.cpp
+    MainInterface/FriendsList/frienditem.h
+    MainInterface/FriendsList/friendsmodel.h MainInterface/FriendsList/friendsmodel.cpp
+    MainInterface/FriendsList/frienditemdelegate.h MainInterface/FriendsList/frienditemdelegate.cpp
+    MainInterface/Chat/chatpart.h MainInterface/Chat/chatpart.cpp
+    MainInterface/Chat/chattoparea.h MainInterface/Chat/chattoparea.cpp
+    MainInterface/Chat/chatarea.h MainInterface/Chat/chatarea.cpp
 )
 
 
@@ -41,6 +62,17 @@ target_link_libraries(CppChat
 )
 target_link_libraries(CppChat PRIVATE Qt6::Core)
 target_link_libraries(CppChat PRIVATE Qt6::Core)
+target_link_libraries(CppChat PRIVATE Qt6::Core Qt6::Widgets)
+target_link_libraries(CppChat PRIVATE Qt6::Core Qt6::Widgets)
+target_link_libraries(CppChat PRIVATE Qt6::Core Qt6::Widgets)
+target_link_libraries(CppChat PRIVATE Qt6::Widgets)
+target_link_libraries(CppChat PRIVATE Qt6::Widgets)
+target_link_libraries(CppChat PRIVATE Qt6::Widgets)
+target_link_libraries(CppChat PRIVATE Qt6::Widgets)
+target_link_libraries(CppChat PRIVATE Qt6::Core)
+target_link_libraries(CppChat PRIVATE Qt6::Core)
+target_link_libraries(CppChat PRIVATE Qt6::Widgets)
+target_link_libraries(CppChat PRIVATE Qt6::Widgets)
 
 
 target_include_directories(CppChat PRIVATE ${ASIO_INCLUDE_DIR})

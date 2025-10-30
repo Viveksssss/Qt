@@ -44,6 +44,7 @@ void TcpManager::initHandlers()
         UserManager::GetInstance()->SetEmail(jsonObj["email"].toString());
         UserManager::GetInstance()->SetToken(jsonObj["token"].toString());
 
+        // 发出信号跳转到主页面
         emit on_switch_interface();
     };
 }

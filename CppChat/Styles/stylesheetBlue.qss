@@ -1,5 +1,5 @@
 #loginScreen {
-  border-image: url(:/Resources/loginBackground.png) 0 0 0 0 stretch stretch;
+  border-image: url(:/Resources/login/loginBackground.png) 0 0 0 0 stretch stretch;
 }
 
 #headerLabel {
@@ -24,19 +24,19 @@ height: 16px;
 }
 
 #agreeCheck::indicator:unchecked {
-image: url(:/Resources/unchecked.png);
+image: url(:/Resources/login/unchecked.png);
 }
 
 #agreeCheck::indicator:checked {
-image: url(:/Resources/checked.png);
+image: url(:/Resources/login/checked.png);
 }
 
 #agreeCheck::indicator:unchecked:hover {
-image: url(:/Resources/unchecked-hover.png);
+image: url(:/Resources/login/unchecked-hover.png);
 }
 
 #agreeCheck::indicator:checked:hover {
-image: url(:/Resources/checked-hover.png);
+image: url(:/Resources/login/checked-hover.png);
 }
 
 #loginBtn {
@@ -51,16 +51,16 @@ color: #f9faf0;
   text-align: center;
   border-radius: 8px;
   background-color: #48b2e5;
-color: #cefdec;
-       font-size: 14px;
+  color: #cefdec;
+      font-size: 14px;
 }
 
 #loginBtn:pressed {
   text-align: center;
   border-radius: 8px;
   background-color: #034ec4;
-color: #cefdec;
-       font-size: 14px;
+  color: #cefdec;
+  font-size: 14px;
 }
 
 #registerBtn1 {
@@ -91,7 +91,7 @@ color: #d91288;
        font-weight: bold;
 }
 #registerScreen {
-  border-image: url(:/Resources/loginBackground.png) 0 0 0 0 stretch stretch;
+  border-image: url(:/Resources/login/loginBackground.png) 0 0 0 0 stretch stretch;
 }
 
 #headerLabel {
@@ -155,10 +155,10 @@ color: #cefdec;
        font-size: 15px;
 }
 #closeBtn{
-  image: url(:/Resources/close.png);
+  image: url(:/Resources/login/close.png);
 }
 #closeBtn:hover{
-  image: url(:/Resources/close-hover.png);
+  image: url(:/Resources/login/close-hover.png);
 }
 #registerTitle[state='normal']{
   font-size:16px;
@@ -174,7 +174,7 @@ QToolTip {
 }
 
 #ForgotScreen{
-  border-image: url(:/Resources/loginBackground.png) 0 0 0 0 stretch stretch;
+  border-image: url(:/Resources/login/loginBackground.png) 0 0 0 0 stretch stretch;
 }
 
 
@@ -238,13 +238,14 @@ QToolTip {
 
 /* 忘记密码界面样式 */
 #FotgotScreen {
-  border-image: url(:/Resources/loginBackground.png) 0 0 0 0 stretch stretch;
+  border-image: url(:/Resources/login/loginBackground.png) 0 0 0 0 stretch stretch;
 }
 
 #headerLabel {
   border: 2px solid #E0E0E0;
   border-radius: 40px;
   background: #F8F8F8;
+  border-image: url(:/Resources/login/QQ.png) 0 0 0 0 stretch stretch;
 }
 
 #labelForHeader[state='normal']{
@@ -325,4 +326,39 @@ QToolTip {
 QToolTip {
   border-radius: 6px;
   color:#b82800;
+}
+
+#logo{
+  border-image: url(:/Resources/main/logo.png) 0 0 0 0 stretch stretch;
+}
+
+#logoTitle{
+  font-size:20px;
+  color:#187fc9;
+}
+
+#friendsList{
+  background-color:#f9fafb;
+  border:none;
+  outline:one;
+  border-radius:8px;
+}
+#friendsList::item{
+  border:1px;
+}
+
+#findButton{
+  background:transparent;
+  border:0px;
+}
+
+#findButton:hover{
+  background:#bde0d5;
+  border:1px #e8e7de;
+  border-radius:8px;
+}
+
+#findButton:pressed{
+  background:#34eae8;
+  border-radius:8px;
 }

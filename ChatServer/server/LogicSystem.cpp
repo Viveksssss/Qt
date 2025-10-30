@@ -89,11 +89,11 @@ bool LogicSystem::GetBaseInfo(std::string base_key, int uid, std::shared_ptr<Use
     bool b_base = RedisManager::GetInstance()->Get(base_key, info_str);
     if (b_base) {
         json j = json::parse(info_str);
-        // userinfo->uid = j["uid"].get<int>();
-        // userinfo->sex = j["sex"].get<int>();
         userinfo->name = j["name"].get<std::string>();
         userinfo->password = j["password"].get<std::string>();
         userinfo->email = j["email"].get<std::string>();
+        // userinfo->uid = j["uid"].get<int>();
+        // userinfo->sex = j["sex"].get<int>();
         // userinfo->nick = j["nick"].get<std::string>();
         // userinfo->desc = j["desc"].get<std::string>();
         // userinfo->icon = j["icon"].get<std::string>();
@@ -103,7 +103,6 @@ bool LogicSystem::GetBaseInfo(std::string base_key, int uid, std::shared_ptr<Use
         if (userinfo == nullptr) {
             return false;
         }
-
         json j;
         j["name"] = userinfo->name;
         j["email"] = userinfo->email;
