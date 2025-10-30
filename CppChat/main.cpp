@@ -14,6 +14,9 @@ int main(int argc, char *argv[])
 {
 
     QApplication a(argc, argv);
+    QPalette pal = qApp->palette();
+    pal.setColor(QPalette::Window, QColor("#f9fafb"));
+    qApp->setPalette(pal);
     // 加载样式表
     auto res = StyleManager::changeStyleSheet(Styles::BLUE);
 
@@ -26,6 +29,7 @@ int main(int argc, char *argv[])
     gate_url_prefix = "http://"+gate_host+":"+gate_port;
 
     MainWindow w;
+    w.setAttribute(Qt::WA_StyledBackground, true);
     w.show();
     if(!res){
         QMessageBox::warning(nullptr,"加载异常","qss样式表加载异常,请检查文件是否损坏");

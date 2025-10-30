@@ -1,20 +1,27 @@
 <RCC>
     <qresource prefix="/icons"/>
     <qresource prefix="/">
-        <file>Resources/QQ.png</file>
-        <file>Resources/loginBackground.png</file>
-        <file>Resources/unchecked.png</file>
-        <file>Resources/unchecked-hover.png</file>
-        <file>Resources/checked.png</file>
-        <file>Resources/checked-hover.png</file>
         <file>Styles/stylesheetBlue.qss</file>
         <file>Styles/stylesheetDark.qss</file>
         <file>Styles/stylesheetLight.qss</file>
-        <file>Resources/close.png</file>
-        <file>Resources/close-hover.png</file>
-        <file>Resources/see-hover.png</file>
-        <file>Resources/see.png</file>
-        <file>Resources/nosee-hover.png</file>
-        <file>Resources/nosee.png</file>
+        <file>Resources/login/checked-hover.png</file>
+        <file>Resources/login/checked.png</file>
+        <file>Resources/login/close-hover.png</file>
+        <file>Resources/login/close.png</file>
+        <file>Resources/login/loginBackground.png</file>
+        <file>Resources/login/nosee-hover.png</file>
+        <file>Resources/login/nosee.png</file>
+        <file>Resources/login/QQ.png</file>
+        <file>Resources/login/see-hover.png</file>
+        <file>Resources/login/see.png</file>
+        <file>Resources/login/unchecked-hover.png</file>
+        <file>Resources/login/unchecked.png</file>
+        <file>Resources/main/logo.png</file>
+        <file>Resources/main/friends.png</file>
+        <file>Resources/main/message.png</file>
+        <file>Resources/main/add.png</file>
+        <file>Resources/main/find.png</file>
+        <file>Resources/main/news.png</file>
+        <file>Resources/main/unfold.png</file>
     </qresource>
 </RCC>
