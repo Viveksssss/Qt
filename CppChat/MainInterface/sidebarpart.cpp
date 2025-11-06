@@ -2,8 +2,11 @@
 #include "../stylemanager.h"
 #include <QVBoxLayout>
 #include <QLabel>
+#include <QAbstractButton>
 #include <QPushButton>
 #include <QButtonGroup>
+#include <QEvent>
+#include <QMouseEvent>
 
 SideBarPart::SideBarPart(QWidget *parent)
     : QWidget{parent}
@@ -14,8 +17,8 @@ SideBarPart::SideBarPart(QWidget *parent)
 
 void SideBarPart::setupUI()
 {
-    setMinimumWidth(60);
-    setMaximumWidth(60);
+    setMinimumWidth(55);
+    setMaximumWidth(55);
 
     setFocusPolicy(Qt::ClickFocus);   // 允许鼠标点击时自己拿焦点
 
@@ -27,6 +30,9 @@ void SideBarPart::setupUI()
 
     addItem("message", "消息", ":/Resources/main/message.png");
     addItem("friends", "好友", ":/Resources/main/friends.png");
+
+
+    this->installEventFilter(this);
 }
 
 void SideBarPart::setupConnections()
@@ -97,4 +103,31 @@ void SideBarPart::createButton(const SideBarItem &item,bool showText)
     connect(btn, &QPushButton::clicked, this, [this,btn, id = item.id]() {
         emit on_sidebar_btn_clicked(id);
     });
+}
+
+bool SideBarPart::eventFilter(QObject *watched, QEvent *event)
+{
+    if (event->type() == QEvent::MouseButtonPress) {
+        QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+
+        // 检查点击是否在按钮上
+        bool clickOnButton = false;
+        if (buttonGroup) {
+            for (QAbstractButton *button : buttonGroup->buttons()) {
+                QPushButton *pushButton = qobject_cast<QPushButton*>(button);
+                if (pushButton && pushButton->rect().contains(pushButton->mapFromGlobal(mouseEvent->globalPos()))) {
+                    clickOnButton = true;
+                    break;
+                }
+            }
+            // 如果点击不在任何按钮上且有选中按钮，则取消选中
+            if (!clickOnButton && buttonGroup->checkedButton()) {
+                buttonGroup->setExclusive(false);
+                buttonGroup->checkedButton()->setChecked(false);
+                buttonGroup->setExclusive(true);
+            }
+        }
+    }
+
+    return QWidget::eventFilter(watched, event);
 }

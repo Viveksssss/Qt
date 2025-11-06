@@ -44,13 +44,11 @@ void MainScreen::setupUI()
     sideBarPart = new SideBarPart;
     // FriendsListPart
     friendsListPart = new FriendsListPart;
-
     bar_friends_hlay->addWidget(sideBarPart,0);
     bar_friends_hlay->addWidget(friendsListPart,0);
 
     // ChatPart
     chatPart = new ChatPart;
-
     main_hlay->addLayout(left_vlay,1);
     main_hlay->addWidget(chatPart,1);
 

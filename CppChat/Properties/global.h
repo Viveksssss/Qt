@@ -67,6 +67,13 @@ struct ServerInfo{
     int uid;
 };
 
+struct UserInfo{
+    QString id;
+    QString email;
+    QString name;
+    QString avatar;
+};
+
 extern QString gate_url_prefix;
 
 extern std::function<QString(QString)>cryptoString;

@@ -14,6 +14,8 @@ int main(int argc, char *argv[])
 {
 
     QApplication a(argc, argv);
+    a.setWindowIcon(QIcon(":/Resources/main/logo.png"));
+
     QPalette pal = qApp->palette();
     pal.setColor(QPalette::Window, QColor("#f9fafb"));
     qApp->setPalette(pal);

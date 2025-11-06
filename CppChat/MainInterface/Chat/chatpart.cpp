@@ -1,6 +1,6 @@
 #include "chatpart.h"
-#include "chattoparea.h"
-#include "chatarea.h"
+#include "ChatTopArea/chattoparea.h"
+#include "ChatArea/chatarea.h"
 #include <QVBoxLayout>
 #include <QLabel>
 
@@ -14,7 +14,7 @@ ChatPart::ChatPart(QWidget *parent)
 void ChatPart::setupUI()
 {
     setContentsMargins(0,0,0,0);
-    setMinimumWidth(200);
+    setMinimumWidth(300);
     setMinimumHeight(200);
     setFocusPolicy(Qt::ClickFocus);
 

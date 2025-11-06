@@ -24,10 +24,16 @@ class FriendsListPart : public QWidget
     Q_OBJECT
 public:
     explicit FriendsListPart(QWidget *parent = nullptr);
+    QListView* getList();
 private:
     void setupUI();
     void setupConnections();
 
+signals:
+    void on_loading_users(); // to do_loading_users
+
+private slots:
+    void do_loading_users();
 private:
     QLabel *title;
     QPushButton *findButton;
@@ -35,10 +41,15 @@ private:
     FriendsModel *friendsModel;
     FriendItemDelegate *friendsDelegate;
 
+    // 是否正在加载列表
+    bool isLoading;
+
 
     // QObject interface
 public:
     bool eventFilter(QObject *watched, QEvent *event);
+    inline bool getIsLoading()noexcept{return isLoading;}
+    inline void setLoading(bool loading)noexcept{this->isLoading = loading;}
 };
 
 #endif // FRIENDSLISTPART_H

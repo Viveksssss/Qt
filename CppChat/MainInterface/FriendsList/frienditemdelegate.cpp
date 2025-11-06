@@ -1,15 +1,32 @@
 #include "frienditemdelegate.h"
 #include "frienditem.h"
+#include "friendslistpart.h"
 #include "friendsmodel.h"
 #include <QFile>
+#include <QListView>
+#include <QMenu>
+#include <QMouseEvent>
+#include <QMovie>
 #include <QPainter>
 #include <QPainterPath>
+#include <QStandardItemModel>
+#include <QTimer>
 
-FriendItemDelegate::FriendItemDelegate(QWidget* parent)
+FriendItemDelegate::FriendItemDelegate(QWidget* parent,FriendsListPart*list)
     : QStyledItemDelegate(parent)
-{}
+    , list(list)
+{
+    menu = new QMenu();
+    toTopAction = new QAction("置顶",menu);
+    selectAction = new QAction("选择",menu);
+    deleteAction = new QAction("删除",menu);
 
-void FriendItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
+    menu->addAction(toTopAction);
+    menu->addAction(selectAction);
+    menu->addAction(deleteAction);
+}
+
+void FriendItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index)const
 {
     painter->save();
 
@@ -17,15 +34,18 @@ void FriendItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
     QRect rect = option.rect;
     int radius = 12;
     QColor bg;
+    QPen pen = Qt::NoPen;
     if(option.state & QStyle::State_Selected){
         bg = QColor(225,240,255);
+        pen = QPen(QColor(0xc1e6d9),2);
     }else if(option.state & QStyle::State_MouseOver){
         bg = QColor(245,245,245);
     }else{
-        bg = QColor("#f9fafb");
+        bg = QColor(0xf9fafb);
     }
 
-    painter->setPen(Qt::NoPen);
+
+    painter->setPen(pen);
     painter->setBrush(bg);
     painter->drawRoundedRect(rect, radius, radius);
 
@@ -55,10 +75,10 @@ void FriendItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
 
     // 4. 状态标记 - 修正后的布局计算
     QColor statusColor;
-    if(status == "在线") statusColor = QColor("#58f376");
-    else if(status == "忙碌") statusColor = QColor("#e90739");
-    else if(status == "离开") statusColor = QColor("#51615f");
-    else statusColor = QColor("#cccccc"); // 默认颜色
+    if(status == "在线") statusColor = QColor(0x58f376);
+    else if(status == "忙碌") statusColor = QColor(0xe90739);
+    else if(status == "离开") statusColor = QColor(0x51615f);
+    else statusColor = QColor(0xcccccc); // 默认颜色
 
     QFontMetrics fm(painter->font());
     int textWidth = fm.horizontalAdvance(status);
@@ -119,6 +139,19 @@ void FriendItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
     painter->restore();
 }
 
+bool FriendItemDelegate::editorEvent(QEvent *event, QAbstractItemModel *model, const QStyleOptionViewItem &option, const QModelIndex &index)
+{
+    if (event->type() == QEvent::MouseButtonPress) {
+        QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+        if (mouseEvent->button() == Qt::RightButton){
+            showContextMenu(mouseEvent->globalPos(), index);
+            return true;
+        }
+    }
+
+    return QStyledItemDelegate::editorEvent(event, model, option, index);
+}
+
 QSize FriendItemDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
     Q_UNUSED(option);
@@ -126,7 +159,40 @@ QSize FriendItemDelegate::sizeHint(const QStyleOptionViewItem &option, const QMo
     return QSize(option.rect.width(),60);
 }
 
+QListView *FriendItemDelegate::getList()
+{
+    return list->getList();
+}
+
 QPixmap FriendItemDelegate::getStatusPximap(const QString &status) const
 {
 
+}
+
+void FriendItemDelegate::showContextMenu(const QPoint &globalPos, const QModelIndex &index)
+{
+    QAction *selectedAction = menu->exec(globalPos);
+    if (!selectedAction || !index.isValid())
+        return;
+    QAbstractItemModel *model = const_cast<QAbstractItemModel*>(index.model());
+    if (!model){
+        return;
+    }
+
+    if (selectedAction == toTopAction){
+        int pos = index.row();
+        if (pos == 0){
+            return;
+        }else{
+            bool ok = model->moveRow(QModelIndex(), pos,QModelIndex(), 0);
+        }
+    }else if(selectedAction == selectAction){
+        auto *p= list->getList();
+        if(p){
+            qDebug() <<"yes";
+            p->setCurrentIndex(index);
+        }
+    }else if(selectedAction == deleteAction){
+        model->removeRow(index.row(),QModelIndex());
+    }
 }

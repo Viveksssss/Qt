@@ -43,6 +43,10 @@ private:
     QMap<QString,QPushButton*>buttons;
     QVector<SideBarItem>items;
     QButtonGroup*buttonGroup;
+
+    // QObject interface
+public:
+    bool eventFilter(QObject *watched, QEvent *event)override;
 };
 
 #endif // SIDEBARPART_H

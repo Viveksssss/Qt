@@ -338,7 +338,7 @@ QToolTip {
 }
 
 #friendsList{
-  background-color:#f9fafb;
+  background-color:white;
   border:none;
   outline:one;
   border-radius:8px;
@@ -361,4 +361,327 @@ QToolTip {
 #findButton:pressed{
   background:#34eae8;
   border-radius:8px;
+}
+
+
+
+#newsBtn{
+  background:transparent;
+  border:0px;
+}
+
+#newsBtn:hover{
+  background:#bde0d5;
+  border:1px #e8e7de;
+  border-radius:8px;
+}
+
+#newsBtn:pressed{
+  background:#34eae8;
+  border-radius:8px;
+}
+
+
+#foldBtn{
+  background:transparent;
+  border:0px;
+}
+
+#foldBtn:hover{
+  background:#bde0d5;
+  border:1px #e8e7de;
+  border-radius:8px;
+}
+
+#foldBtn:pressed{
+  background:#34eae8;
+  border-radius:8px;
+}
+
+#textEdit{
+  background:transparent;
+  border-radius:20px;
+}
+
+#textEdit QScrollBar:vertical, QScrollBar:vertical {
+    background: #f5f5f5;
+    width:3px;
+    border-radius:5px;
+}
+
+QScrollBar::handle:vertical {
+    background: #f8d6c4;
+    border-radius:5px;
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    border: none;
+    background: none;
+    height: 0px;
+}
+
+
+#emojiMenu{
+  border-radius:15px;
+  background:#f0f2de;
+}
+
+#fileButton{
+  background:transparent;
+  border:0px;
+}
+
+#fileButton:hover{
+  background:#bde0d5;
+  border:1px #e8e7de;
+  border-radius:8px;
+}
+
+#fileButton:pressed{
+  background:#34eae8;
+  border-radius:8px;
+}
+
+
+#imageButton{
+  background:transparent;
+  border:0px;
+}
+
+#imageButton:hover{
+  background:#bde0d5;
+  border:1px #e8e7de;
+  border-radius:8px;
+}
+
+#imageButton:pressed{
+  background:#34eae8;
+  border-radius:8px;
+}
+
+#videoButton{
+  background:transparent;
+  border:0px;
+}
+
+#videoButton:hover{
+  background:#bde0d5;
+  border:1px #e8e7de;
+  border-radius:8px;
+}
+
+#videoButton:pressed{
+  background:#34eae8;
+  border-radius:8px;
+}
+
+#audioButton{
+  background:transparent;
+  border:0px;
+}
+
+#audioButton:hover{
+  background:#bde0d5;
+  border:1px #e8e7de;
+  border-radius:8px;
+}
+
+#audioButton:pressed{
+  background:#34eae8;
+  border-radius:8px;
+}
+
+#emojiButton{
+  background:transparent;
+  border:0px;
+}
+
+#emojiButton:hover{
+  background:#bde0d5;
+  border:1px #e8e7de;
+  border-radius:8px;
+}
+
+#emojiButton:pressed{
+  background:#34eae8;
+  border-radius:8px;
+}
+
+#emojiButton::menu-indicator {
+    image: none;
+    width: 0px;
+    height: 0px;
+    subcontrol-position: center center;
+}
+
+#captureButton{
+  background:transparent;
+  border:0px;
+}
+
+#captureButton:hover{
+  background:#bde0d5;
+  border:1px #e8e7de;
+  border-radius:8px;
+}
+
+#captureButton:pressed{
+  background:#34eae8;
+  border-radius:8px;
+}
+
+
+#sendButton{
+  background:#970ad1;
+  border:0px;
+  border-radius:8px;
+  color:white;
+}
+
+#sendButton:hover{
+  background:#bde0d5;
+  border:1px #e8e7de;
+  border-radius:8px;
+}
+
+#splitter::handle{
+  background-color:#ebf0f5;
+}
+
+#searchEdit{
+  background:white;
+  border:1px solid #ddd;
+  border-radius:8px;
+  padding:0px 12px;
+  font-size:14px;
+}
+
+#searchEdit:focus{
+  border-color:#2196F3;
+}
+
+#searchButton{
+  background:transparent;
+  border:none;
+  border-radius:15px;
+}
+
+#searchButton:hover{
+  background：#bbdefb;
+}
+
+#searchButton:pressed{
+  background: #bbdefb;
+}
+
+#resultList {
+ background: white;
+ border: 1px solid #ddd;
+ border-radius: 8px;
+ outline: none;
+}
+#resultListList::item {
+    padding: 10px;
+    border-bottom: 1px solid #f0f0f0;
+}
+#resultList::item:hover {
+    background: #f5f5f5;
+}
+#resultList::item:selected {
+    background: #e3f2fd;
+    color: #1976D2;
+}
+
+/* FriendAddDialog.qss */
+
+#friendAddDialog {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+}
+
+#titleLabel {
+    font-size: 18px;
+    font-weight: bold;
+    color: #000000;
+    padding: 0px;
+    margin: 0px;
+}
+
+#userInfoFrame {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    margin: 5px 0px;
+}
+
+#avatarLabel {
+    border-radius: 8px;
+    border: 2px solid #ffffff;
+}
+
+#nameLabel {
+    font-size: 16px;
+    font-weight: 600;
+    color: #212529;
+    margin: 0px;
+    padding: 0px;
+}
+
+#uidLabel {
+    font-size: 13px;
+    color: #6c757d;
+    margin: 0px;
+    padding: 0px;
+}
+
+#remarkLabel {
+    font-size: 14px;
+    font-weight: 500;
+    color: #495057;
+    margin: 5px 0px;
+    padding: 0px;
+}
+
+#remarkEdit {
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    padding: 8px;
+    font-size: 14px;
+    background-color: #ffffff;
+    margin: 0px;
+}
+
+#remarkEdit:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+#addButton {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    margin: 0px;
+}
+
+#addButton:hover {
+    background-color: #0056b3;
+}
+
+#cancelButton {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    margin: 0px;
+}
+
+#cancelButton:hover {
+    background-color: #545b62;
 }

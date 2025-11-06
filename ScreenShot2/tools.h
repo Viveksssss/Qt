@@ -22,7 +22,7 @@ private slots:
     void onCloseClicked();
     void onFinishClicked();
 public slots:
-    void setPixmap(const QPixmap pix);
+    void setPixmap(const QPixmap&pix);
 private:
     void createButtons();
     QPixmap _pixmap;

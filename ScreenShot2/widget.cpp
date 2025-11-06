@@ -5,6 +5,7 @@
 Widget::Widget(QWidget *parent)
     : QWidget{parent}
 {
+    setAttribute(Qt::WA_DeleteOnClose);
 }
 
 void Widget::showPix(QPixmap pix)

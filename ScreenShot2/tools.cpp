@@ -20,43 +20,22 @@ Tools::Tools(Snipater*s,QWidget *parent): QWidget{parent}
     sni = s;
 
     setMouseTracking(true);
-    setAttribute(Qt::WA_Hover);  // 启用悬停事件
+    setFixedSize({90,20});
 
     this->_clipboard = QApplication::clipboard();
 
-    setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::Tool);
-    setAttribute(Qt::WA_TranslucentBackground);
-
-    setStyleSheet(R"(
-        QWidget {
-            background: rgba(45, 45, 45, 220);
-            border: 1px solid #666666;
-            border-radius: 6px;
-        }
-        QPushButton {
-            border: none;
-            border-radius: 4px;
-            color: white;
-        }
-        QPushButton:hover {
-            background: rgba(0, 0, 0, 100);
-        }
-        QPushButton:pressed {
-            background: rgba(255, 255, 255, 50);
-        }
-    )");
-
+    setWindowFlags(Qt::FramelessWindowHint | Qt::Tool);
+    // setAttribute(Qt::WA_TranslucentBackground);
 
     createButtons();
-    setFixedHeight(50);
-
 }
 
-void Tools::setPixmap(const QPixmap pix)
+void Tools::setPixmap(const QPixmap&pix)
 {
-    raise();
     if(!pix.isNull()){
+        qDebug() << "yes";
         this->_pixmap = pix;
+        _clipboard->setPixmap(pix);
     }
 }
 
@@ -78,7 +57,7 @@ void Tools::onCloseClicked()
 
 void Tools::onFinishClicked()
 {
-    _clipboard->setPixmap(_pixmap);
+    sni->grabRegion(sni->overlay->selectedRect());
     hide();
     emit closeWindow();
 }
@@ -89,18 +68,21 @@ void Tools::createButtons()
     _buttonContainer->setStyleSheet("background: transparent;");
 
     QHBoxLayout *_layout = new QHBoxLayout(_buttonContainer);
-    _layout->setSpacing(5);
-    _layout->setContentsMargins(10,5,10,5);
+    _layout->setSpacing(0);
+    _layout->setContentsMargins(0,0,0,0);
 
     QPushButton*saveButton = new QPushButton(_buttonContainer);
     saveButton->setIcon(QIcon("/home/vivek/Codes/Qt/ScreenShot2/resources/save.png"));
     saveButton->setIconSize(QSize(24, 24));
+    saveButton->setFixedSize({30,20});
     QPushButton*finishButton = new QPushButton(_buttonContainer);
     finishButton->setIcon(QIcon("/home/vivek/Codes/Qt/ScreenShot2/resources/yes.png"));
     finishButton->setIconSize(QSize(24, 24));
+    finishButton->setFixedSize({30,20});
     QPushButton*closeButton = new QPushButton(_buttonContainer);
     closeButton->setIcon(QIcon("/home/vivek/Codes/Qt/ScreenShot2/resources/no.png"));
     closeButton->setIconSize(QSize(24, 24));
+    closeButton->setFixedSize({30,20});
 
     connect(saveButton, &QPushButton::clicked, this, &Tools::onSaveClicked);
     connect(finishButton, &QPushButton::clicked, this, &Tools::onFinishClicked);

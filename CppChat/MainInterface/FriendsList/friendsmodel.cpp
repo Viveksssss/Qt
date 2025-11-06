@@ -1,5 +1,7 @@
 #include "friendsmodel.h"
 
+#include <QLabel>
+
 FriendsModel::FriendsModel(QObject *parent)
     : QAbstractListModel{parent}
 {}
@@ -60,3 +62,38 @@ FriendItem FriendsModel::getFriend(int index)
     }
     return FriendItem("","");
 }
+
+bool FriendsModel::removeRows(int row, int count, const QModelIndex &parent)
+{
+    if (parent.isValid() || row < 0 || row > _friends.size()){
+        return false;
+    }
+    beginRemoveRows(parent,row,row+count-1);
+    _friends.remove(row,count);
+    endRemoveRows();
+    return true;
+}
+
+bool FriendsModel::moveRows(const QModelIndex &sourceParent, int sourceRow, int count, const QModelIndex &destinationParent, int destinationChild)
+{
+    if (sourceParent.isValid() || destinationParent.isValid() || count != 1){
+        return false;
+    }
+    if (sourceRow == destinationChild){
+        return false;
+    }
+    if (!(sourceRow >= 0 &&sourceRow <= _friends.size() &&destinationChild>=0 && destinationChild<=_friends.size())){
+        return false;
+    }
+
+    beginMoveRows(sourceParent,sourceRow,sourceRow+count-1,destinationParent,destinationChild);
+    if (sourceRow < destinationChild){
+        _friends.insert(destinationChild,_friends.at(sourceRow));
+    }else{
+        _friends.insert(destinationChild, _friends.at(sourceRow));
+        _friends.remove(sourceRow + 1);   // 因为刚插完index+1
+    }
+    endMoveRows();
+    return true;
+}
+

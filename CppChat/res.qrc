@@ -23,5 +23,20 @@
         <file>Resources/main/find.png</file>
         <file>Resources/main/news.png</file>
         <file>Resources/main/unfold.png</file>
+        <file>Resources/main/file.png</file>
+        <file>Resources/main/emoji.png</file>
+        <file>Resources/main/picture.png</file>
+        <file>Resources/main/capture.png</file>
+        <file>Resources/main/clear.png</file>
+        <file>Resources/main/clear-hover.png</file>
+        <file>Resources/main/loading.gif</file>
+        <file>Resources/main/header.png</file>
+        <file>Resources/main/header-0.png</file>
+        <file>Resources/main/video.png</file>
+        <file>Resources/main/audio.png</file>
+        <file>Resources/main/stop.png</file>
+        <file>Resources/main/play.png</file>
+        <file>Resources/main/volume.png</file>
+        <file>Resources/main/no-volume.png</file>
     </qresource>
 </RCC>

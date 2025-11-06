@@ -413,7 +413,7 @@ Vulkan_GLSLANG_VALIDATOR_EXECUTABLE:FILEPATH=/usr/bin/glslangValidator
 Vulkan_GLSLC_EXECUTABLE:FILEPATH=/usr/bin/glslc
 
 //Path to a file.
-Vulkan_INCLUDE_DIR:PATH=Vulkan_INCLUDE_DIR-NOTFOUND
+Vulkan_INCLUDE_DIR:PATH=/usr/include
 
 //Path to a library.
 Vulkan_LIBRARY:FILEPATH=/usr/lib/libvulkan.so
@@ -443,7 +443,7 @@ CMAKE_CACHE_MAJOR_VERSION:INTERNAL=4
 //Minor version of cmake used to create the current loaded cache
 CMAKE_CACHE_MINOR_VERSION:INTERNAL=1
 //Patch version of cmake used to create the current loaded cache
-CMAKE_CACHE_PATCH_VERSION:INTERNAL=1
+CMAKE_CACHE_PATCH_VERSION:INTERNAL=2
 //Path to CMake executable.
 CMAKE_COMMAND:INTERNAL=/usr/bin/cmake
 //Path to cpack program executable.
@@ -603,6 +603,8 @@ FIND_PACKAGE_MESSAGE_DETAILS_Threads:INTERNAL=[TRUE][v()]
 FIND_PACKAGE_MESSAGE_DETAILS_WrapAtomic:INTERNAL=[1][v()]
 //Details about finding WrapOpenGL
 FIND_PACKAGE_MESSAGE_DETAILS_WrapOpenGL:INTERNAL=[ON][v()]
+//Details about finding WrapVulkanHeaders
+FIND_PACKAGE_MESSAGE_DETAILS_WrapVulkanHeaders:INTERNAL=[/usr/include][v()]
 //Test HAVE_STDATOMIC
 HAVE_STDATOMIC:INTERNAL=1
 //ADVANCED property for variable: OPENGL_EGL_INCLUDE_DIR
@@ -760,6 +762,8 @@ QT_FEATURE_concatenatetablesproxymodel:INTERNAL=ON
 QT_FEATURE_concurrent:INTERNAL=ON
 //Qt feature: contextmenu (from target Qt6::Widgets)
 QT_FEATURE_contextmenu:INTERNAL=ON
+//Qt feature: copy_file_range (from target Qt6::Core)
+QT_FEATURE_copy_file_range:INTERNAL=ON
 //Qt feature: cpp_winrt (from target Qt6::Core)
 QT_FEATURE_cpp_winrt:INTERNAL=OFF
 //Qt feature: cross_compile (from target Qt6::Core)
@@ -848,6 +852,8 @@ QT_FEATURE_easingcurve:INTERNAL=ON
 QT_FEATURE_effects:INTERNAL=ON
 //Qt feature: egl (from target Qt6::Gui)
 QT_FEATURE_egl:INTERNAL=ON
+//Qt feature: egl_extension_platform_wayland (from target Qt6::Gui)
+QT_FEATURE_egl_extension_platform_wayland:INTERNAL=ON
 //Qt feature: egl_x11 (from target Qt6::Gui)
 QT_FEATURE_egl_x11:INTERNAL=ON
 //Qt feature: eglfs (from target Qt6::Gui)
@@ -941,7 +947,7 @@ QT_FEATURE_glibc_fortify_source:INTERNAL=ON
 //Qt feature: graphicseffect (from target Qt6::Widgets)
 QT_FEATURE_graphicseffect:INTERNAL=ON
 //Qt feature: graphicsframecapture (from target Qt6::Gui)
-QT_FEATURE_graphicsframecapture:INTERNAL=OFF
+QT_FEATURE_graphicsframecapture:INTERNAL=ON
 //Qt feature: graphicsview (from target Qt6::Widgets)
 QT_FEATURE_graphicsview:INTERNAL=ON
 //Qt feature: groupbox (from target Qt6::Widgets)
@@ -1002,6 +1008,8 @@ QT_FEATURE_itemmodel:INTERNAL=ON
 QT_FEATURE_itemviews:INTERNAL=ON
 //Qt feature: jalalicalendar (from target Qt6::Core)
 QT_FEATURE_jalalicalendar:INTERNAL=ON
+//Qt feature: jemalloc (from target Qt6::Core)
+QT_FEATURE_jemalloc:INTERNAL=OFF
 //Qt feature: journald (from target Qt6::Core)
 QT_FEATURE_journald:INTERNAL=ON
 //Qt feature: jpeg (from target Qt6::Gui)
@@ -1424,6 +1432,38 @@ QT_FEATURE_wasm_jspi:INTERNAL=OFF
 QT_FEATURE_wasm_simd128:INTERNAL=OFF
 //Qt feature: wayland (from target Qt6::Gui)
 QT_FEATURE_wayland:INTERNAL=ON
+//Qt feature: wayland_brcm (from target Qt6::Gui)
+QT_FEATURE_wayland_brcm:INTERNAL=OFF
+//Qt feature: wayland_client (from target Qt6::Gui)
+QT_FEATURE_wayland_client:INTERNAL=ON
+//Qt feature: wayland_client_fullscreen_shell_v1 (from target Qt6::Gui)
+QT_FEATURE_wayland_client_fullscreen_shell_v1:INTERNAL=ON
+//Qt feature: wayland_client_primary_selection (from target Qt6::Gui)
+QT_FEATURE_wayland_client_primary_selection:INTERNAL=ON
+//Qt feature: wayland_client_wl_shell (from target Qt6::Gui)
+QT_FEATURE_wayland_client_wl_shell:INTERNAL=ON
+//Qt feature: wayland_client_xdg_shell (from target Qt6::Gui)
+QT_FEATURE_wayland_client_xdg_shell:INTERNAL=ON
+//Qt feature: wayland_datadevice (from target Qt6::Gui)
+QT_FEATURE_wayland_datadevice:INTERNAL=ON
+//Qt feature: wayland_dmabuf_server_buffer (from target Qt6::Gui)
+QT_FEATURE_wayland_dmabuf_server_buffer:INTERNAL=ON
+//Qt feature: wayland_drm_egl_server_buffer (from target Qt6::Gui)
+QT_FEATURE_wayland_drm_egl_server_buffer:INTERNAL=ON
+//Qt feature: wayland_egl (from target Qt6::Gui)
+QT_FEATURE_wayland_egl:INTERNAL=ON
+//Qt feature: wayland_libhybris_egl_server_buffer (from target
+// Qt6::Gui)
+QT_FEATURE_wayland_libhybris_egl_server_buffer:INTERNAL=OFF
+//Qt feature: wayland_server (from target Qt6::Gui)
+QT_FEATURE_wayland_server:INTERNAL=ON
+//Qt feature: wayland_shm_emulation_server_buffer (from target
+// Qt6::Gui)
+QT_FEATURE_wayland_shm_emulation_server_buffer:INTERNAL=ON
+//Qt feature: wayland_vulkan_server_buffer (from target Qt6::Gui)
+QT_FEATURE_wayland_vulkan_server_buffer:INTERNAL=ON
+//Qt feature: waylandscanner (from target Qt6::Gui)
+QT_FEATURE_waylandscanner:INTERNAL=ON
 //Qt feature: whatsthis (from target Qt6::Gui)
 QT_FEATURE_whatsthis:INTERNAL=ON
 //Qt feature: wheelevent (from target Qt6::Gui)
@@ -1432,6 +1472,8 @@ QT_FEATURE_wheelevent:INTERNAL=ON
 QT_FEATURE_widgets:INTERNAL=ON
 //Qt feature: widgettextcontrol (from target Qt6::Widgets)
 QT_FEATURE_widgettextcontrol:INTERNAL=ON
+//Qt feature: winsdkicu (from target Qt6::Core)
+QT_FEATURE_winsdkicu:INTERNAL=OFF
 //Qt feature: wizard (from target Qt6::Widgets)
 QT_FEATURE_wizard:INTERNAL=ON
 //Qt feature: x86intrin (from target Qt6::Core)

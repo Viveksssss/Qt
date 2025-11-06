@@ -18,7 +18,6 @@ public:
         MessageRole,                // 最近消息
     };
 
-
     explicit FriendsModel(QObject *parent = nullptr);
     // QAbstractItemModel interface
     int rowCount(const QModelIndex&parent = QModelIndex()) const override;
@@ -26,8 +25,15 @@ public:
     QHash<int,QByteArray>roleNames()const override;
     void addFriend(const FriendItem&friendItem);
     FriendItem getFriend(int index);
+
+
 private:
     QVector<FriendItem>_friends;
+
+    // QAbstractItemModel interface
+public:
+    bool removeRows(int row, int count, const QModelIndex &parent)override;
+    bool moveRows(const QModelIndex &sourceParent, int sourceRow, int count, const QModelIndex &destinationParent, int destinationChild)override;
 };
 
 #endif // FRIENDSMODEL_H

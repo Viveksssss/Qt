@@ -10,58 +10,34 @@
 #include <QAbstractItemView>
 #include <QScrollBar>
 #include <QWheelEvent>
+#include <QMovie>
+#include <QTimer>
 
 FriendsListPart::FriendsListPart(QWidget *parent)
     : QWidget{parent}
+    , isLoading{false}
 {
     setupUI();
     setupConnections();
-    friendsModel->addFriend(FriendItem("1", "张三", ":/avatars/1.png", "在线", "今天天气真好"));
-    friendsModel->addFriend(FriendItem("2", "李四", ":/avatars/2.png", "离线", "忙碌中"));
-    friendsModel->addFriend(FriendItem("3", "王五", ":/avatars/3.png", "在线", "你好世界"));
-    friendsModel->addFriend(FriendItem("4", "赵六", ":/avatars/4.png", "忙碌", "请勿打扰"));
-    friendsModel->addFriend(FriendItem("4", "赵六", ":/avatars/4.png", "忙碌", "请勿打扰"));
-    friendsModel->addFriend(FriendItem("4", "赵六", ":/avatars/4.png", "忙碌", "请勿打扰"));
-    friendsModel->addFriend(FriendItem("4", "赵六", ":/avatars/4.png", "忙碌", "请勿打扰"));
-    friendsModel->addFriend(FriendItem("4", "赵六", ":/avatars/4.png", "忙碌", "请勿打扰"));
-    friendsModel->addFriend(FriendItem("4", "赵六", ":/avatars/4.png", "忙碌", "请勿打扰"));
-    friendsModel->addFriend(FriendItem("4", "赵六", ":/avatars/4.png", "忙碌", "请勿打扰"));
 
-    friendsModel->addFriend(FriendItem("4", "赵六", ":/avatars/4.png", "忙碌", "请勿打扰"));
-    friendsModel->addFriend(FriendItem("4", "赵六", ":/avatars/4.png", "忙碌", "请勿打扰"));
+    do_loading_users();
 
-    friendsModel->addFriend(FriendItem("4", "赵六", ":/avatars/4.png", "忙碌", "请勿打扰"));
-    friendsModel->addFriend(FriendItem("4", "赵六", ":/avatars/4.png", "忙碌", "请勿打扰"));
+}
 
-    friendsModel->addFriend(FriendItem("4", "赵六", ":/avatars/4.png", "忙碌", "请勿打扰"));
-    friendsModel->addFriend(FriendItem("4", "赵六", ":/avatars/4.png", "忙碌", "请勿打扰"));
-
-    friendsModel->addFriend(FriendItem("4", "赵六", ":/avatars/4.png", "忙碌", "请勿打扰"));
-    friendsModel->addFriend(FriendItem("4", "赵六", ":/avatars/4.png", "忙碌", "请勿打扰"));
-
-    friendsModel->addFriend(FriendItem("4", "赵六", ":/avatars/4.png", "忙碌", "请勿打扰"));
-    friendsModel->addFriend(FriendItem("4", "赵六", ":/avatars/4.png", "忙碌", "请勿打扰"));
-
-    friendsModel->addFriend(FriendItem("4", "赵六", ":/avatars/4.png", "忙碌", "请勿打扰"));
-    friendsModel->addFriend(FriendItem("4", "赵六", ":/avatars/4.png", "忙碌", "请勿打扰"));
-
-    friendsModel->addFriend(FriendItem("4", "赵六", ":/avatars/4.png", "忙碌", "请勿打扰"));
-    friendsModel->addFriend(FriendItem("4", "赵六", ":/avatars/4.png", "忙碌", "请勿打扰"));
-
-    friendsModel->addFriend(FriendItem("4", "赵六", ":/avatars/4.png", "忙碌", "请勿打扰"));
-    friendsModel->addFriend(FriendItem("4", "赵六", ":/avatars/4.png", "忙碌", "请勿打扰"));
-
+QListView *FriendsListPart::getList()
+{
+    return friendsList;
 }
 
 void FriendsListPart::setupUI()
 {
-    setMinimumWidth(60);
-    setMaximumWidth(250);
+    setMinimumWidth(40);
+    setMaximumWidth(220);
 
     setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
 
     QVBoxLayout *main_vlay = new QVBoxLayout(this);
-    main_vlay->setContentsMargins(0,0,0,15);
+    main_vlay->setContentsMargins(3,0,8,15);
 
     QHBoxLayout *top_hlay = new QHBoxLayout;
     top_hlay->setContentsMargins(15,0,15,0);
@@ -89,7 +65,7 @@ void FriendsListPart::setupUI()
     friendsList = new QListView;
     friendsList->setObjectName("friendsList");
     friendsModel = new FriendsModel(this);
-    friendsDelegate = new FriendItemDelegate(this);
+    friendsDelegate = new FriendItemDelegate(this,this);
     QScrollBar *vScrollBar = friendsList->verticalScrollBar();
     vScrollBar->setSingleStep(10);  // 每次滚轮滚动10像素
     friendsList->viewport()->installEventFilter(this);
@@ -102,7 +78,7 @@ void FriendsListPart::setupUI()
         "QScrollBar::handle:vertical {"
         "background:#eae6e9;"
         "border-radius:10px;"
-        "margin:0px;"
+        "margin-left:2px;"
         "}"
         "QScrollBar::handle:vertical:hover{"
         "background:#efa3e2;"
@@ -122,6 +98,7 @@ void FriendsListPart::setupUI()
     friendsList->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     friendsList->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     friendsList->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);   // 需要时显示
+    friendsList->setMaximumWidth(250);
 
     // 添加到布局
     main_vlay->addLayout(top_hlay);
@@ -130,6 +107,8 @@ void FriendsListPart::setupUI()
 
 void FriendsListPart::setupConnections()
 {
+    // 滚动接受新的列表
+    connect(this,&FriendsListPart::on_loading_users,this,&FriendsListPart::do_loading_users);
 
 }
 
@@ -143,8 +122,43 @@ bool FriendsListPart::eventFilter(QObject *obj, QEvent *event)
             int delta = wheelEvent->angleDelta().y();
             int step = delta > 0 ? -30 : 30;  // 反向，因为滚动条值增加是向下
             vScrollBar->setValue(vScrollBar->value() + step);
+
+            int maxValue = vScrollBar->maximum();
+            int currentValue = vScrollBar->value();
+            if (currentValue - maxValue >= 0){
+                qDebug() << "load more users";
+                emit on_loading_users();
+            }
+
             return true; // 事件已处理
         }
     }
     return QWidget::eventFilter(obj, event);
+}
+
+
+void FriendsListPart::do_loading_users()
+{
+    if(isLoading){
+        return;
+    }
+
+    isLoading = true;
+
+    // auto friend_list = UserManager::GetInstance()->GetChatListPerPage();
+    // if(!friend_list.empty()){
+    //     for(auto&friend:friend_list){
+    //         friendsModel->addFriend(FriendItem(friend.id,friend.name,friend.avatar,friend.status,friend.message));
+    //     }
+    // }
+
+
+    friendsModel->addFriend(FriendItem("1", "张三", ":/avatars/1.png", "在线", "今天天气真好"));
+    friendsModel->addFriend(FriendItem("2", "李四", ":/avatars/2.png", "离线", "忙碌中"));
+    friendsModel->addFriend(FriendItem("3", "王五", ":/avatars/3.png", "在线", "你好世界"));
+    friendsModel->addFriend(FriendItem("4", "赵六", ":/avatars/4.png", "忙碌", "请勿打扰"));
+
+    QTimer::singleShot(1000,this,[this](){
+        this->setLoading(false);
+    });
 }

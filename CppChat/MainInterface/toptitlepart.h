@@ -30,6 +30,9 @@ private:
     QLabel *logo;
     QLabel *logoTitle;
 
+
+    // QObject interface
+public:
 };
 
 #endif // TOPTITLEPART_H
