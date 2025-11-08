@@ -44,4 +44,9 @@ extern ConfigManager cfgMgr;
 
 #define EMAIL_PREFIX "email_"
 #define USER_PREFIX "user_"
+#define USERIP_PREFIX "uip_"
+#define USER_TOKEN_PREFIX "user_token_"
+#define LOGIN_COUNT_PREFIX "login_count_"
+#define USER_BASE_INFO_PREFIX "user_base_info_"
+#define IP_COUNT_PREFIX "ip_count_"
 #endif // CONST_H

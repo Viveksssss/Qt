@@ -39,5 +39,5 @@ void AsioPool::Stop()
 AsioPool::~AsioPool()
 {
     Stop();
-    std::cout << "The AsioPool Destruct" << std::endl;
+    //std::cout << "The AsioPool Destruct" << std::endl;
 }

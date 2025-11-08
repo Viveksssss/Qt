@@ -17,7 +17,7 @@ MainWindow::MainWindow(QWidget *parent)
     setConnections();
     stack = new AuthStack(this);
     setCentralWidget(stack);
-    emit TcpManager::GetInstance()->on_switch_interface();
+    // emit TcpManager::GetInstance()->on_switch_interface();
 }
 
 void MainWindow::setupUI()

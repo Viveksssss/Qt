@@ -28,6 +28,9 @@ add_executable(ChatServer
     grpc/StatusClient.cpp
     global/ConfigManager.h
     global/const.cpp
+    global/UserManager.cpp
+    grpc/ChatGrpcClient.cpp
+    grpc/ChatGrpcServer.cpp
     server/AsioPool.cpp
     server/Server.cpp
     server/LogicSystem.cpp

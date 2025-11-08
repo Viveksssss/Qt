@@ -1265,22 +1265,23 @@ void MessageDelegate::openFile(const QString &filePath) const
 
 void MessageDelegate::openImage(const QString&filePath)const {
     QDialog *dlg = new QDialog;
-    dlg->setContentsMargins(0,0,0,0);
+    dlg->setStyleSheet("background:black;");
+    dlg->setContentsMargins(0, 0, 0, 0);
     dlg->setWindowTitle("图片");
-
-    dlg->setStyleSheet("QDialog {background:black;}");
 
     QVBoxLayout *lay = new QVBoxLayout(dlg);
     lay->setContentsMargins(0, 0, 0, 0);
+    lay->setAlignment(Qt::AlignCenter);
 
     QPixmap pix = SourceManager::GetInstance()->getPixmap(filePath);
-    QLabel *label =new QLabel();
-    label->setPixmap(pix);
+    QLabel *label = new QLabel();
+    label->setPixmap(pix.scaledToHeight(dlg->height()));
 
-    dlg->resize(pix.width(),pix.height() );
+    // 限制最大尺寸，避免图片太大超出屏幕
+    dlg->setMaximumSize(1200, 800);
 
     lay->addWidget(label);
-    dlg->show();
+    dlg->exec();  // 使用exec()确保对话框关闭前不会销毁
 }
 
 void MessageDelegate::openAudio(const QString &filePath) const

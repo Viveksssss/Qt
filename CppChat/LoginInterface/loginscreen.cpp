@@ -191,7 +191,7 @@ void LoginScreen::initHandlers()
     };
 }
 
-void LoginScreen::do_login_clicked()
+void LoginScreen:: do_login_clicked()
 {
     QString accountStr = accountEdit->text().trimmed();
     QString passwordStr = passwordEdit->text().trimmed();
