@@ -109,6 +109,7 @@ message TextChatMessageResponse{
 
 
 service ChatServer{
+    // 后端调用，通知另一个服务器消息。
     rpc NotifyAddFriend(AddFriendRequest)returns(AddFriendResponse){}
     rpc ReplyAddFriend(ReplyFriendRequest)returns(ReplyFriendResponse){}
     rpc SendChatMessage(SendChatMessageRequest)returns(SendChatMessageResponse){}

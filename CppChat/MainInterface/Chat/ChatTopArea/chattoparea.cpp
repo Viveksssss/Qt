@@ -322,9 +322,9 @@ void AnimatedSearchBox::setupUI()
     resultList->hide();
     QTimer::singleShot(0, this, [this] {
         QWidget *central = window();           // 普通 QWidget 场景
-        resultList->setParent(nullptr);
+        resultList->setParent(central);
         resultList->setWindowFlags(Qt::Popup);         // 变回普通子控件
-        resultList->setFocusPolicy(Qt::StrongFocus);
+        // resultList->setFocusPolicy(Qt::StrongFocus);
     });
 
     searchLayout->addWidget(searchEdit);
@@ -715,13 +715,16 @@ void FriendsItem::setupConnections()
     connect(_applyFriend,&QPushButton::clicked,this,[this](bool){
         QJsonObject obj;
         obj["fromUid"] = QString::number(UserManager::GetInstance()->GetUid());
+        obj["fromName"] = UserManager::GetInstance()->GetName();
+        obj["fromEmail"] = UserManager::GetInstance()->GetEmail();
+
         obj["toUid"] = this->_uid;
 
         QJsonDocument doc;
         doc.setObject(obj);
-        QByteArray array = doc.toJson(QJsonDocument::Compact);
+        QByteArray data = doc.toJson(QJsonDocument::Compact);
 
-        emit TcpManager::GetInstance()->on_send_data(RequestType::ID_ADD_FRIEND_REQ,array);
+        emit TcpManager::GetInstance()->on_send_data(RequestType::ID_ADD_FRIEND_REQ,data);
         this->_applyFriend->setEnabled(false);
         showToolTip(_applyFriend,"已发送好友请求");
     });

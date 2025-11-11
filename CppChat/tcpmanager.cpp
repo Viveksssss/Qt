@@ -60,13 +60,13 @@ void TcpManager::initHandlers()
         QJsonObject jsonObj = jsonDoc.object();
         if (!jsonObj.contains("error")){
             int err = static_cast<int>(ErrorCodes::ERROR_JSON);
-            qDebug() << "AddFriend Failed,Error Is Json Parse Error " <<err;
+            qDebug() << "Search Failed,Error Is Json Parse Error " <<err;
             return;
         }
 
         int err = jsonObj["error"].toInt();
         if (err != static_cast<int>(ErrorCodes::SUCCESS)){
-            qDebug() << "AddFriend Failed,Error Is " << err;
+            qDebug() << "Search Failed,Error Is " << err;
             return;
         }
 
@@ -114,7 +114,7 @@ void TcpManager::initHandlers()
     };
 
     // TODO:
-    _handlers[RequestType::ID_ADD_FRIEND_REQ] = [this](RequestType requestType,int len,QByteArray data){
+    _handlers[RequestType::ID_ADD_FRIEND_RSP] = [this](RequestType requestType,int len,QByteArray data){
       QJsonDocument jsonDoc = QJsonDocument::fromJson(data);
       if (jsonDoc.isNull()){
           qDebug() << "Error occured about Json";
@@ -123,18 +123,25 @@ void TcpManager::initHandlers()
       QJsonObject jsonObj = jsonDoc.object();
       if (!jsonObj.contains("error")){
           int err = static_cast<int>(ErrorCodes::ERROR_JSON);
-          qDebug() << "Login Failed,Error Is Json Parse Error " <<err;
-          emit on_login_failed(err);
+          qDebug() << "AddFriend Failed,Error Is Json Parse Error " <<err;
           return;
       }
 
       int err = jsonObj["error"].toInt();
       if (err != static_cast<int>(ErrorCodes::SUCCESS)){
-          qDebug() << "Login Failed,Error Is " << err;
-          emit on_login_failed(err);
+          qDebug() << "AddFriend Failed,Error Is " << err;
           return;
       }
-        //_____________________________;
+      UserInfo info;
+      info.id = jsonObj["toUid"].toString();
+      info.email = jsonObj["email"].toString();
+      info.name = jsonObj["name"].toString();
+      info.status = jsonObj["status"].toString();
+
+      bool ok = jsonObj["accept"].toBool();
+      // TODO:
+      qDebug() << "添加好友成功";
+      emit on_add_friend(std::move(info),ok);
   };
 }
 

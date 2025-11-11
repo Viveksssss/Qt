@@ -193,12 +193,8 @@ void LogicSystem::GetSearchedUsers(const std::string& uid, json& j, bool only_di
     std::string info_str = "";
     json users = json::array();
 
-    Defer defer([this, &j, users = &users]() {
-        std::cout << "=== DEFER EXECUTING ===" << std::endl;
-        std::cout << "Users size: " << users->size() << std::endl;
-        j["users"] = *users;
-        std::cout << "j[users] size after set: " << j["users"].size() << std::endl;
-        std::cout << "j content: " << j.dump() << std::endl;
+    Defer defer([this, &j, &users]() {
+        j["users"] = users;
     });
 
     if (only_digit) {

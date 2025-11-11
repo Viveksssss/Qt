@@ -104,15 +104,32 @@ void LogicSystem::RegisterCallBacks()
      */
     _function_callbacks[MsgId::ID_SEARCH_USER_REQ] = [this](std::shared_ptr<Session> session, uint16_t msg_id, const std::string& msg) {
         json j = json::parse(msg);
-        auto uid_str = j["uid"].get<std::string>();
-        Defer defer([this, session, j]() {
+        j["error"] = static_cast<int>(ErrorCodes::SUCCESS);
+        SPDLOG_INFO("json:{}", j.dump());
+        auto uid_str = j["toUid"].get<std::string>();
+        Defer defer([this, session, &j]() {
+            SPDLOG_INFO("j.size:{},j.dump:{}", j.dump().size(), j.dump());
             session->Send(j.dump(), static_cast<int>(MsgId::ID_SEARCH_USER_RSP));
         });
 
-        bool only_digit = isPureDigit(uid_str);
+        bool only_digit = IsPureDigit(uid_str);
 
         GetSearchedUsers(uid_str, j, only_digit);
     };
+    /**
+     *  @brief 好友申请请求
+     */
+     _function_callbacks[MsgId::ID_ADD_FRIEND_REQ] = [this](std::shared_ptr<Session> session, uint16_t msg_id, const std::string& msg){
+         json j = json::parse(msg);
+         j["error"] = ErrorCodes::SUCCESS;
+         Defer defer([this,&j,session](){
+             session->Send(j.dump(),static_cast<int>(MsgId::ID_ADD_FRIEND_RSP));
+         });
+
+
+
+     };
+
 }
 
 void LogicSystem::DealMsg()
@@ -175,7 +192,7 @@ bool LogicSystem::GetBaseInfo(std::string base_key, int uid, std::shared_ptr<Use
     return true;
 }
 
-bool LogicSystem::isPureDigit(const std::string& str)
+bool LogicSystem::IsPureDigit(const std::string& str)
 {
     if (str.empty())
         return false;

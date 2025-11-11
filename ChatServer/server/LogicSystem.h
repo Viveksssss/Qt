@@ -18,13 +18,19 @@ class LogicSystem : public Singleton<LogicSystem> {
     friend class Singleton<LogicSystem>;
 
 public:
+    // 完成任务提交
     void PostMsgToQueue(std::shared_ptr<LogicNode> msg);
+    // 注册回调
     void RegisterCallBacks();
+    // 线程处理逻辑
     void DealMsg();
+    //—————————————————————————————————————辅助函数—————————————————————————————————————————
+    // 获取基本信息
     bool GetBaseInfo(std::string base_key, int uid, std::shared_ptr<UserInfo>& userinfo);
-
-    bool isPureDigit(const std::string& str);
+    // 搜索用户
+    bool IsPureDigit(const std::string& str);
     void GetSearchedUsers(const std::string& uid, json& j, bool only_digit);
+    // 添加好友请求
 
 public:
     LogicSystem(std::size_t size = std::thread::hardware_concurrency());
