@@ -1,4 +1,7 @@
 #include "chattoparea.h"
+#include "../../../Properties/sourcemanager.h"
+#include "../../../usermanager.h"
+#include "../../../tcpmanager.h"
 #include <QPushButton>
 #include <QLabel>
 #include <QHBoxLayout>
@@ -14,6 +17,8 @@
 #include <QApplication>
 #include <QTimer>
 #include <QMessageBox>
+#include <QJsonObject>
+#include <QJsonDocument>
 #include <QTextEdit>
 ChatTopArea::ChatTopArea(QWidget *parent)
     : QWidget{parent}
@@ -21,6 +26,8 @@ ChatTopArea::ChatTopArea(QWidget *parent)
     setupUI();
     setupConnections();
 }
+
+ChatTopArea::~ChatTopArea()= default;
 
 void ChatTopArea::setupUI()
 {
@@ -64,12 +71,17 @@ void ChatTopArea::setupUI()
     main_hlay->addWidget(newsBtn);
     main_hlay->addWidget(headerLabelFromChat);
     main_hlay->addWidget(foldBtn);
+
+
+    qApp->installEventFilter(this);
 }
 
 void ChatTopArea::setupConnections()
 {
 
-    connect(this,&ChatTopArea::on_add_friend,friendAddDialog,&FriendAddDialog::do_add_friend);
+    connect(this,&ChatTopArea::on_add_friend,searchBox,&AnimatedSearchBox::do_text_changed);
+
+    connect(newsBtn,&QPushButton::clicked,this,&ChatTopArea::do_show_news);
 
     // 在按钮点击的槽函数中
     connect(statusLabel, &StatusLabel::clicked, this, [this]() {
@@ -118,6 +130,14 @@ void ChatTopArea::setupConnections()
     });
 }
 
+void ChatTopArea::do_show_news()
+{
+
+}
+
+
+
+
 void ChatTopArea::keyPressEvent(QKeyEvent *event)
 {
     if(event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter){
@@ -128,6 +148,8 @@ void ChatTopArea::keyPressEvent(QKeyEvent *event)
         QWidget::keyPressEvent(event);
     }
 }
+
+
 
 StatusLabel::StatusLabel(QWidget *parent)
 {}
@@ -152,6 +174,11 @@ void StatusLabel::setDotColor(const QColor &color)
 {
     dotColor = color;
     update();
+}
+
+void StatusLabel::setEnabled(bool enabled)
+{
+    isEnabled = enabled;
 }
 
 void StatusLabel::paintEvent(QPaintEvent *event)
@@ -199,7 +226,7 @@ void StatusLabel::paintEvent(QPaintEvent *event)
 
 void StatusLabel::mousePressEvent(QMouseEvent *event)
 {
-    if (event->button() == Qt::LeftButton){
+    if (event->button() == Qt::LeftButton && isEnabled){
         isPressed = true;
         emit clicked();
         update();
@@ -211,7 +238,7 @@ void StatusLabel::mousePressEvent(QMouseEvent *event)
 
 void StatusLabel::enterEvent(QEnterEvent *event)
 {
-    if (!isPressed){
+    if (!isPressed && isEnabled){
         isHovered = true;
         update();
         emit hover();
@@ -221,18 +248,23 @@ void StatusLabel::enterEvent(QEnterEvent *event)
 
 void StatusLabel::leaveEvent(QEvent *event)
 {
-    isHovered = false;
-    isPressed = false;
-    update();
+    if (isEnabled){
+        isHovered = false;
+        isPressed = false;
+        update();
+    }
 
     QLabel::leaveEvent(event);
 }
 
 void StatusLabel::mouseReleaseEvent(QMouseEvent *event)
 {
-    isPressed = false;
-    update(); // 触发重绘恢复正常状态
-    event->accept();
+
+    if (isEnabled){
+        isPressed = false;
+        update(); // 触发重绘恢复正常状态
+        event->accept();
+    }
 }
 
 
@@ -287,10 +319,11 @@ void AnimatedSearchBox::setupUI()
     resultList = new QListWidget(window());
     resultList->setObjectName("resultList");
     resultList->setFixedHeight(0);  // 初始高度为0
+    resultList->hide();
     QTimer::singleShot(0, this, [this] {
         QWidget *central = window();           // 普通 QWidget 场景
-        resultList->setParent(central);
-        resultList->setWindowFlags(Qt::Widget);         // 变回普通子控件
+        resultList->setParent(nullptr);
+        resultList->setWindowFlags(Qt::Popup);         // 变回普通子控件
         resultList->setFocusPolicy(Qt::StrongFocus);
     });
 
@@ -326,7 +359,7 @@ void AnimatedSearchBox::toggleSearch()
 
 QString AnimatedSearchBox::getContent()
 {
-    return searchEdit ? "" : searchEdit->text().trimmed();
+    return !searchEdit ? "" : searchEdit->text().trimmed();
 }
 
 void AnimatedSearchBox::do_search_clcked()
@@ -336,18 +369,20 @@ void AnimatedSearchBox::do_search_clcked()
 
 void AnimatedSearchBox::do_text_changed(const QString &text)
 {
-    if (text.length() >= 2){
-        updateResults(text);
-        showResults();
+    if (text.length() >= 1){
+        getSearchUsers(text.trimmed());
     }else{
         hideResults();
     }
 }
 
-void AnimatedSearchBox::do_item_clicked(QListWidgetItem *item)
+void AnimatedSearchBox::do_users_searched(QList<std::shared_ptr<UserInfo>>list)noexcept
 {
-
+    this->usersList = std::move(list);
+    updateResults();
+    showResults();
 }
+
 
 void AnimatedSearchBox::setSearchWidth(int width)
 {
@@ -363,46 +398,38 @@ void AnimatedSearchBox::hideResults()
 
 void AnimatedSearchBox::showResults()
 {
-    if (resultList->count()==0)return;
-
-
-    resultList->raise();
-
-    /* 1. 取搜索框在屏幕中的绝对几何 */
-    QRect r = searchEdit->rect();
-    QPoint bottomLeft = searchEdit->mapToGlobal(r.bottomLeft());
-
-    /* 2. 移到搜索框正下方 */
-    resultList->move(bottomLeft);
-    resultList->resize(searchEdit->width(), 150);
-
-    resultList->show();
-}
-
-void AnimatedSearchBox::updateResults(const QString &keyword){
-    resultList->clear();
-
-    // 模拟搜索结果 - 实际项目中替换为真实数据
-    QStringList mockUsers;
-    if (keyword.contains("张")) {
-        mockUsers << "张三 (ID: 10001)" << "张伟 (ID: 10004)" << "张小凡 (ID: 10007)";
-    } else if (keyword.contains("李")) {
-        mockUsers << "李四 (ID: 10002)" << "李华 (ID: 10005)";
-    } else if (keyword.contains("王")) {
-        mockUsers << "王五 (ID: 10003)" << "王明 (ID: 10006)";
-    } else {
-        // 通用搜索结果
-        mockUsers << "张三 (ID: 10001)" << "李四 (ID: 10002)" << "王五 (ID: 10003)";
+    if (resultList->count() == 0) {
+        return;
     }
 
-    for (const QString &user : mockUsers) {
-        QListWidgetItem *item = new QListWidgetItem(user);
+    if (!resultList->parent()) {
+        resultList->setParent(window());
+    }
 
+    QRect r = searchEdit->rect();
+    QPoint bottomLeft = searchEdit->mapToGlobal(r.bottomLeft());
+    bottomLeft.setX(bottomLeft.x()-50);
+
+    // 先设置大小，再移动
+    resultList->setFixedSize(310, 300);  // 使用 setFixedSize
+    resultList->move(bottomLeft);
+
+    resultList->show();
+    resultList->raise();
+
+    // 强制更新
+    // resultList->update();
+    // resultList->repaint();
+}
+
+void AnimatedSearchBox::updateResults(){
+    for (const std::shared_ptr<UserInfo> &user : this->usersList) {
+        QListWidgetItem *item = new QListWidgetItem;
+        item->setSizeHint(QSize(300,50));
         // 提取用户ID - 实际项目中从数据结构获取
-        int userId = 10000 + resultList->count() + 1;
-        item->setData(Qt::UserRole, userId);
-        item->setData(Qt::UserRole + 1, user.split(" ").first());  // 用户名
+        FriendsItem *friendItem = new FriendsItem(user->id,user->avatar,user->name,user->status);
         resultList->addItem(item);
+        resultList->setItemWidget(item,friendItem);
     }
 
     // 如果没有结果
@@ -410,9 +437,20 @@ void AnimatedSearchBox::updateResults(const QString &keyword){
         QListWidgetItem *item = new QListWidgetItem("未找到相关用户");
         item->setFlags(item->flags() & ~Qt::ItemIsSelectable);
         item->setForeground(Qt::gray);
+        item->setSizeHint(QSize(300,50));
         resultList->addItem(item);
     }
-    resultList->setFixedHeight(mockUsers.size()*30);
+}
+
+void AnimatedSearchBox::getSearchUsers(const QString &uid)
+{
+    QJsonObject obj;
+    obj["fromUid"] = UserManager::GetInstance()->GetUid();
+    obj["toUid"] = uid.trimmed();
+
+    QJsonDocument doc(obj);
+
+    emit TcpManager::GetInstance()->on_send_data(RequestType::ID_SEARCH_USER_REQ,doc.toJson(QJsonDocument::Compact));
 }
 
 void AnimatedSearchBox::startAnimation()
@@ -445,12 +483,12 @@ void AnimatedSearchBox::startAnimation()
 void AnimatedSearchBox::setupConnections()
 {
     connect(searchButton,&QToolButton::clicked,this,&AnimatedSearchBox::do_search_clcked);
-    connect(resultList,&QListWidget::itemClicked,this,&AnimatedSearchBox::on_item_clicked);
-    connect(searchEdit,&QLineEdit::textChanged,this,&AnimatedSearchBox::do_text_changed);
-    connect(resultList,&QListWidget::itemClicked,this,&AnimatedSearchBox::do_item_clicked);
+
     connect(searchEdit,&QLineEdit::returnPressed,[this](){
         emit on_search_clicked(searchEdit->text());
     });
+
+    connect(TcpManager::GetInstance().get(),&TcpManager::on_users_searched,this,&AnimatedSearchBox::do_users_searched);
 }
 
 bool AnimatedSearchBox::eventFilter(QObject *obj, QEvent *event)
@@ -601,5 +639,90 @@ void FriendAddDialog::do_add_friend(const QString &uid)
 }
 
 
+FriendsItem::FriendsItem(const QString &uid, const QString &avatar_path, const QString &name, const QString &status,QWidget*parent)
+    : QWidget(parent)
+    , _uid(uid)
+    , _avatar_path(avatar_path)
+    , _name(name)
+    , _status(status)
+{
+    setupUI();
+    setupConnections();
+}
 
+void FriendsItem::setupUI()
+{
+    QPixmap avatar = SourceManager::GetInstance()->getPixmap(_avatar_path);
+    QHBoxLayout*main_hlay = new QHBoxLayout(this);
+    main_hlay->setContentsMargins(0,0,10,0);
+    main_hlay->setSpacing(5);
 
+    _avatar = new QLabel;
+    _avatar->setFixedSize(50, 50);
+    _avatar->setStyleSheet(R"(
+        QLabel {
+            border-radius: 25px;
+            background-color: #fdf5fe;
+            border: 1px solid #CCCCCC;
+        }
+    )");
+    _avatar->setAlignment(Qt::AlignCenter);  // 关键：内容居中
+
+    // 设置头像，确保缩放并居中
+    if (!avatar.isNull()) {
+        QPixmap scaledAvatar = avatar.scaled(45, 45, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        _avatar->setPixmap(scaledAvatar);
+    } else {
+        // 默认头像
+        _avatar->setText("👤");
+    }
+
+    QLabel*name = new QLabel;
+    name->setText(_name);
+    name->setStyleSheet("font-weight:bold;color:#333333;font-size:15px;");
+
+    _statusLabel = new StatusLabel;
+    _statusLabel->setStatus(_status);
+    _statusLabel->setEnabled(false);
+    _statusLabel->setFixedSize({60,30});
+
+    _applyFriend = new QPushButton;
+    _applyFriend->setText("添加");
+    _applyFriend->setFixedSize({60,35});
+    _applyFriend->setStyleSheet(R"(
+        QPushButton {
+            background-color: #79fcf7;
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        QPushButton:hover {
+            background-color: #3fd9d4;
+        }
+    )");
+
+    main_hlay->addWidget(_avatar);
+    main_hlay->addWidget(name);
+    main_hlay->addStretch();
+    main_hlay->addWidget(_statusLabel);
+    main_hlay->addWidget(_applyFriend);
+}
+
+void FriendsItem::setupConnections()
+{
+    connect(_applyFriend,&QPushButton::clicked,this,[this](bool){
+        QJsonObject obj;
+        obj["fromUid"] = QString::number(UserManager::GetInstance()->GetUid());
+        obj["toUid"] = this->_uid;
+
+        QJsonDocument doc;
+        doc.setObject(obj);
+        QByteArray array = doc.toJson(QJsonDocument::Compact);
+
+        emit TcpManager::GetInstance()->on_send_data(RequestType::ID_ADD_FRIEND_REQ,array);
+        this->_applyFriend->setEnabled(false);
+        showToolTip(_applyFriend,"已发送好友请求");
+    });
+}

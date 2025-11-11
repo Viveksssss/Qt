@@ -1,6 +1,5 @@
 
 #include "message.grpc.pb.h"
-#include "message.pb.h"
 #include <atomic>
 #include <condition_variable>
 #include <grpc/grpc.h>

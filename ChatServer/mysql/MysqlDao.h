@@ -4,10 +4,14 @@
 #include <atomic>
 #include <condition_variable>
 #include <memory>
-#include <mysql/mysql.h>
 #include <queue>
 #include <string>
 #include <thread>
+
+#define MYSQLPP_MYSQL_HEADERS_BURIED
+#include <mysql++/mysql++.h>
+#include <mysql++/ssqls.h>
+// #include <mysql/mysql.h> // 移除c的封装改用cpp
 
 /**
  ┌─────────────────┐       ┌──────────────────┐       ┌─────────────────┐
@@ -28,38 +32,30 @@
  *
  */
 
-
+struct UserInfo;
 
 class MysqlPool {
 public:
-    struct conn_deleter {
-        void operator()(MYSQL* conn) const noexcept
-        {
-            mysql_close(conn);
-            mysql_thread_end();
-        }
-    };
-    MysqlPool(const std::string& url, const std::string& user, const std::string& password, const std::string& schedma, int poolSize = std::thread::hardware_concurrency());
+    MysqlPool(const std::string& url, const std::string& user, const std::string& password, const std::string& schedma, const std::string& port = "3306", int poolSize = std::thread::hardware_concurrency());
 
-    std::unique_ptr<MYSQL, MysqlPool::conn_deleter> GetConnection() noexcept;
-    void ReturnConnection(std::unique_ptr<MYSQL, conn_deleter> conn) noexcept;
+    std::unique_ptr<mysqlpp::Connection> GetConnection() noexcept;
+    void ReturnConnection(std::unique_ptr<mysqlpp::Connection> conn) noexcept;
     void Close() noexcept;
     ~MysqlPool();
 
 private:
-private:
-    std::string _url;
+    std::string _schedma;
     std::string _user;
     std::string _password;
-    std::string _schedma;
+    std::string _url;
+    std::string _port;
     std::size_t _poolSize;
-    std::queue<std::unique_ptr<MYSQL, conn_deleter>> _connections;
+    std::queue<std::unique_ptr<mysqlpp::Connection>> _connections;
     std::mutex _mutex;
     std::condition_variable _cv;
     std::atomic<bool> _stop;
 };
 
-struct UserInfo;
 class MysqlDao {
 public:
     MysqlDao();
@@ -68,8 +64,9 @@ public:
     int RegisterUser(const std::string& name, const std::string& email, const std::string& password);
     int ResetPassword(const std::string& email, const std::string& password);
     bool CheckPwd(const std::string& user, const std::string& password, UserInfo& userInfo);
-    std::shared_ptr<UserInfo>GetUser(int uid);
-    std::shared_ptr<UserInfo>GetUser(const std::string& name);
+    std::shared_ptr<UserInfo> GetUser(int uid);
+    std::vector<std::shared_ptr<UserInfo>> GetUser(const std::string& name);
+
 private:
     std::unique_ptr<MysqlPool> _pool;
 };

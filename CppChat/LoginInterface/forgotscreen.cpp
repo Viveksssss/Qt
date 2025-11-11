@@ -324,7 +324,6 @@ void ForgotScreen::initHttpHandlers()
         }
         auto email = obj["email"].toString();
         showTip(1,tr("密码修改成功"));
-        qDebug()<< "Email is " << email ;
         emit readyGoLogin();
     };
 
@@ -384,7 +383,6 @@ void ForgotScreen::do_get_code_finished(RequestType requestType,const QString&re
 
     // 解析json字符串
     QJsonDocument jsonDoc = QJsonDocument::fromJson(res.toUtf8());
-    qDebug() << jsonDoc.toJson();
     if(jsonDoc.isEmpty()){
         showTip(0,"接收数据异常为空,无法解析");
         return;

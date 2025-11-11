@@ -3,52 +3,37 @@
 #include "../global/ConfigManager.h"
 #include "../global/const.h"
 #include <exception>
-#include <iostream>
-#include <mariadb_com.h>
-#include <mysql.h>
-MysqlPool::MysqlPool(const std::string& url, const std::string& user, const std::string& password, const std::string& schedma, int poolSize)
+#include <mysql++/connection.h>
+#include <mysql++/result.h>
+#include <spdlog/spdlog.h>
+
+MysqlPool::MysqlPool(const std::string& url, const std::string& user, const std::string& password, const std::string& schedma, const std::string& port, int poolSize)
     : _url(url)
     , _user(user)
     , _password(password)
     , _schedma(schedma)
+    , _port(port)
     , _poolSize(poolSize)
     , _stop(false)
 {
-    int successCount = 0;
-    try {
-        for (std::size_t i = 0; i < _poolSize; ++i) {
-            MYSQL* conn = mysql_init(nullptr);
-            if (conn == nullptr) {
-                throw std::runtime_error("mysql_init failed");
+    for (std::size_t i = 0; i < _poolSize; ++i) {
+        try {
+            auto conn = std::make_unique<mysqlpp::Connection>();
+            if (conn->connect(_schedma.c_str(), _url.c_str(), _user.c_str(), _password.c_str(), std::stoi(_port))) {
+                _connections.push(std::move(conn));
+            } else {
+                SPDLOG_ERROR("Failed To Create Database Connection: {}", conn->error());
             }
-
-            if (mysql_real_connect(conn, _url.c_str(), _user.c_str(), _password.c_str(), _schedma.c_str(), 0, NULL, 0) == nullptr) {
-                throw std::runtime_error("mysql_real_connect failed");
-            }
-
-            if (mysql_ping(conn) != 0) {
-                std::string error = "mysql_ping failed: ";
-                error += mysql_error(conn);
-                mysql_close(conn);
-                throw std::runtime_error(error);
-            }
-
-            std::unique_ptr<MYSQL, conn_deleter> conn_ptr(conn, conn_deleter());
-            _connections.push(std::move(conn_ptr));
-            successCount++;
+        } catch (const mysqlpp::Exception& e) {
+            SPDLOG_ERROR("Failed to connect to mysql:{}", e.what());
         }
-    } catch (std::exception& e) {
-        while (!_connections.empty()) {
-            auto conn = std::move(_connections.front());
-            _connections.pop();
-            if (conn) {
-                mysql_close(conn.get());
-            }
-        }
-        std::cerr << e.what() << std::endl;
     }
-    if (successCount < _poolSize) {
-        std::cerr << "Warning Only" << successCount << "Out Of" << _poolSize << " Connections Were Established" << std::endl;
+
+    if (_connections.size() < _poolSize) {
+        SPDLOG_WARN("Connection Pool Initialized With Only {}/{} Connections",
+            _connections.size(), _poolSize);
+    } else {
+        SPDLOG_INFO("Mysql Connection Pool Initialized");
     }
 }
 
@@ -57,7 +42,7 @@ MysqlPool::~MysqlPool()
     Close();
 }
 
-std::unique_ptr<MYSQL, MysqlPool::conn_deleter> MysqlPool::GetConnection() noexcept
+std::unique_ptr<mysqlpp::Connection> MysqlPool::GetConnection() noexcept
 {
     std::unique_lock<std::mutex> lock(_mutex);
     _cv.wait(lock, [this] {
@@ -71,7 +56,7 @@ std::unique_ptr<MYSQL, MysqlPool::conn_deleter> MysqlPool::GetConnection() noexc
     return conn;
 }
 
-void MysqlPool::ReturnConnection(std::unique_ptr<MYSQL, conn_deleter> conn) noexcept
+void MysqlPool::ReturnConnection(std::unique_ptr<mysqlpp::Connection> conn) noexcept
 {
     std::unique_lock<std::mutex> lock(_mutex);
     if (_stop) {
@@ -100,7 +85,7 @@ MysqlDao::MysqlDao()
     const auto& schema = cfgMgr["Mysql"]["schema"];
     const auto& password = cfgMgr["Mysql"]["password"];
     const auto& user = cfgMgr["Mysql"]["user"];
-    _pool = std::make_unique<MysqlPool>(host, user, password, schema);
+    _pool = std::make_unique<MysqlPool>(host, user, password, schema, port);
 }
 
 MysqlDao::~MysqlDao()
@@ -111,72 +96,27 @@ MysqlDao::~MysqlDao()
 int MysqlDao::TestUidAndEmail(const std::string& uid, const std::string& email)
 {
     auto conn = _pool->GetConnection();
+    if (!conn) {
+        return -1;
+    }
+    Defer defer([this, &conn] {
+        _pool->ReturnConnection(std::move(conn));
+    });
+
     try {
-        if (conn == nullptr) {
-            _pool->ReturnConnection(std::move(conn));
-            return false;
-        }
+        mysqlpp::Query query = conn->query();
+        query << "select * from user where uid = ? or email = ?";
+        query.parse();
 
-        MYSQL_STMT* stmt = mysql_stmt_init(conn.get());
-        std::string query = "select * from user where uid = ? and email = ?";
+        mysqlpp::StoreQueryResult res = query.store(uid, email);
 
-        if (mysql_stmt_prepare(stmt, query.c_str(), query.size()) != 0) {
-            std::cout << mysql_error(conn.get()) << std::endl;
-            mysql_stmt_close(stmt);
-            _pool->ReturnConnection(std::move(conn));
+        std::size_t count = res.num_rows();
+        if (count != 1) {
             return -1;
         }
-
-        MYSQL_BIND params[2];
-
-        memset(params, 0, sizeof(params));
-        params[0].buffer_type = MYSQL_TYPE_STRING;
-        params[0].buffer = (char*)uid.c_str();
-        params[0].buffer_length = uid.size();
-        params[0].length = &params[0].buffer_length;
-
-        params[1].buffer_type = MYSQL_TYPE_STRING;
-        params[1].buffer = (char*)email.c_str();
-        params[1].buffer_length = email.size();
-        params[1].length = &params[0].buffer_length;
-
-        if (mysql_stmt_bind_param(stmt, params) != 0) {
-            std::cout << mysql_stmt_error(stmt) << std::endl;
-            mysql_stmt_close(stmt);
-            _pool->ReturnConnection(std::move(conn));
-            return -1;
-        }
-
-        if (mysql_stmt_execute(stmt) != 0) {
-            mysql_stmt_close(stmt);
-            _pool->ReturnConnection(std::move(conn));
-            return -1;
-        }
-
-        // 关键：必须先存储结果集,之后才能查询行数
-        if (mysql_stmt_store_result(stmt) != 0) {
-            std::cout << mysql_stmt_error(stmt) << std::endl;
-            mysql_stmt_close(stmt);
-            _pool->ReturnConnection(std::move(conn));
-            return -1;
-        }
-
-        my_ulonglong row_count = mysql_stmt_num_rows(stmt);
-        mysql_stmt_close(stmt);
-
-        // 如果存在记录，返回 -1 表示用户已存在
-        if (row_count != 1) {
-            _pool->ReturnConnection(std::move(conn));
-            return -1;
-        }
-
         return 1;
-
     } catch (const std::exception& e) {
-        if (conn != nullptr) {
-            _pool->ReturnConnection(std::move(conn));
-        }
-        std::cerr << "Exception: " << e.what() << std::endl;
+        SPDLOG_ERROR("MySQL++ exception in TestUidAndEmail: {}", e.what());
         return -1;
     }
 }
@@ -184,444 +124,217 @@ int MysqlDao::TestUidAndEmail(const std::string& uid, const std::string& email)
 int MysqlDao::RegisterUser(const std::string& name, const std::string& email, const std::string& password)
 {
     auto conn = _pool->GetConnection();
-    try {
-        if (conn == nullptr) {
-            _pool->ReturnConnection(std::move(conn));
-            return false;
-        }
-
-        MYSQL_STMT* stmt = mysql_stmt_init(conn.get());
-        std::string query = "select * from user where name = ? or email =?";
-
-        if (mysql_stmt_prepare(stmt, query.c_str(), query.size()) != 0) {
-            std::cout << mysql_error(conn.get()) << std::endl;
-            mysql_stmt_close(stmt);
-            _pool->ReturnConnection(std::move(conn));
-            return -1;
-        }
-
-        MYSQL_BIND params[2];
-
-        memset(params, 0, sizeof(params));
-        params[0].buffer_type = MYSQL_TYPE_STRING;
-        params[0].buffer = (char*)name.c_str();
-        params[0].buffer_length = name.size();
-        params[0].length = &params[0].buffer_length;
-
-        params[1].buffer_type = MYSQL_TYPE_STRING;
-        params[1].buffer = (char*)email.c_str();
-        params[1].buffer_length = email.size();
-        params[1].length = &params[1].buffer_length;
-
-        if (mysql_stmt_bind_param(stmt, params) != 0) {
-            std::cout << mysql_stmt_error(stmt) << std::endl;
-            mysql_stmt_close(stmt);
-            _pool->ReturnConnection(std::move(conn));
-            return -1;
-        }
-
-        if (mysql_stmt_execute(stmt) != 0) {
-            mysql_stmt_close(stmt);
-            _pool->ReturnConnection(std::move(conn));
-            return -1;
-        }
-
-        if (mysql_stmt_store_result(stmt) != 0) {
-            mysql_stmt_close(stmt);
-            _pool->ReturnConnection(std::move(conn));
-            return -1;
-        }
-
-        my_ulonglong row_count = mysql_stmt_num_rows(stmt);
-        mysql_stmt_close(stmt);
-
-        std::cout << "count:" << row_count << std::endl;
-        // 如果存在记录，返回 -1 表示用户已存在
-        if (row_count > 0) {
-            _pool->ReturnConnection(std::move(conn));
-            return -1;
-        }
-
-        stmt = mysql_stmt_init(conn.get());
-        query = "INSERT INTO user (name, email, password) VALUES (?, ?, ?)";
-
-        if (mysql_stmt_prepare(stmt, query.c_str(), query.size()) != 0) {
-            std::cout << "Insert prepare failed: " << mysql_error(conn.get()) << std::endl;
-            mysql_stmt_close(stmt);
-            _pool->ReturnConnection(std::move(conn));
-            return -1;
-        }
-
-        MYSQL_BIND insert_params[3];
-        memset(insert_params, 0, sizeof(insert_params));
-
-        unsigned long name_len = name.size();
-        insert_params[0].buffer_type = MYSQL_TYPE_STRING;
-        insert_params[0].buffer = (char*)name.c_str();
-        insert_params[0].buffer_length = name_len;
-        insert_params[0].length = &name_len;
-
-        unsigned long email_len = email.size();
-        insert_params[1].buffer_type = MYSQL_TYPE_STRING;
-        insert_params[1].buffer = (char*)email.c_str();
-        insert_params[1].buffer_length = email_len;
-        insert_params[1].length = &email_len;
-
-        unsigned long password_len = password.size();
-        insert_params[2].buffer_type = MYSQL_TYPE_STRING;
-        insert_params[2].buffer = (char*)password.c_str();
-        insert_params[2].buffer_length = password_len;
-        insert_params[2].length = &password_len;
-
-        if (mysql_stmt_bind_param(stmt, insert_params) != 0) {
-            std::cout << "Insert bind failed: " << mysql_stmt_error(stmt) << std::endl;
-            mysql_stmt_close(stmt);
-            _pool->ReturnConnection(std::move(conn));
-            return -1;
-        }
-
-        if (mysql_stmt_execute(stmt) != 0) {
-            std::cout << "Insert execute failed: " << mysql_stmt_error(stmt) << std::endl;
-            mysql_stmt_close(stmt);
-            _pool->ReturnConnection(std::move(conn));
-            return -1;
-        }
-
-        mysql_stmt_close(stmt);
+    if (!conn) {
+        return -1;
+    }
+    Defer defer([&conn, this] {
         _pool->ReturnConnection(std::move(conn));
+    });
 
-        return 1; // 返回1表示注册成功
+    try {
+        mysqlpp::Transaction trans(*conn);
+        mysqlpp::Query query = conn->query();
 
-    } catch (const std::exception& e) {
-        if (conn != nullptr) {
-            _pool->ReturnConnection(std::move(conn));
+        // 先检查是否用户已经存在
+        query << "SELECT id FROM user WHERE name = ? OR email = ? FOR UPDATE";
+        auto check_result = query.store(name, email);
+
+        if (check_result && check_result.num_rows() > 0) {
+            trans.rollback();
+            return -1;
         }
-        std::cerr << "Exception: " << e.what() << std::endl;
+
+        // 如果不存在就插入，注册成功
+        query << "INSERT INTO user (name, email, password) VALUES (?, ?, ?)";
+        auto insert_result = query.execute(name, email, password);
+
+        if (insert_result) {
+            int new_id = query.insert_id();
+            trans.commit();
+            return new_id;
+        } else {
+            trans.rollback();
+            return -1;
+        }
+
+    } catch (const mysqlpp::Exception& e) {
+        SPDLOG_ERROR("Exception: {}", e.what());
         return -1;
     }
 }
 
 int MysqlDao::ResetPassword(const std::string& email, const std::string& password)
 {
-
     auto conn = _pool->GetConnection();
-    try {
-        if (conn == nullptr) {
-            _pool->ReturnConnection(std::move(conn));
-            return false;
-        }
-
-        MYSQL_STMT* stmt = mysql_stmt_init(conn.get());
-        std::string query = "update user set password = ? where email = ?";
-
-        if (mysql_stmt_prepare(stmt, query.c_str(), query.size()) != 0) {
-            std::cout << mysql_error(conn.get()) << std::endl;
-            mysql_stmt_close(stmt);
-            _pool->ReturnConnection(std::move(conn));
-            return -1;
-        }
-
-        MYSQL_BIND params[2];
-
-        memset(params, 0, sizeof(params));
-        params[0].buffer_type = MYSQL_TYPE_STRING;
-        params[0].buffer = (char*)password.c_str();
-        params[0].buffer_length = password.size();
-        params[0].length = &params[0].buffer_length;
-
-        params[1].buffer_type = MYSQL_TYPE_STRING;
-        params[1].buffer = (char*)email.c_str();
-        params[1].buffer_length = email.size();
-        params[1].length = &params[1].buffer_length;
-
-        if (mysql_stmt_bind_param(stmt, params) != 0) {
-            std::cout << mysql_stmt_error(stmt) << std::endl;
-            mysql_stmt_close(stmt);
-            _pool->ReturnConnection(std::move(conn));
-            return -1;
-        }
-
-        if (mysql_stmt_execute(stmt) != 0) {
-            mysql_stmt_close(stmt);
-            _pool->ReturnConnection(std::move(conn));
-            return -1;
-        }
-
-        if (mysql_stmt_store_result(stmt) != 0) {
-            mysql_stmt_close(stmt);
-            _pool->ReturnConnection(std::move(conn));
-            return -1;
-        }
-
-        my_ulonglong affected_rows = mysql_stmt_affected_rows(stmt);
-        if (affected_rows == (my_ulonglong)-1) {
-            std::cerr << "Error getting affected rows" << std::endl;
-            mysql_stmt_close(stmt);
-            return false;
-        }
-
-        mysql_stmt_close(stmt);
-        _pool->ReturnConnection(std::move(conn));
-        return 1; // 返回1表示重置密码成功
-
-    } catch (const std::exception& e) {
-        if (conn != nullptr) {
-            _pool->ReturnConnection(std::move(conn));
-        }
-        std::cerr << "Exception: " << e.what() << std::endl;
+    if (!conn) {
         return -1;
     }
-    return 0;
+    Defer defer([this, &conn]() {
+        _pool->ReturnConnection(std::move(conn));
+    });
+    if (!conn) {
+        SPDLOG_ERROR("Failed to get connection from pool");
+        return -1;
+    }
+
+    try {
+        // 使用 mysql++ 预处理语句
+        mysqlpp::Query query = conn->query();
+        query << "UPDATE user SET password = ? WHERE email = ?";
+
+        // 执行预处理更新
+        mysqlpp::SimpleResult res = query.execute(password, email);
+
+        if (res) {
+            int affected_rows = res.rows();
+            if (affected_rows > 0) {
+                SPDLOG_INFO("Password reset successfully for email: {}, affected rows: {}", email, affected_rows);
+                return 1; // 成功重置密码
+            } else {
+                SPDLOG_WARN("No user found with email: {}", email);
+                return 0; // 没有找到用户，返回0
+            }
+        } else {
+            SPDLOG_ERROR("Failed to reset password: {}", query.error());
+            return -1;
+        }
+
+    } catch (const mysqlpp::BadQuery& e) {
+        SPDLOG_ERROR("Bad query in ResetPassword: {}", e.what());
+        return -1;
+    } catch (const mysqlpp::Exception& e) {
+        SPDLOG_ERROR("MySQL++ exception in ResetPassword: {}", e.what());
+        return -1;
+    } catch (const std::exception& e) {
+        SPDLOG_ERROR("Exception in ResetPassword: {}", e.what());
+        return -1;
+    }
 }
 
 bool MysqlDao::CheckPwd(const std::string& user, const std::string& password, UserInfo& userInfo)
 {
     auto conn = _pool->GetConnection();
-    try {
-        if (conn == nullptr) {
-            _pool->ReturnConnection(std::move(conn));
-            return false;
-        }
-
-        MYSQL_STMT* stmt = mysql_stmt_init(conn.get());
-        std::string query = "select * from user where name = ? and password = ?";
-
-        if (mysql_stmt_prepare(stmt, query.c_str(), query.size()) != 0) {
-            std::cout << mysql_error(conn.get()) << std::endl;
-            mysql_stmt_close(stmt);
-            _pool->ReturnConnection(std::move(conn));
-            return false;
-        }
-
-        MYSQL_BIND params[2];
-
-        memset(params, 0, sizeof(params));
-        params[0].buffer_type = MYSQL_TYPE_STRING;
-        params[0].buffer = (char*)user.c_str();
-        params[0].buffer_length = user.size();
-        params[0].length = &params[0].buffer_length;
-
-        params[1].buffer_type = MYSQL_TYPE_STRING;
-        params[1].buffer = (char*)password.c_str();
-        params[1].buffer_length = password.size();
-        params[1].length = &params[1].buffer_length;
-
-        if (mysql_stmt_bind_param(stmt, params) != 0) {
-            std::cout << mysql_stmt_error(stmt) << std::endl;
-            mysql_stmt_close(stmt);
-            _pool->ReturnConnection(std::move(conn));
-            return false;
-        }
-
-        if (mysql_stmt_execute(stmt) != 0) {
-            mysql_stmt_close(stmt);
-            _pool->ReturnConnection(std::move(conn));
-            return false;
-        }
-
-        if (mysql_stmt_store_result(stmt) != 0) {
-            mysql_stmt_close(stmt);
-            _pool->ReturnConnection(std::move(conn));
-            return false;
-        }
-
-        int count = mysql_stmt_num_rows(stmt);
-        if (count != 1) {
-            mysql_stmt_close(stmt);
-            _pool->ReturnConnection(std::move(conn));
-            return false;
-        }
-
-        mysql_stmt_close(stmt);
-        _pool->ReturnConnection(std::move(conn));
-        return true; // 返回1表示重置密码成功
-
-    } catch (const std::exception& e) {
-        if (conn != nullptr) {
-            _pool->ReturnConnection(std::move(conn));
-        }
-        std::cerr << "Exception: " << e.what() << std::endl;
+    if (!conn) {
         return false;
     }
-    return false;
+
+    Defer defer([this, &conn]() {
+        _pool->ReturnConnection(std::move(conn));
+    });
+
+    if (!conn) {
+        SPDLOG_ERROR("Failed to get connection from pool");
+        return false;
+    }
+    try {
+        mysqlpp::Query query = conn->query();
+        query << "Select * from user where name = ? or email = ?";
+        mysqlpp::StoreQueryResult res = query.store(user, user);
+        std::size_t count = res.num_rows();
+        if (count != 1) {
+            return false;
+        }
+        return true;
+    } catch (const mysqlpp::BadQuery& e) {
+        SPDLOG_ERROR("Bad query in CheckPwd: {}", e.what());
+        return false;
+    } catch (const mysqlpp::Exception& e) {
+        SPDLOG_ERROR("MySQL++ exception in CheckPwd: {}", e.what());
+        return false;
+    } catch (const std::exception& e) {
+        SPDLOG_ERROR("Exception in CheckPwd: {}", e.what());
+        return false;
+    }
 }
 
 std::shared_ptr<UserInfo> MysqlDao::GetUser(int uid)
 {
     auto conn = _pool->GetConnection();
-    std::shared_ptr<UserInfo> user_info = nullptr;
-    MYSQL_STMT* stmt = mysql_stmt_init(conn.get());
-    Defer defer([this, &conn, stmt]() {
-        _pool->ReturnConnection(std::move(conn));
-        mysql_stmt_close(stmt);
-    });
-    try {
-        if (conn == nullptr || stmt == nullptr) {
-            return user_info;
-        }
-
-        std::string query = "select name,email,password from user where uid = ?";
-
-        if (mysql_stmt_prepare(stmt, query.c_str(), query.size()) != 0) {
-            return user_info;
-        }
-
-        MYSQL_BIND params[1];
-        std::string uid_str = std::to_string(uid);
-        memset(params, 0, sizeof(params));
-        params[0].buffer_type = MYSQL_TYPE_STRING;
-        params[0].buffer = (char*)uid_str.c_str();
-        params[0].buffer_length = uid_str.size();
-        params[0].length = &params[0].buffer_length;
-
-        if (mysql_stmt_bind_param(stmt, params) != 0) {
-            return user_info;
-        }
-
-        if (mysql_stmt_execute(stmt) != 0) {
-            return user_info;
-        }
-
-        if (mysql_stmt_store_result(stmt) != 0) {
-            return user_info;
-        }
-
-        int count = mysql_stmt_num_rows(stmt);
-        if (count != 1) {
-            return user_info;
-        }
-
-        const unsigned int field_count = mysql_stmt_field_count(stmt);
-        if (field_count != 3) // pwd, name, email 暂时，之后添加
-        {
-            return user_info;
-        }
-
-        MYSQL_BIND result[3] = {};
-        char res_name[70] = { 0 };
-        char res_email[70] = { 0 };
-        char res_password[70] = { 0 };
-        result[0].buffer_type = MYSQL_TYPE_STRING;
-        result[0].buffer = &res_name;
-        result[0].buffer_length = sizeof(res_name);
-        result[0].length = &result[0].buffer_length;
-        // email
-        result[1].buffer_type = MYSQL_TYPE_STRING;
-        result[1].buffer = &res_email;
-        result[1].buffer_length = sizeof(res_email);
-        result[1].length = &result[1].buffer_length;
-        // password
-        result[2].buffer_type = MYSQL_TYPE_STRING;
-        result[2].buffer = &res_password;
-        result[2].buffer_length = sizeof(res_password);
-        result[2].length = &result[2].buffer_length;
-
-        if (mysql_stmt_bind_result(stmt, result) != 0) {
-            return user_info;
-        }
-
-        if (mysql_stmt_fetch(stmt) == 0) {
-            user_info = std::make_shared<UserInfo>();
-            user_info->name = std::string(res_name);
-            user_info->email = std::string(res_email);
-            user_info->password = std::string(res_password);
-        }
-
-    } catch (const std::exception& e) {
-        if (conn != nullptr) {
-            _pool->ReturnConnection(std::move(conn));
-        }
-        std::cerr << "Exception: " << e.what() << std::endl;
+    if (!conn) {
+        SPDLOG_ERROR("Failed to get connection from pool");
         return nullptr;
     }
-    return user_info;
+
+    try {
+        mysqlpp::Query query = conn->query();
+        query << "SELECT name, email, password FROM user WHERE uid = ?";
+
+        mysqlpp::StoreQueryResult res = query.store(uid);
+
+        /**
+                            jj["uid"] = uid;
+                            jj["name"] = user_info->name;
+                            jj["email"] = user_info->email;
+                            jj["nick"] = user_info->nick;
+                            jj["sex"] = user_info->sex;
+                            jj["desc"] = user_info->desc;
+                            jj["icon"] = user_info->icon;
+                            jj["token"] = token;
+         *
+         */
+
+        if (res && res.num_rows() == 1) {
+            auto user_info = std::make_shared<UserInfo>();
+            user_info->uid = uid;
+            user_info->name = std::string(res[0]["name"]);
+            user_info->email = std::string(res[0]["email"]);
+            user_info->status = std::stoi(res[0]["status"].c_str());
+
+            _pool->ReturnConnection(std::move(conn));
+            return user_info;
+        } else {
+            _pool->ReturnConnection(std::move(conn));
+            SPDLOG_DEBUG("User not found with uid: {}", uid);
+            return nullptr;
+        }
+
+    } catch (const mysqlpp::Exception& e) {
+        SPDLOG_ERROR("MySQL++ exception: {}", e.what());
+        if (conn)
+            _pool->ReturnConnection(std::move(conn));
+        return nullptr;
+    }
 }
-std::shared_ptr<UserInfo> MysqlDao::GetUser(const std::string& name)
+
+std::vector<std::shared_ptr<UserInfo>> MysqlDao::GetUser(const std::string& name)
 {
     auto conn = _pool->GetConnection();
-    std::shared_ptr<UserInfo> user_info = nullptr;
-    MYSQL_STMT* stmt = mysql_stmt_init(conn.get());
-    Defer defer([this, &conn, stmt]() {
-        _pool->ReturnConnection(std::move(conn));
-        mysql_stmt_close(stmt);
-    });
-    try {
-        if (conn == nullptr) {
-            _pool->ReturnConnection(std::move(conn));
-            return user_info;
-        }
-
-        std::string query = "select name,email,password from user where uid = ?";
-
-        if (mysql_stmt_prepare(stmt, query.c_str(), query.size()) != 0) {
-            return user_info;
-        }
-
-        MYSQL_BIND params[1];
-        memset(params, 0, sizeof(params));
-        params[0].buffer_type = MYSQL_TYPE_STRING;
-        params[0].buffer = (char*)name.c_str();
-        params[0].buffer_length = name.size();
-        params[0].length = &params[0].buffer_length;
-
-        if (mysql_stmt_bind_param(stmt, params) != 0) {
-            return user_info;
-        }
-
-        if (mysql_stmt_execute(stmt) != 0) {
-            return user_info;
-        }
-
-        if (mysql_stmt_store_result(stmt) != 0) {
-            return user_info;
-        }
-
-        int count = mysql_stmt_num_rows(stmt);
-        if (count != 1) {
-            return user_info;
-        }
-
-        const unsigned int field_count = mysql_stmt_field_count(stmt);
-        if (field_count != 3) // pwd, name, email 暂时，之后添加
-        {
-            return user_info;
-        }
-
-        MYSQL_BIND result[3] = {};
-        char res_name[70] = { 0 };
-        char res_email[70] = { 0 };
-        char res_password[70] = { 0 };
-        result[0].buffer_type = MYSQL_TYPE_STRING;
-        result[0].buffer = &res_name;
-        result[0].buffer_length = sizeof(res_name);
-        result[0].length = &result[0].buffer_length;
-        // email
-        result[1].buffer_type = MYSQL_TYPE_STRING;
-        result[1].buffer = &res_email;
-        result[1].buffer_length = sizeof(res_email);
-        result[1].length = &result[1].buffer_length;
-        // password
-        result[2].buffer_type = MYSQL_TYPE_STRING;
-        result[2].buffer = &res_password;
-        result[2].buffer_length = sizeof(res_password);
-        result[2].length = &result[2].buffer_length;
-
-        if (mysql_stmt_bind_result(stmt, result) != 0) {
-            return user_info;
-        }
-
-        if (mysql_stmt_fetch(stmt) == 0) {
-            user_info->name = res_name;
-            user_info->email = res_email;
-            user_info->password = res_password;
-        }
-
-    } catch (const std::exception& e) {
-        if (conn != nullptr) {
-            _pool->ReturnConnection(std::move(conn));
-        }
-        std::cerr << "Exception: " << e.what() << std::endl;
-        return nullptr;
+    if (!conn) {
+        SPDLOG_ERROR("Failed to get connection from pool");
+        return {};
     }
-    return user_info;
+
+    Defer defer([this, &conn]() {
+        _pool->ReturnConnection(std::move(conn));
+    });
+
+    try {
+        mysqlpp::Query query = conn->query();
+
+        // 使用预处理语句进行模糊查询
+        query << "SELECT * FROM user WHERE name LIKE ?";
+
+        std::string search_pattern = "%" + name + "%";
+        mysqlpp::StoreQueryResult res = query.store(search_pattern);
+
+        std::vector<std::shared_ptr<UserInfo>> users;
+
+        if (res) {
+            users.reserve(res.num_rows()); // 预分配内存
+            for (size_t i = 0; i < res.num_rows(); ++i) {
+                auto user_info = std::make_shared<UserInfo>();
+                user_info->uid = res[i]["uid"];
+                user_info->name = std::string(res[i]["name"]);
+                user_info->email = std::string(res[i]["email"]);
+                user_info->status = std::stoi(res[i]["status"].c_str());
+
+                users.push_back(user_info);
+            }
+            SPDLOG_DEBUG("Found {} users matching pattern: '{}'", users.size(), search_pattern);
+        }
+        return users;
+    } catch (const mysqlpp::Exception& e) {
+        SPDLOG_ERROR("MySQL++ exception: {}", e.what());
+        return {};
+    }
 }

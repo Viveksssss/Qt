@@ -1,35 +1,38 @@
 #pragma once
 #include <string>
 
-struct UserInfo{
-UserInfo()
-    : name("")
-    , password("")
-    , email("")
-    , nick("")
-    , desc("")
-    , icon("")
-    , back("")
-    , token("")
-    , sex(0)
-    , uid(0){}
+struct UserInfo {
+    UserInfo()
+        : name("")
+        , password("")
+        , email("")
+        , nick("")
+        , desc("")
+        , icon("")
+        , back("")
+        , token("")
+        , status(0)
+        , sex(0)
+        , uid(0)
+    {
+    }
 
-std::string name;
-std::string password;
-std::string email;
-std::string nick;
-std::string desc;
-std::string icon;
-std::string back;
-std::string token;
-int uid;
-int sex;
+    std::string name;
+    std::string password;
+    std::string email;
+    std::string nick;
+    std::string desc;
+    std::string icon;
+    std::string back;
+    std::string token;
+    int status;
+    int uid;
+    int sex;
 };
 
-
-struct ApplyInfo{
-    ApplyInfo(){}
-    ApplyInfo(int uid,const std::string&name,const std::string&desc,const std::string&nick,const std::string&icon,const std::string&email,int sex)
+struct ApplyInfo {
+    ApplyInfo() { }
+    ApplyInfo(int uid, const std::string& name, const std::string& desc, const std::string& nick, const std::string& icon, const std::string& email, int sex)
         : uid(uid)
         , name(name)
         , desc(desc)
@@ -38,7 +41,6 @@ struct ApplyInfo{
         , email(email)
         , sex(sex)
     {
-
     }
 
     std::string name;

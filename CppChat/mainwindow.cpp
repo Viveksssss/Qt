@@ -68,6 +68,7 @@ void MainWindow::filesClean()
     filters << "tmp_from_quick_chat_clipboard_*";
     filters << "tmp_from_quick_chat_aduio_*";
     filters << "tmp_from_quick_chat_video_*";
+    filters << "tmp_from_quick_chat_image_*";
     filters << "audio_*";
     filters << "video_*";
     QFileInfoList files = tempDir.entryInfoList(filters, QDir::Files);

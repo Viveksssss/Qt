@@ -9,8 +9,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR})
 cmake_policy(SET CMP0167 NEW)
 find_package(PkgConfig REQUIRED)
 find_package(Boost REQUIRED)
-# find_package(Boost 1.70 REQUIRED COMPONENTS filesystem system)
+# 
+# find_packageckage(Boost 1.70 REQUIRED COMPONENTS filesystem system)
 
+# pkg_check_modules(MYSQLPP REQUIRED mysql++)
 pkg_check_modules(MYSQL REQUIRED REQUIRED IMPORTED_TARGET mariadb)
 pkg_check_modules(SPEEDLOG REQUIRED REQUIRED IMPORTED_TARGET spdlog)
 pkg_check_modules(REDIS REQUIRED REQUIRED IMPORTED_TARGET hiredis)
@@ -50,9 +52,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::ABSL)
 target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::REDIS)
 target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::MYSQL)
 target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::SPEEDLOG)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${MYSQLPP_LIBRARIES})
 
-
-
+target_link_libraries(${PROJECT_NAME} PRIVATE /usr/lib/libmysqlpp.so)
 set(NO_WARNING_FILES
     grpc/message.grpc.cc
     grpc/message.grpc.h

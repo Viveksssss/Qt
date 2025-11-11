@@ -37,12 +37,13 @@ private:
     QHash<RequestType,std::function<void(RequestType,int,QByteArray)>>_handlers;
 public slots:
     void do_tcp_connect(ServerInfo); // from LoginScreen::on_tcp_connect
-    void do_send_data(RequestType requestType,QString data); // from TcpManager::to_send_data
+    void do_send_data(RequestType requestType,QByteArray data); // from TcpManager::to_send_data
 signals:
     void on_connect_success(bool success); // to LoginScreen::do_connect_success
-    void on_send_data(RequestType requestType,QString data); // to TcpManager::do_send_data
+    void on_send_data(RequestType requestType,QByteArray data); // to TcpManager::do_send_data
     void on_switch_interface();
     void on_login_failed(int);
+    void on_users_searched(QList<std::shared_ptr<UserInfo>>list);
 };
 
 #endif // TCPMANAGER_H

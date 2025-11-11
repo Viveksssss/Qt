@@ -27,10 +27,12 @@ bool MysqlManager::CheckPwd(const std::string& user, const std::string& password
     return _dao.CheckPwd(user, password, userInfo);
 }
 
-std::shared_ptr<UserInfo>MysqlManager::GetUser(int uid){
+std::shared_ptr<UserInfo> MysqlManager::GetUser(int uid)
+{
     return _dao.GetUser(uid);
 }
-std::shared_ptr<UserInfo>MysqlManager::GetUser(const std::string &name){
+std::vector<std::shared_ptr<UserInfo>> MysqlManager::GetUser(const std::string& name)
+{
     return _dao.GetUser(name);
 }
 

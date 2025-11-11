@@ -1,9 +1,6 @@
 #ifndef CHATGRPCSERVER_H
 #define CHATGRPCSERVER_H
 
-#include "../global/ConfigManager.h"
-#include "../global/Singleton.h"
-#include "../global/const.h"
 #include "../data/UserInfo.h"
 #include "RPCPool.h"
 #include "message.grpc.pb.h"
@@ -13,7 +10,6 @@
 #include <nlohmann/json.hpp>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/support/status.h>
-#include <unordered_map>
 
 
 using grpc::Channel;

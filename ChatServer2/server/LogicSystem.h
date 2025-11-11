@@ -21,7 +21,10 @@ public:
     void PostMsgToQueue(std::shared_ptr<LogicNode> msg);
     void RegisterCallBacks();
     void DealMsg();
-    bool GetBaseInfo(std::string base_key,int uid,std::shared_ptr<UserInfo>&userinfo);
+    bool GetBaseInfo(std::string base_key, int uid, std::shared_ptr<UserInfo>& userinfo);
+
+    bool isPureDigit(const std::string& str);
+    void GetSearchedUsers(const std::string& uid, json& j, bool only_digit);
 
 public:
     LogicSystem(std::size_t size = std::thread::hardware_concurrency());

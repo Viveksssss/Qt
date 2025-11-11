@@ -1,7 +1,6 @@
 #ifndef CHATGRPCCLIENT_H
 #define CHATGRPCCLIENT_H
 
-#include "../global/ConfigManager.h"
 #include "../global/Singleton.h"
 #include "../global/const.h"
 #include "../data/UserInfo.h"

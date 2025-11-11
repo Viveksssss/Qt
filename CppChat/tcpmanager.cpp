@@ -3,6 +3,8 @@
 #include <QAbstractSocket>
 #include <QDataStream>
 #include <QJsonObject>
+#include <QDir>
+#include <QJsonArray>
 
 TcpManager::~TcpManager() = default;
 
@@ -47,6 +49,93 @@ void TcpManager::initHandlers()
         // 发出信号跳转到主页面
         emit on_switch_interface();
     };
+
+
+    _handlers[RequestType::ID_SEARCH_USER_RSP] = [this](RequestType requestType,int len,QByteArray data){
+        QJsonDocument jsonDoc = QJsonDocument::fromJson(data);
+        if (jsonDoc.isNull()){
+            qDebug() << "Error occured about Json";
+            return;
+        }
+        QJsonObject jsonObj = jsonDoc.object();
+        if (!jsonObj.contains("error")){
+            int err = static_cast<int>(ErrorCodes::ERROR_JSON);
+            qDebug() << "AddFriend Failed,Error Is Json Parse Error " <<err;
+            return;
+        }
+
+        int err = jsonObj["error"].toInt();
+        if (err != static_cast<int>(ErrorCodes::SUCCESS)){
+            qDebug() << "AddFriend Failed,Error Is " << err;
+            return;
+        }
+
+        // 解析查询的用户列表
+        QList<std::shared_ptr<UserInfo>> userList;
+        if (jsonObj.contains("users") && jsonObj["users"].isArray()) {
+            QJsonArray usersArray = jsonObj["users"].toArray();
+
+            for (const QJsonValue &userValue : usersArray) {
+                if (userValue.isObject()) {
+                    QJsonObject userObj = userValue.toObject();
+
+                    QPixmap avatar;
+                    QString tempFilePath;
+                    if (userObj.contains("avatar")) {
+                        QString base64Avatar = userObj["avatar"].toString();
+                        QByteArray avatarData = QByteArray::fromBase64(base64Avatar.toUtf8());
+                        avatar.loadFromData(avatarData);
+                        tempFilePath = QDir::tempPath() + "/tmp_from_quick_chat_image_" + QUuid::createUuid().toString(QUuid::WithoutBraces) + ".png";
+                        // 如果加载失败，使用默认头像
+                        if (avatar.isNull()) {
+                            avatar = QPixmap(":/Resources/main/header.png");
+                        }
+                    } else {
+                        // 没有头像字段，使用默认头像
+                        avatar = QPixmap(":/Resources/main/header.png");
+                    }
+
+                    QString id = userObj["uid"].toString();
+                    QString email = userObj["email"].toString();
+                    QString name = userObj["name"].toString();
+                    QString status = userObj["status"].toString();
+                    QString avatar_path = tempFilePath;
+                    auto user_info = std::make_shared<UserInfo>(id,email,name,avatar_path,status);
+
+                    userList.append(user_info);
+                }
+            }
+
+        }
+        if(userList.count() == 0){
+            return;
+        }
+        emit on_users_searched(userList);
+    };
+
+    // TODO:
+    _handlers[RequestType::ID_ADD_FRIEND_REQ] = [this](RequestType requestType,int len,QByteArray data){
+      QJsonDocument jsonDoc = QJsonDocument::fromJson(data);
+      if (jsonDoc.isNull()){
+          qDebug() << "Error occured about Json";
+          return;
+      }
+      QJsonObject jsonObj = jsonDoc.object();
+      if (!jsonObj.contains("error")){
+          int err = static_cast<int>(ErrorCodes::ERROR_JSON);
+          qDebug() << "Login Failed,Error Is Json Parse Error " <<err;
+          emit on_login_failed(err);
+          return;
+      }
+
+      int err = jsonObj["error"].toInt();
+      if (err != static_cast<int>(ErrorCodes::SUCCESS)){
+          qDebug() << "Login Failed,Error Is " << err;
+          emit on_login_failed(err);
+          return;
+      }
+        //_____________________________;
+  };
 }
 
 void TcpManager::connections()
@@ -68,17 +157,13 @@ void TcpManager::connections()
                     return;
                 }
                 stream >> _msg_id >> _msg_len;
-                qDebug() << "Message Id:" << _msg_id << " len:" << _msg_len ;
             }
-
-            qDebug() << _buffer.size() << ":" << _msg_len;
             if (_buffer.size() < _msg_len){
                 _recv_pending = true;
                 return;
             }
             _recv_pending = false;
             QByteArray msgBody = _buffer.mid(4,_msg_len);
-            qDebug() << "Receive body:" <<msgBody;
             _buffer.remove(0,4+_msg_len);
             handleMessage(RequestType(_msg_id),_msg_len,msgBody);
         }
@@ -114,11 +199,14 @@ void TcpManager::do_tcp_connect(ServerInfo si)
     _socket.connectToHost(_host,_port);
 }
 
-void TcpManager::do_send_data(RequestType requestType, QString data)
+void TcpManager::do_send_data(RequestType requestType, QByteArray data)
 {
-    auto id =static_cast<uint16_t>(requestType);
 
-    QByteArray dataBytes = data.toUtf8();
+    if (!_socket.isOpen()){
+        qDebug() << "No Connection!";
+        return;
+    }
+    auto id =static_cast<uint16_t>(requestType);
 
     quint16 len = static_cast<quint16>(data.size());
 
@@ -129,7 +217,7 @@ void TcpManager::do_send_data(RequestType requestType, QString data)
 
     out << id << len;
 
-    block.append(dataBytes);
+    block.append(data);
 
     _socket.write(block);
 }

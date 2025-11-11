@@ -5,10 +5,14 @@
 #include "../global/Singleton.h"
 #include "../global/const.h"
 #include "RPCPool.h"
+#include "message.grpc.pb.h"
+#include "message.pb.h"
 
 using message::GetChatServerRequest;
 using message::GetChatServerResponse;
 using message::StatusService;
+using message::LoginResponse;
+using message::LoginRequest;
 
 class StatusClient : public Singleton<StatusClient> {
     friend class Singleton<StatusClient>;

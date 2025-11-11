@@ -1,10 +1,7 @@
 #ifndef MSGNODE_H
 #define MSGNODE_H
 
-#include "../global/const.h"
-
 #include <boost/asio.hpp>
-#include <string>
 
 class LogicSystem;
 class MsgNode {

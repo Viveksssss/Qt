@@ -90,5 +90,6 @@
         "variant": "cpp",
         "regex": "cpp",
         "*.inc": "cpp"
-    }
+    },
+
 }

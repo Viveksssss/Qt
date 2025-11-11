@@ -1,7 +1,6 @@
 #ifndef GATEWAYSERVER_H
 #define GATEWAYSERVER_H
 
-#include "../global/const.h"
 #include "../session/Session.h"
 #include <memory>
 #include <mutex>

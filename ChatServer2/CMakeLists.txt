@@ -48,10 +48,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::GRPCPP)
 target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::PROTOBUF)
 target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::ABSL)
 target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::REDIS)
-target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::MYSQL)
 target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::SPEEDLOG)
 
-
+target_link_libraries(${PROJECT_NAME} PRIVATE /usr/lib/libmysqlpp.so)
 
 set(NO_WARNING_FILES
     grpc/message.grpc.cc

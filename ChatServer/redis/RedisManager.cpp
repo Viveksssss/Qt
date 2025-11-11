@@ -1,8 +1,7 @@
 #include "RedisManager.h"
 #include "../global/ConfigManager.h"
-#include <iostream>
-#include <string>
 #include <spdlog/spdlog.h>
+#include <string>
 
 RedisManager::~RedisManager()
 {
@@ -147,8 +146,8 @@ bool RedisManager::HSet(const char* key, const char* hkey, const char* hvalue, s
     return true;
 }
 
-
-bool RedisManager::HDel(const std::string& key,const std::string&field){
+bool RedisManager::HDel(const std::string& key, const std::string& field)
+{
     auto* reply = execute("HDEL %s %s", key.c_str(), field.c_str());
     if (reply == NULL) {
         return false;
@@ -212,7 +211,6 @@ void RedisManager::Close()
         _isConnected = false;
         _pool.reset();
     }
-    std::cout << "Redis connection closed" << std::endl;
 }
 
 RedisPool::RedisPool(std::size_t size, const std::string& host, int port, const std::string& password)
@@ -234,6 +232,7 @@ RedisPool::RedisPool(std::size_t size, const std::string& host, int port, const 
         }
     }
     if (!success) {
+        SPDLOG_ERROR("Redis Connect Failed");
         exit(1);
     }
 }

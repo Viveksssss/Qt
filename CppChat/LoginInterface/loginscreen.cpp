@@ -47,7 +47,7 @@ void LoginScreen::do_connect_success(bool success)
         json["uid"] = _uid;
         json["token"] = _token;
         QJsonDocument doc(json);
-        QString str = doc.toJson(QJsonDocument::Indented);
+        QByteArray str = doc.toJson(QJsonDocument::Indented);
         emit TcpManager::GetInstance()->on_send_data(RequestType::ID_CHAT_LOGIN,str);
     }else{
         showToolTip(loginBtn,"网络异常");
@@ -184,8 +184,6 @@ void LoginScreen::initHandlers()
 
         _uid = si.uid;
         _token = si.token;
-
-        qDebug() << si.uid <<"\t" << si.host << "\t" << si.token << "\t" << si.email <<"\t" << si.name;
 
         emit on_tcp_connect(si);
     };

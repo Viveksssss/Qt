@@ -685,3 +685,28 @@ QScrollBar::sub-line:vertical {
 #cancelButton:hover {
     background-color: #545b62;
 }
+
+
+/* 针对 newsList 的样式 */
+QListWidget#newsList {
+    border: 1px solid #CCCCCC;
+    background-color: white;
+    border-radius: 5px;
+    outline: none;
+    font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+}
+
+QListWidget#newsList::item {
+    padding: 8px;
+    border-bottom: 1px solid #F0F0F0;
+    background-color: transparent;
+}
+
+QListWidget#newsList::item:hover {
+    background-color: #F5F5F5;
+}
+
+QListWidget#newsList::item:selected {
+    background-color: #E3F2FD;
+    color: #1976D2;
+}

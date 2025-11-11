@@ -1,9 +1,9 @@
 #include "global/ConfigManager.h"
 #include "global/const.h"
+#include "grpc/ChatGrpcServer.h"
 #include "redis/RedisManager.h"
 #include "server/AsioPool.h"
 #include "server/Server.h"
-#include "grpc/ChatGrpcServer.h"
 
 #include <boost/asio.hpp>
 #include <boost/asio/signal_set.hpp>
@@ -13,6 +13,8 @@
 #include <grpcpp/server_builder.h>
 #include <spdlog/spdlog.h>
 #include <thread>
+
+#include <mysql++/mysql++.h>
 
 int main()
 {
@@ -24,24 +26,23 @@ int main()
     auto server_name = cfg["SelfServer"]["name"];
 
     {
-        RedisManager::GetInstance()->HSet(LOGIN_COUNT_PREFIX,server_name,"0");
-        std::string server_address = cfg["SelfServer"]["host"]+":"+cfg["SelfServer"]["RPCPort"];
+        RedisManager::GetInstance()->HSet(LOGIN_COUNT_PREFIX, server_name, "0");
+        std::string server_address = cfg["SelfServer"]["host"] + ":" + cfg["SelfServer"]["RPCPort"];
         ChatGrpcServer service;
         grpc::ServerBuilder builder;
         builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
         builder.RegisterService(&service);
-        std::unique_ptr<grpc::Server>server(builder.BuildAndStart());
-        SPDLOG_INFO("Grpc Server On: {}",server_address);
+        std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
+        SPDLOG_INFO("Grpc Server On: {}", server_address);
 
-        std::thread grpc_server([&server](){
+        std::thread grpc_server([&server]() {
             server->Wait();
         });
-
 
         auto pool = AsioPool::GetInstance();
         boost::asio::io_context ioc;
         boost::asio::signal_set signals(ioc, SIGINT, SIGTERM);
-        signals.async_wait([&ioc, pool,&server](const boost::system::error_code& /*error*/, int /*signal_number*/) {
+        signals.async_wait([&ioc, pool, &server](const boost::system::error_code& /*error*/, int /*signal_number*/) {
             pool->Stop();
             ioc.stop();
             server->Shutdown();
@@ -51,8 +52,7 @@ int main()
         std::make_shared<Server>(ioc, std::stoi(port))->Start();
         ioc.run();
 
-
-        RedisManager::GetInstance()->HDel(LOGIN_COUNT_PREFIX,server_name);
+        RedisManager::GetInstance()->HDel(LOGIN_COUNT_PREFIX, server_name);
         RedisManager::GetInstance()->Close();
         grpc_server.join();
     }

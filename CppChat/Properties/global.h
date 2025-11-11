@@ -72,6 +72,22 @@ struct UserInfo{
     QString email;
     QString name;
     QString avatar;
+    QString status;
+
+    UserInfo(){}
+    UserInfo(const QString &id,const QString&name,const QString&avatar,const QString&status)
+        : id(id)
+        , name(name)
+        , avatar(avatar)
+        , status(status)
+    {}
+    UserInfo(const QString &id,const QString&email,const QString&name,const QString&avatar,const QString&status)
+        : id(id)
+        , email(email)
+        , name(name)
+        , avatar(avatar)
+        , status(status)
+    {}
 };
 
 extern QString gate_url_prefix;

@@ -1,5 +1,4 @@
 #include "AsioPool.h"
-#include <iostream>
 #include <memory>
 #include <spdlog/spdlog.h>
 

@@ -25,15 +25,20 @@ class StatusButton;
 class AnimatedSearchBox;
 class ClearAvatarLabel;
 class FriendAddDialog;
+class SideNews;
 class ChatTopArea : public QWidget
 {
     Q_OBJECT
 public:
     explicit ChatTopArea(QWidget *parent = nullptr);
+    ~ChatTopArea();
     void setupUI();
     void setupConnections();
 signals:
     void on_add_friend(const QString&uid);
+public slots:
+    void do_show_news();
+
 private:
     // 变量声明顺序和ui顺序相同
     StatusLabel *statusLabel;
@@ -42,13 +47,12 @@ private:
     ClearAvatarLabel *headerLabelFromChat;
     QPushButton *foldBtn;
     FriendAddDialog *friendAddDialog;
-
-    // QObject interface
-public:
-    // QWidget interface
+    QList<std::shared_ptr<UserInfo>>userLists;
 protected:
     void keyPressEvent(QKeyEvent *event);
+
 };
+
 
 
 class StatusLabel: public QLabel
@@ -60,7 +64,7 @@ public:
     void setStatus(const QString &status);
     QString getStatus();
     void setDotColor(const QColor &color);
-
+    void setEnabled(bool enabled = true);
 protected:
     void paintEvent(QPaintEvent *event) override;
 
@@ -70,6 +74,7 @@ private:
 
     bool isHovered = false;
     bool isPressed = false;
+    bool isEnabled = true;
 signals:
     void clicked();
     void hover();
@@ -82,6 +87,25 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event)override;
 };
 
+
+class FriendsItem :public QWidget
+{
+    Q_OBJECT
+public:
+    explicit FriendsItem(const QString&uid,const QString&avatar_path = "",const QString&name = "",const QString&status = "在线",QWidget*parent=nullptr);
+    void setupUI();
+    void setupConnections();
+signals:
+    void on_apply_clicked(const QString&uid);
+private:
+    QString _uid;
+    QString _avatar_path;
+    QString _name;
+    QPushButton *_applyFriend;
+    StatusLabel *_statusLabel;
+    QLabel * _avatar;
+    QString _status;
+};
 
 
 class AnimatedSearchBox : public QWidget
@@ -96,18 +120,23 @@ public:
 
 signals:
     void on_search_clicked(const QString &keyword);
-    void on_item_clicked(QListWidgetItem*item);
-private slots:
+public slots:
+    // 收缩查询框的按键
     void do_search_clcked();
+    // 根据输入内容决定是否发送请求
     void do_text_changed(const QString &text);
-    void do_item_clicked(QListWidgetItem*);
+    // 获取tcp回包，设置usersList
+    void do_users_searched(QList<std::shared_ptr<UserInfo>>)noexcept;
 
 private:
+    // 发送tcp请求，查询用户
+    void getSearchUsers(const QString &uid);
     int searchWidth() const { return textWidth; }
     void setSearchWidth(int width);
     void hideResults();
     void showResults();
-    void updateResults(const QString &keyword);
+    void addItemToResults();
+    void updateResults();
 
     void setupUI();
     void startAnimation();
@@ -121,6 +150,7 @@ private:
     QAction *clearAction;
     QGraphicsOpacityEffect *opacityEffect;
     QListWidget *resultList;
+    QList<std::shared_ptr<UserInfo>>usersList;
 
     int textWidth;
     bool isExpanded;

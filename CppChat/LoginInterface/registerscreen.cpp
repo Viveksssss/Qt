@@ -367,7 +367,6 @@ void RegisterScreen::do_get_code_finished(RequestType requestType,const QString&
     }
     // 解析json字符串
     QJsonDocument jsonDoc = QJsonDocument::fromJson(res.toUtf8());
-    qDebug() << jsonDoc.toJson();
     if(jsonDoc.isEmpty()){
         showTip(0,"接收数据异常为空,无法解析");
         return;

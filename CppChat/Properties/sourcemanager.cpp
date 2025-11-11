@@ -26,3 +26,18 @@ QPixmap SourceManager::getPixmap(const QString &path) const
 
     return path.endsWith("_rounded") ? rounded : rawPix;
 }
+
+void SourceManager::addPixmap(const QString &path)
+{
+    auto it = pixCache.find(path);
+    if (it != pixCache.end())
+    {
+        return;
+    }
+
+    QPixmap rawPix(path);
+    if (rawPix.isNull())
+        return;
+
+    pixCache.insert(path, rawPix);
+}

@@ -27,7 +27,7 @@ GetChatServerResponse StatusClient::GetChatServer(int uid)
 
 LoginResponse StatusClient::Login(int uid, const std::string& token)
 {
-    ClientContext context;
+    grpc::ClientContext context;
     LoginRequest request;
     LoginResponse reply;
     request.set_uid(uid);

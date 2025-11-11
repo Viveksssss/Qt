@@ -11,6 +11,7 @@ class SourceManager : public Singleton<SourceManager>
 public:
     SourceManager();
     QPixmap getPixmap(const QString &path)const;
+    void addPixmap(const QString&path);
 
 private:
     mutable QHash<QString, QPixmap> pixCache;
