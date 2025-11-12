@@ -6,15 +6,14 @@
 #include "message.grpc.pb.h"
 #include "message.pb.h"
 
-#include <grpcpp/server_context.h>
-#include <nlohmann/json.hpp>
 #include <grpcpp/grpcpp.h>
+#include <grpcpp/server_context.h>
 #include <grpcpp/support/status.h>
-
+#include <nlohmann/json.hpp>
 
 using grpc::Channel;
-using grpc::Status;
 using grpc::ClientContext;
+using grpc::Status;
 using message::ChatServer;
 
 using message::AddFriendRequest;
@@ -23,20 +22,54 @@ using message::AddFriendResponse;
 using message::AuthFriendRequest;
 using message::AuthFriendResponse;
 
-using message::GetChatServerResponse;
 using message::GetChatServerRequest;
+using message::GetChatServerResponse;
 
+using message::TextChatData;
 using message::TextChatMessageRequest;
 using message::TextChatMessageResponse;
-using message::TextChatData;
-class ChatGrpcServer final:public message::ChatServer::Service
-{
+class ChatGrpcServer final : public message::ChatServer::Service {
 public:
     ChatGrpcServer();
-    Status NotifyAddFriend(grpc::ServerContext*context,const AddFriendRequest*request,AddFriendResponse*response)override;
-    Status NotifyAuthFriend(grpc::ServerContext*context,const AuthFriendRequest*request,AuthFriendResponse*response)override;
-    Status NotifyTextChatMessage(grpc::ServerContext*context,const TextChatMessageRequest*request,TextChatMessageResponse*response)override;
-    bool GetBaseInfo(std::string base_key,int uid,std::shared_ptr<UserInfo>&userinfo);
+    
+    /**
+     * @brief 好友请求回包
+     *
+     * @param context
+     * @param request
+     * @param response
+     * @return Status
+     */
+    Status NotifyAddFriend(grpc::ServerContext* context, const AddFriendRequest* request, AddFriendResponse* response) override;
+    /**
+     * @brief 好友验证回包
+     *
+     * @param context
+     * @param request
+     * @param response
+     * @return Status
+     */
+    Status NotifyAuthFriend(grpc::ServerContext* context, const AuthFriendRequest* request, AuthFriendResponse* response) override;
+    /**
+     * @brief 聊天消息回包
+     *
+     * @param context
+     * @param request
+     * @param response
+     * @return Status
+     */
+    Status NotifyTextChatMessage(grpc::ServerContext* context, const TextChatMessageRequest* request, TextChatMessageResponse* response) override;
+    /**
+     * @brief 用户基本信息回包
+     *
+     * @param base_key
+     * @param uid
+     * @param userinfo
+     * @return true
+     * @return false
+     */
+    bool GetBaseInfo(std::string base_key, int uid, std::shared_ptr<UserInfo>& userinfo);
+
 private:
 };
 

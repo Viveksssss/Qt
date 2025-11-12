@@ -4,6 +4,7 @@
 #include "../Properties/global.h"
 #include "../httpmanager.h"
 #include "../tcpmanager.h"
+#include "../usermanager.h"
 
 #include <QApplication>
 #include <QScreen>

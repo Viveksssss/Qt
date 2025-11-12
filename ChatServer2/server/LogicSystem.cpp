@@ -3,12 +3,14 @@
 #include "../global/ConfigManager.h"
 #include "../global/UserManager.h"
 #include "../global/const.h"
+#include "../grpc/ChatGrpcClient.h"
 #include "../mysql/MysqlManager.h"
 #include "../redis/RedisManager.h"
 #include <algorithm>
 #include <boost/mpl/base.hpp>
 #include <cstdint>
 #include <spdlog/spdlog.h>
+#include <string>
 
 std::string thread_id_to_string(std::thread::id id)
 {
@@ -112,9 +114,65 @@ void LogicSystem::RegisterCallBacks()
             session->Send(j.dump(), static_cast<int>(MsgId::ID_SEARCH_USER_RSP));
         });
 
-        bool only_digit = isPureDigit(uid_str);
+        bool only_digit = IsPureDigit(uid_str);
 
         GetSearchedUsers(uid_str, j, only_digit);
+    };
+    /*
+     * * @brief 好友申请请求
+     */
+    _function_callbacks[MsgId::ID_ADD_FRIEND_REQ] = [this](std::shared_ptr<Session> session, uint16_t msg_id, const std::string& msg) {
+        json j = json::parse(msg);
+        j["error"] = ErrorCodes::SUCCESS;
+        Defer defer([this, &j, session]() {
+            // 回复请求方的信息
+            session->Send(j.dump(), static_cast<int>(MsgId::ID_ADD_FRIEND_RSP));
+        });
+        auto toUid = j["toUid"].get<int>();
+        auto fromUid = j["fromUid"].get<int>();
+        auto fromName = j["fromName"].get<std::string>();
+        auto fromSex = j["fromSex"].get<int>();
+        auto fromDesc = j["fromDesc"].get<std::string>();
+        // auto fromIcon = j["fromIcon"].get<std::string>();
+        auto fromIcon = j.value("fromIcon", "");
+
+        std::string uid_str = std::to_string(toUid);
+
+        MysqlManager::GetInstance()->AddFriendApply(std::to_string(fromUid), uid_str);
+
+        auto to_key = USERIP_PREFIX + uid_str;
+        std::string to_ip_value;
+        bool b_ip = RedisManager::GetInstance()->Get(to_key, to_ip_value);
+        if (!b_ip) {
+            return;
+        }
+
+        // 是对方发送请求信息
+        auto& cfg = ConfigManager::GetInstance();
+        auto self_name = cfg["SelfServer"]["name"];
+        if (to_ip_value == self_name) {
+            auto session = UserManager::GetInstance()->GetSession(toUid);
+            if (session) {
+                json jj;
+                jj["error"] = ErrorCodes::SUCCESS;
+                jj["fromUid"] = fromUid;
+                jj["fromName"] = fromName;
+                session->Send(jj.dump(), static_cast<int>(MsgId::ID_NOTIFY_ADD_FRIEND_REQ));
+            }
+            return;
+        }
+        // std::string base_key = USER_BASE_INFO_PREFIX + toUid;
+        // auto apply_info = std::make_shared<UserInfo>();
+        // bool b_info = GetBaseInfo(base_key, std::stoi(toUid),apply_info);
+        AddFriendRequest req;
+        req.set_fromuid(fromUid);
+        req.set_touid(toUid);
+        req.set_name(fromName);
+        req.set_desc(fromDesc);
+        req.set_sex(fromSex);
+        req.set_icon(fromIcon);
+
+        ChatGrpcClient::GetInstance()->NotifyAddFriend(to_ip_value, req);
     };
 }
 
@@ -178,7 +236,7 @@ bool LogicSystem::GetBaseInfo(std::string base_key, int uid, std::shared_ptr<Use
     return true;
 }
 
-bool LogicSystem::isPureDigit(const std::string& str)
+bool LogicSystem::IsPureDigit(const std::string& str)
 {
     if (str.empty())
         return false;

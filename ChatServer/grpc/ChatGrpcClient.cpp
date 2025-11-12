@@ -1,45 +1,81 @@
 #include "ChatGrpcClient.h"
 #include "../global/ConfigManager.h"
 #include "message.pb.h"
+#include <grpcpp/client_context.h>
 #include <new>
+#include <spdlog/spdlog.h>
 #include <string>
 
+AddFriendResponse ChatGrpcClient::NotifyAddFriend(std::string server_ip, const AddFriendRequest& req)
+{
+    SPDLOG_INFO("发送好友请求to:{}", req.touid());
+    SPDLOG_INFO("目标服务名称:{}", server_ip);
 
-//TODO:
-GetChatServerResponse ChatGrpcClient::NotifyAddFriend(std::string server_ip,const AddFriendRequest&){
-    GetChatServerResponse rsp;
+    AddFriendResponse rsp;
+    Defer defer([&rsp, &req]() {
+        rsp.set_error(static_cast<int>(ErrorCodes::SUCCESS));
+        rsp.set_fromuid(req.fromuid());
+        rsp.set_touid(req.touid());
+    });
+
+    auto it = _pool.find(server_ip);
+    if (it == _pool.end()) {
+        return rsp;
+    }
+
+    auto& pool = it->second;
+    SPDLOG_INFO("服务端ip,{}:{}", _pool[server_ip]->_host, _pool[server_ip]->_port);
+    grpc::ClientContext context;
+    auto stub = pool->GetConnection();
+    Defer defer2([&pool, &stub]() {
+        pool->ReturnConnection(std::move(stub));
+    });
+
+    Status status = stub->NotifyAddFriend(&context, req, &rsp);
+    if (!status.ok()) {
+        rsp.set_error(static_cast<int>(ErrorCodes::RPCFAILED));
+        return rsp;
+    }
+
     return rsp;
 }
-AuthFriendResponse ChatGrpcClient::NotifyAuthFriend(std::string server_ip,const AuthFriendRequest&){
+
+AuthFriendResponse ChatGrpcClient::NotifyAuthFriend(std::string server_ip, const AuthFriendRequest&)
+{
     AuthFriendResponse rsp;
+
     return rsp;
 }
-TextChatMessageResponse ChatGrpcClient::NotifyTextChatMessage(std::string server_ip,const TextChatMessageRequest&req,const json&){
+
+TextChatMessageResponse ChatGrpcClient::NotifyTextChatMessage(std::string server_ip, const TextChatMessageRequest& req, const json&)
+{
     TextChatMessageResponse rsp;
     return rsp;
 }
-bool ChatGrpcClient::GetBaseInfo(std::string base_key,int uid,std::shared_ptr<UserInfo>&userinfo){
+bool ChatGrpcClient::GetBaseInfo(std::string base_key, int uid, std::shared_ptr<UserInfo>& userinfo)
+{
     return true;
 }
 
-ChatGrpcClient::ChatGrpcClient(){
-    auto&cfg = ConfigManager::GetInstance();
+ChatGrpcClient::ChatGrpcClient()
+{
+    auto& cfg = ConfigManager::GetInstance();
     auto server_list = cfg["PeerServer"]["servers"];
 
-    std::vector<std::string>words;
+    std::vector<std::string> words;
     words.reserve(10);
 
     std::stringstream ss(server_list);
     std::string word;
 
-    while (std::getline(ss,word,',')){
+    while (std::getline(ss, word, ',')) {
         words.push_back(word);
     }
 
-    for(const auto&word:words){
-        if(cfg["word"]["name"].empty()){
+    for (const auto& word : words) {
+        if (cfg[word]["name"].empty()) {
             continue;
         }
-        _pool[cfg[word]["name"]] = std::make_unique<RPCPool<ChatServer, ChatServer::Stub>>(10,cfg[word]["host"],cfg[word]["port"]);
+        _pool[cfg[word]["name"]] = std::make_unique<RPCPool<ChatServer, ChatServer::Stub>>(10, cfg[word]["host"], cfg[word]["RPCPort"]);
     }
 }

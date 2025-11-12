@@ -35,7 +35,7 @@ public:
     void setupUI();
     void setupConnections();
 signals:
-    void on_add_friend(const QString&uid);
+    void on_search_friend(const QString&uid);
 public slots:
     void do_show_news();
 
@@ -92,13 +92,13 @@ class FriendsItem :public QWidget
 {
     Q_OBJECT
 public:
-    explicit FriendsItem(const QString&uid,const QString&avatar_path = "",const QString&name = "",const QString&status = "在线",QWidget*parent=nullptr);
+    explicit FriendsItem(int uid,const QString&avatar_path = "",const QString&name = "",const QString&status = "在线",QWidget*parent=nullptr);
     void setupUI();
     void setupConnections();
 signals:
-    void on_apply_clicked(const QString&uid);
+    void on_apply_clicked(int uid);
 private:
-    QString _uid;
+    int _uid;
     QString _avatar_path;
     QString _name;
     QPushButton *_applyFriend;
@@ -212,14 +212,14 @@ class FriendAddDialog : public QDialog
 
 public:
     explicit FriendAddDialog(QWidget *parent = nullptr);
-    void searchFriend(const QString&uid);
+    void searchFriend(int uid);
     void setUserName(const QString&name);
-    void setUserUid(const QString&uid);
+    void setUserUid(int uid);
     void setUserAvatar(const QString&avatar);
     void setRemark(const QString&remark);
 
 public slots:
-    void do_add_friend(const QString&uid);
+    void do_add_friend(int uid);
 private:
     void setupUI();
 
@@ -232,7 +232,7 @@ private:
     QPushButton *cancelButton;
     QTextEdit *remarkEdit;
 
-    QString userUid;
+    int userUid;
     QString userName;
     QString userAvatar;
 };

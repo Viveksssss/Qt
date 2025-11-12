@@ -16,7 +16,7 @@ struct FriendItem:public UserInfo {
         : message(message)
     {
         this->status = status;
-        this->id = id;
+        this->id = id.toInt();
         this->name = name;
         this->avatar = avatar;
     }

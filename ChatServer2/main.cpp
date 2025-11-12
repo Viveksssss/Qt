@@ -22,14 +22,18 @@ int main()
 
     auto& cfg = ConfigManager::GetInstance();
     auto server_name = cfg["SelfServer"]["name"];
+    SPDLOG_INFO("开始创建 ChatGrpcServer 实例...");
 
     {
         RedisManager::GetInstance()->HSet(LOGIN_COUNT_PREFIX,server_name,"0");
         std::string server_address = cfg["SelfServer"]["host"]+":"+cfg["SelfServer"]["RPCPort"];
+        SPDLOG_INFO("开始创建 ChatGrpcServer 实例...");
         ChatGrpcServer service;
+        SPDLOG_INFO("ChatGrpcServer 实例创建完成，地址: {}", (void*)&service);
         grpc::ServerBuilder builder;
         builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
         builder.RegisterService(&service);
+
         std::unique_ptr<grpc::Server>server(builder.BuildAndStart());
         SPDLOG_INFO("Grpc Server On: {}",server_address);
 

@@ -1,4 +1,5 @@
 #include "MysqlManager.h"
+#include "MysqlDao.h"
 MysqlManager::~MysqlManager()
 {
 }
@@ -25,6 +26,10 @@ int MysqlManager::ResetPassword(const std::string& email, const std::string& pas
 bool MysqlManager::CheckPwd(const std::string& user, const std::string& password, UserInfo& userInfo)
 {
     return _dao.CheckPwd(user, password, userInfo);
+}
+
+bool MysqlManager::AddFriendApply(const std::string&fromUid,const std::string&toUid){
+    return _dao.AddFriendApply(fromUid,toUid);
 }
 
 std::shared_ptr<UserInfo> MysqlManager::GetUser(int uid)

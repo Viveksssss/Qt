@@ -4,6 +4,7 @@
 #include "../global/const.h"
 #include <exception>
 #include <mysql++/connection.h>
+#include <mysql++/exceptions.h>
 #include <mysql++/result.h>
 #include <spdlog/spdlog.h>
 
@@ -247,6 +248,35 @@ bool MysqlDao::CheckPwd(const std::string& user, const std::string& password, Us
     }
 }
 
+bool MysqlDao::AddFriendApply(const std::string& fromUid, const std::string& toUid)
+{
+    auto conn = _pool->GetConnection();
+    if (!conn) {
+        SPDLOG_ERROR("Failed to get connection from pool");
+        return false;
+    }
+
+    Defer defer([this, &conn]() {
+        _pool->ReturnConnection(std::move(conn));
+    });
+
+    try {
+        mysqlpp::Query query = conn->query();
+        query << "Insert into friend_apply (from_uid,to_uid) values(%0q,%1q) "
+              << "on duplicate key update from_uid = from_uid,to_uid=to_uid";
+
+        query.parse();
+        mysqlpp::SimpleResult res = query.execute(fromUid, toUid);
+        int rowCount = res.rows();
+        return rowCount == 1;
+    } catch (const mysqlpp::Exception& e) {
+        SPDLOG_ERROR("MySQL++ exception: {}", e.what());
+        return false;
+    }
+
+    return true;
+}
+
 std::shared_ptr<UserInfo> MysqlDao::GetUser(int uid)
 {
     auto conn = _pool->GetConnection();
@@ -257,7 +287,8 @@ std::shared_ptr<UserInfo> MysqlDao::GetUser(int uid)
 
     try {
         mysqlpp::Query query = conn->query();
-        query << "SELECT name, email, password FROM user WHERE uid = ?";
+        query << "SELECT name, email, password,status FROM user WHERE uid = %0q";
+        query.parse();
 
         mysqlpp::StoreQueryResult res = query.store(uid);
 
@@ -278,7 +309,7 @@ std::shared_ptr<UserInfo> MysqlDao::GetUser(int uid)
             user_info->uid = uid;
             user_info->name = std::string(res[0]["name"]);
             user_info->email = std::string(res[0]["email"]);
-            user_info->status = std::stoi(res[0]["status"].c_str());
+            user_info->status = res[0]["status"];
 
             _pool->ReturnConnection(std::move(conn));
             return user_info;
@@ -326,7 +357,7 @@ std::vector<std::shared_ptr<UserInfo>> MysqlDao::GetUser(const std::string& name
                 user_info->uid = res[i]["uid"];
                 user_info->name = std::string(res[i]["name"]);
                 user_info->email = std::string(res[i]["email"]);
-                user_info->status = std::stoi(res[i]["status"].c_str());
+                user_info->status = static_cast<int>(res[i]["status"]);
 
                 users.push_back(user_info);
             }

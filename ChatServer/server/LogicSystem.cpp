@@ -3,6 +3,7 @@
 #include "../global/ConfigManager.h"
 #include "../global/UserManager.h"
 #include "../global/const.h"
+#include "../grpc/ChatGrpcClient.h"
 #include "../mysql/MysqlManager.h"
 #include "../redis/RedisManager.h"
 #include <algorithm>
@@ -116,20 +117,67 @@ void LogicSystem::RegisterCallBacks()
 
         GetSearchedUsers(uid_str, j, only_digit);
     };
-    /**
-     *  @brief 好友申请请求
+    /*
+     * * @brief 好友申请请求
      */
-     _function_callbacks[MsgId::ID_ADD_FRIEND_REQ] = [this](std::shared_ptr<Session> session, uint16_t msg_id, const std::string& msg){
-         json j = json::parse(msg);
-         j["error"] = ErrorCodes::SUCCESS;
-         Defer defer([this,&j,session](){
-             session->Send(j.dump(),static_cast<int>(MsgId::ID_ADD_FRIEND_RSP));
-         });
+    _function_callbacks[MsgId::ID_ADD_FRIEND_REQ] = [this](std::shared_ptr<Session> session, uint16_t msg_id, const std::string& msg) {
+        json j = json::parse(msg);
+        j["error"] = ErrorCodes::SUCCESS;
+        Defer defer([this, &j, session]() {
+            // 回复请求方的信息
+            session->Send(j.dump(), static_cast<int>(MsgId::ID_ADD_FRIEND_RSP));
+        });
+        auto toUid = j["toUid"].get<int>();
+        auto fromUid = j["fromUid"].get<int>();
+        auto fromName = j["fromName"].get<std::string>();
+        auto fromSex = j["fromSex"].get<int>();
+        auto fromDesc = j["fromDesc"].get<std::string>();
+        // auto fromIcon = j["fromIcon"].get<std::string>();
+        auto fromIcon = j.value("fromIcon", "");
 
+        std::string uid_str = std::to_string(toUid);
 
+        bool b_apply = MysqlManager::GetInstance()->AddFriendApply(std::to_string(fromUid), uid_str);
+        if (!b_apply) {
+            return;
+        }
 
-     };
+        auto to_key = USERIP_PREFIX + uid_str;
+        std::string to_ip_value;
+        bool b_ip = RedisManager::GetInstance()->Get(to_key, to_ip_value);
+        if (!b_ip) {
+            return;
+        }
 
+        // 是对方发送请求信息
+        auto& cfg = ConfigManager::GetInstance();
+        auto self_name = cfg["SelfServer"]["name"];
+        if (to_ip_value == self_name) {
+            auto session2 = UserManager::GetInstance()->GetSession(toUid);
+            if (session2) {
+                SPDLOG_INFO("FROM UID:{},to:{}", fromUid, toUid);
+                SPDLOG_INFO("FROM SESSION:{},to:{}", session->GetSessionId(), session2->GetSessionId());
+                json jj;
+                jj["error"] = ErrorCodes::SUCCESS;
+                jj["fromUid"] = fromUid;
+                jj["fromName"] = fromName;
+                session2->Send(jj.dump(), static_cast<int>(MsgId::ID_NOTIFY_ADD_FRIEND_REQ));
+            }
+            return;
+        }
+        // std::string base_key = USER_BASE_INFO_PREFIX + toUid;
+        // auto apply_info = std::make_shared<UserInfo>();
+        // bool b_info = GetBaseInfo(base_key, std::stoi(toUid),apply_info);
+        AddFriendRequest req;
+        req.set_fromuid(fromUid);
+        req.set_touid(toUid);
+        req.set_name(fromName);
+        req.set_desc(fromDesc);
+        req.set_sex(fromSex);
+        req.set_icon(fromIcon);
+
+        ChatGrpcClient::GetInstance()->NotifyAddFriend(to_ip_value, req);
+    };
 }
 
 void LogicSystem::DealMsg()

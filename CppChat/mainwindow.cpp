@@ -30,9 +30,6 @@ void MainWindow::setupUI()
     setWindowTitle("QuickChat");
     setObjectName("mainWindow");
 
-    UserManager::GetInstance()->SetName("大胖熊");
-    UserManager::GetInstance()->SetPeerName("小胖熊");
-    UserManager::GetInstance()->SetAvatar(QPixmap(":/Resources/main/header-0.png"));
 }
 
 void MainWindow::setConnections()

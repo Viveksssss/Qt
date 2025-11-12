@@ -21,6 +21,9 @@ TcpManager::TcpManager()
 
 void TcpManager::initHandlers()
 {
+    /**
+     * @brief 用户登录请求回包处理
+     */
     _handlers[RequestType::ID_CHAT_LOGIN_RSP] = [this](RequestType requestType,int len,QByteArray data){
         QJsonDocument jsonDoc = QJsonDocument::fromJson(data);
         if (jsonDoc.isNull()){
@@ -45,12 +48,17 @@ void TcpManager::initHandlers()
         UserManager::GetInstance()->SetName(jsonObj["name"].toString());
         UserManager::GetInstance()->SetEmail(jsonObj["email"].toString());
         UserManager::GetInstance()->SetToken(jsonObj["token"].toString());
+        UserManager::GetInstance()->SetSex(jsonObj["sex"].toInt());
+        UserManager::GetInstance()->SetUid(jsonObj["uid"].toInt());
+        UserManager::GetInstance()->SetIcon(jsonObj["icon"].toString());
 
         // 发出信号跳转到主页面
         emit on_switch_interface();
     };
 
-
+    /**
+     * @brief 用户搜索回包处理
+     */
     _handlers[RequestType::ID_SEARCH_USER_RSP] = [this](RequestType requestType,int len,QByteArray data){
         QJsonDocument jsonDoc = QJsonDocument::fromJson(data);
         if (jsonDoc.isNull()){
@@ -81,8 +89,8 @@ void TcpManager::initHandlers()
 
                     QPixmap avatar;
                     QString tempFilePath;
-                    if (userObj.contains("avatar")) {
-                        QString base64Avatar = userObj["avatar"].toString();
+                    if (userObj.contains("icon")) {
+                        QString base64Avatar = userObj["icon"].toString();
                         QByteArray avatarData = QByteArray::fromBase64(base64Avatar.toUtf8());
                         avatar.loadFromData(avatarData);
                         tempFilePath = QDir::tempPath() + "/tmp_from_quick_chat_image_" + QUuid::createUuid().toString(QUuid::WithoutBraces) + ".png";
@@ -95,12 +103,13 @@ void TcpManager::initHandlers()
                         avatar = QPixmap(":/Resources/main/header.png");
                     }
 
-                    QString id = userObj["uid"].toString();
+                    int id = userObj["uid"].toInt();
+                    int sex = userObj["sex"].toInt();
                     QString email = userObj["email"].toString();
                     QString name = userObj["name"].toString();
                     QString status = userObj["status"].toString();
                     QString avatar_path = tempFilePath;
-                    auto user_info = std::make_shared<UserInfo>(id,email,name,avatar_path,status);
+                    auto user_info = std::make_shared<UserInfo>(id,sex,email,name,avatar_path,status);
 
                     userList.append(user_info);
                 }
@@ -113,7 +122,9 @@ void TcpManager::initHandlers()
         emit on_users_searched(userList);
     };
 
-    // TODO:
+    /**
+     * @brief 用户添加请求回包处理
+     */
     _handlers[RequestType::ID_ADD_FRIEND_RSP] = [this](RequestType requestType,int len,QByteArray data){
       QJsonDocument jsonDoc = QJsonDocument::fromJson(data);
       if (jsonDoc.isNull()){
@@ -133,16 +144,55 @@ void TcpManager::initHandlers()
           return;
       }
       UserInfo info;
-      info.id = jsonObj["toUid"].toString();
-      info.email = jsonObj["email"].toString();
-      info.name = jsonObj["name"].toString();
-      info.status = jsonObj["status"].toString();
+      info.id = jsonObj["fromUid"].toInt();
+      info.email = jsonObj["fromEmail"].toString();
+      info.name = jsonObj["fromName"].toString();
+      info.status = jsonObj["fromStatus"].toString();
 
-      bool ok = jsonObj["accept"].toBool();
+
+      int status = jsonObj["accept"].toInt();
+      bool ok = status == 1;
       // TODO:
       qDebug() << "添加好友成功";
-      emit on_add_friend(std::move(info),ok);
+      emit on_add_friend(info,ok);
   };
+
+    /**
+     * @brief 用户请求添加好友通知处理
+     */
+
+    _handlers[RequestType::ID_NOTIFY_ADD_FRIEND_REQ] = [this](RequestType requestType,int len,QByteArray data){
+        QJsonDocument jsonDoc = QJsonDocument::fromJson(data);
+        if (jsonDoc.isNull()){
+            return;
+        }
+        QJsonObject jsonObj = jsonDoc.object();
+        if (!jsonObj.contains("error")){
+            int err = static_cast<int>(ErrorCodes::ERROR_JSON);
+            return;
+        }
+
+        int err = jsonObj["error"].toInt();
+        if (err != static_cast<int>(ErrorCodes::SUCCESS)){
+            return;
+        }
+
+        int from_uid = jsonObj["from_uid"].toInt();
+        int from_sex = jsonObj["sex"].toInt();
+        QString from_name = jsonObj["from_name"].toString();
+        QString from_icon = jsonObj["from_icon"].toString();
+        QString from_desc = jsonObj["from_desc"].toString();
+
+        auto user_info = std::make_shared<UserInfo>();
+        user_info->id = from_uid;
+        user_info->sex = from_sex;
+        user_info->name = from_name;
+        user_info->avatar = from_icon;
+        user_info->desc = from_desc;
+
+        qDebug() << "收到好友请求";
+        emit on_auth_friend(user_info);
+    };
 }
 
 void TcpManager::connections()

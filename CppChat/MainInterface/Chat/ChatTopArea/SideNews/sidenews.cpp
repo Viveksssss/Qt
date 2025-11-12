@@ -9,8 +9,14 @@ SideNews::SideNews(QWidget *parent)
     : QWidget{parent}
 {}
 
-// TODO:
-void SideNews::do_add_friend(UserInfo &&info, bool ok)
+void SideNews::do_add_friend(const UserInfo&info, bool ok)
 {
 
 }
+
+void SideNews::do_auth_friend(std::shared_ptr<UserInfo> info)
+{
+
+}
+
+

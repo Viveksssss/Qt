@@ -607,6 +607,7 @@ class ChatServer final {
   class StubInterface {
    public:
     virtual ~StubInterface() {}
+    // 后端调用，通知另一个服务器消息。
     virtual ::grpc::Status NotifyAddFriend(::grpc::ClientContext* context, const ::message::AddFriendRequest& request, ::message::AddFriendResponse* response) = 0;
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::message::AddFriendResponse>> AsyncNotifyAddFriend(::grpc::ClientContext* context, const ::message::AddFriendRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::message::AddFriendResponse>>(AsyncNotifyAddFriendRaw(context, request, cq));
@@ -645,6 +646,7 @@ class ChatServer final {
     class async_interface {
      public:
       virtual ~async_interface() {}
+      // 后端调用，通知另一个服务器消息。
       virtual void NotifyAddFriend(::grpc::ClientContext* context, const ::message::AddFriendRequest* request, ::message::AddFriendResponse* response, std::function<void(::grpc::Status)>) = 0;
       virtual void NotifyAddFriend(::grpc::ClientContext* context, const ::message::AddFriendRequest* request, ::message::AddFriendResponse* response, ::grpc::ClientUnaryReactor* reactor) = 0;
       virtual void ReplyAddFriend(::grpc::ClientContext* context, const ::message::ReplyFriendRequest* request, ::message::ReplyFriendResponse* response, std::function<void(::grpc::Status)>) = 0;
@@ -755,6 +757,7 @@ class ChatServer final {
    public:
     Service();
     virtual ~Service();
+    // 后端调用，通知另一个服务器消息。
     virtual ::grpc::Status NotifyAddFriend(::grpc::ServerContext* context, const ::message::AddFriendRequest* request, ::message::AddFriendResponse* response);
     virtual ::grpc::Status ReplyAddFriend(::grpc::ServerContext* context, const ::message::ReplyFriendRequest* request, ::message::ReplyFriendResponse* response);
     virtual ::grpc::Status SendChatMessage(::grpc::ServerContext* context, const ::message::SendChatMessageRequest* request, ::message::SendChatMessageResponse* response);

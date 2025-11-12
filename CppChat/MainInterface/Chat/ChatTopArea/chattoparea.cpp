@@ -79,7 +79,7 @@ void ChatTopArea::setupUI()
 void ChatTopArea::setupConnections()
 {
 
-    connect(this,&ChatTopArea::on_add_friend,searchBox,&AnimatedSearchBox::do_text_changed);
+    connect(this,&ChatTopArea::on_search_friend,searchBox,&AnimatedSearchBox::do_text_changed);
 
     connect(newsBtn,&QPushButton::clicked,this,&ChatTopArea::do_show_news);
 
@@ -141,7 +141,7 @@ void ChatTopArea::do_show_news()
 void ChatTopArea::keyPressEvent(QKeyEvent *event)
 {
     if(event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter){
-        emit on_add_friend(this->searchBox->getContent());
+        emit on_search_friend(this->searchBox->getContent());
         return ;
     }
     else{
@@ -423,6 +423,7 @@ void AnimatedSearchBox::showResults()
 }
 
 void AnimatedSearchBox::updateResults(){
+    resultList->clear();
     for (const std::shared_ptr<UserInfo> &user : this->usersList) {
         QListWidgetItem *item = new QListWidgetItem;
         item->setSizeHint(QSize(300,50));
@@ -513,7 +514,7 @@ FriendAddDialog::FriendAddDialog(QWidget *parent)
     setupUI();
 }
 
-void FriendAddDialog::searchFriend(const QString &uid)
+void FriendAddDialog::searchFriend(int uid)
 {
     QPixmap avatar(userAvatar);
     avatarLabel->setPixmap(avatar.scaled(50,50));
@@ -621,7 +622,7 @@ void FriendAddDialog::setUserName(const QString &name)
     this->userName = name;
 }
 
-void FriendAddDialog::setUserUid(const QString &uid)
+void FriendAddDialog::setUserUid(int uid)
 {
     this->userUid = uid;
 }
@@ -631,7 +632,7 @@ void FriendAddDialog::setUserAvatar(const QString &avatar)
     this->userAvatar = avatar;
 }
 
-void FriendAddDialog::do_add_friend(const QString &uid)
+void FriendAddDialog::do_add_friend(int uid)
 {
     setUserUid(uid);
     searchFriend(uid);
@@ -639,7 +640,7 @@ void FriendAddDialog::do_add_friend(const QString &uid)
 }
 
 
-FriendsItem::FriendsItem(const QString &uid, const QString &avatar_path, const QString &name, const QString &status,QWidget*parent)
+FriendsItem::FriendsItem(int uid, const QString &avatar_path, const QString &name, const QString &status,QWidget*parent)
     : QWidget(parent)
     , _uid(uid)
     , _avatar_path(avatar_path)
@@ -714,11 +715,15 @@ void FriendsItem::setupConnections()
 {
     connect(_applyFriend,&QPushButton::clicked,this,[this](bool){
         QJsonObject obj;
-        obj["fromUid"] = QString::number(UserManager::GetInstance()->GetUid());
+        obj["fromUid"] = static_cast<int>(UserManager::GetInstance()->GetUid());
         obj["fromName"] = UserManager::GetInstance()->GetName();
         obj["fromEmail"] = UserManager::GetInstance()->GetEmail();
+        obj["fromDesc"] = UserManager::GetInstance()->GetDesc();
+        obj["fromSex"] = UserManager::GetInstance()->GetSex();
+        obj["fromIcon"] = UserManager::GetInstance()->GetIcon();
 
-        obj["toUid"] = this->_uid;
+        obj["toUid"] = this->_uid; // 对方的uid
+        qDebug() << "fromUid" << obj["fromUid"] << "\t" << "toUid" << this->_uid;
 
         QJsonDocument doc;
         doc.setObject(obj);

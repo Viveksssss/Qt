@@ -15,6 +15,7 @@ public:
     int RegisterUser(const std::string& name, const std::string& email, const std::string& password);
     int ResetPassword(const std::string& email, const std::string& password);
     bool CheckPwd(const std::string& user, const std::string& password, UserInfo& userInfo);
+    bool AddFriendApply(const std::string&fromUid,const std::string&toUid);
     std::shared_ptr<UserInfo> GetUser(int uid);
     std::vector<std::shared_ptr<UserInfo>> GetUser(const std::string&);
 

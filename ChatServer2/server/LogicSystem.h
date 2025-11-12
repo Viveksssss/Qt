@@ -23,7 +23,7 @@ public:
     void DealMsg();
     bool GetBaseInfo(std::string base_key, int uid, std::shared_ptr<UserInfo>& userinfo);
 
-    bool isPureDigit(const std::string& str);
+    bool IsPureDigit(const std::string& str);
     void GetSearchedUsers(const std::string& uid, json& j, bool only_digit);
 
 public:

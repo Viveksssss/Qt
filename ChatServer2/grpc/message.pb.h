@@ -926,7 +926,7 @@ class ReplyFriendResponse final : public ::google::protobuf::Message
   // accessors -------------------------------------------------------
   enum : int {
     kErrorFieldNumber = 1,
-    kReplyUidFieldNumber = 2,
+    kFromUidFieldNumber = 2,
     kToUidFieldNumber = 3,
   };
   // int32 error = 1;
@@ -939,14 +939,14 @@ class ReplyFriendResponse final : public ::google::protobuf::Message
   void _internal_set_error(::int32_t value);
 
   public:
-  // int32 replyUid = 2;
-  void clear_replyuid() ;
-  ::int32_t replyuid() const;
-  void set_replyuid(::int32_t value);
+  // int32 fromUid = 2;
+  void clear_fromuid() ;
+  ::int32_t fromuid() const;
+  void set_fromuid(::int32_t value);
 
   private:
-  ::int32_t _internal_replyuid() const;
-  void _internal_set_replyuid(::int32_t value);
+  ::int32_t _internal_fromuid() const;
+  void _internal_set_fromuid(::int32_t value);
 
   public:
   // int32 toUid = 3;
@@ -986,7 +986,7 @@ class ReplyFriendResponse final : public ::google::protobuf::Message
     ::google::protobuf::internal::HasBits<1> _has_bits_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     ::int32_t error_;
-    ::int32_t replyuid_;
+    ::int32_t fromuid_;
     ::int32_t touid_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -1140,18 +1140,18 @@ class ReplyFriendRequest final : public ::google::protobuf::Message
 
   // accessors -------------------------------------------------------
   enum : int {
-    kReplyUidFieldNumber = 1,
+    kFromUidFieldNumber = 1,
     kAgreeFieldNumber = 2,
     kToUidFieldNumber = 3,
   };
-  // int32 replyUid = 1;
-  void clear_replyuid() ;
-  ::int32_t replyuid() const;
-  void set_replyuid(::int32_t value);
+  // int32 fromUid = 1;
+  void clear_fromuid() ;
+  ::int32_t fromuid() const;
+  void set_fromuid(::int32_t value);
 
   private:
-  ::int32_t _internal_replyuid() const;
-  void _internal_set_replyuid(::int32_t value);
+  ::int32_t _internal_fromuid() const;
+  void _internal_set_fromuid(::int32_t value);
 
   public:
   // bool agree = 2;
@@ -1200,7 +1200,7 @@ class ReplyFriendRequest final : public ::google::protobuf::Message
         const ReplyFriendRequest& from_msg);
     ::google::protobuf::internal::HasBits<1> _has_bits_;
     ::google::protobuf::internal::CachedSize _cached_size_;
-    ::int32_t replyuid_;
+    ::int32_t fromuid_;
     bool agree_;
     ::int32_t touid_;
     PROTOBUF_TSAN_DECLARE_MEMBER
@@ -3056,7 +3056,7 @@ class AddFriendResponse final : public ::google::protobuf::Message
   // accessors -------------------------------------------------------
   enum : int {
     kErrorFieldNumber = 1,
-    kApplyUidFieldNumber = 2,
+    kFromUidFieldNumber = 2,
     kToUidFieldNumber = 3,
   };
   // int32 error = 1;
@@ -3069,14 +3069,14 @@ class AddFriendResponse final : public ::google::protobuf::Message
   void _internal_set_error(::int32_t value);
 
   public:
-  // int32 applyUid = 2;
-  void clear_applyuid() ;
-  ::int32_t applyuid() const;
-  void set_applyuid(::int32_t value);
+  // int32 fromUid = 2;
+  void clear_fromuid() ;
+  ::int32_t fromuid() const;
+  void set_fromuid(::int32_t value);
 
   private:
-  ::int32_t _internal_applyuid() const;
-  void _internal_set_applyuid(::int32_t value);
+  ::int32_t _internal_fromuid() const;
+  void _internal_set_fromuid(::int32_t value);
 
   public:
   // int32 toUid = 3;
@@ -3116,7 +3116,7 @@ class AddFriendResponse final : public ::google::protobuf::Message
     ::google::protobuf::internal::HasBits<1> _has_bits_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     ::int32_t error_;
-    ::int32_t applyuid_;
+    ::int32_t fromuid_;
     ::int32_t touid_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -3272,8 +3272,10 @@ class AddFriendRequest final : public ::google::protobuf::Message
   enum : int {
     kNameFieldNumber = 2,
     kDescFieldNumber = 3,
-    kApplyUidFieldNumber = 1,
+    kIconFieldNumber = 6,
+    kFromUidFieldNumber = 1,
     kToUidFieldNumber = 4,
+    kSexFieldNumber = 5,
   };
   // string name = 2;
   void clear_name() ;
@@ -3305,14 +3307,29 @@ class AddFriendRequest final : public ::google::protobuf::Message
   ::std::string* PROTOBUF_NONNULL _internal_mutable_desc();
 
   public:
-  // int32 applyUid = 1;
-  void clear_applyuid() ;
-  ::int32_t applyuid() const;
-  void set_applyuid(::int32_t value);
+  // string icon = 6;
+  void clear_icon() ;
+  const ::std::string& icon() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_icon(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_icon();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_icon();
+  void set_allocated_icon(::std::string* PROTOBUF_NULLABLE value);
 
   private:
-  ::int32_t _internal_applyuid() const;
-  void _internal_set_applyuid(::int32_t value);
+  const ::std::string& _internal_icon() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_icon(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_icon();
+
+  public:
+  // int32 fromUid = 1;
+  void clear_fromuid() ;
+  ::int32_t fromuid() const;
+  void set_fromuid(::int32_t value);
+
+  private:
+  ::int32_t _internal_fromuid() const;
+  void _internal_set_fromuid(::int32_t value);
 
   public:
   // int32 toUid = 4;
@@ -3325,12 +3342,22 @@ class AddFriendRequest final : public ::google::protobuf::Message
   void _internal_set_touid(::int32_t value);
 
   public:
+  // int32 sex = 5;
+  void clear_sex() ;
+  ::int32_t sex() const;
+  void set_sex(::int32_t value);
+
+  private:
+  ::int32_t _internal_sex() const;
+  void _internal_set_sex(::int32_t value);
+
+  public:
   // @@protoc_insertion_point(class_scope:message.AddFriendRequest)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<2, 4,
-                                   0, 41,
+  static const ::google::protobuf::internal::TcParseTable<3, 6,
+                                   0, 45,
                                    2>
       _table_;
 
@@ -3353,8 +3380,10 @@ class AddFriendRequest final : public ::google::protobuf::Message
     ::google::protobuf::internal::CachedSize _cached_size_;
     ::google::protobuf::internal::ArenaStringPtr name_;
     ::google::protobuf::internal::ArenaStringPtr desc_;
-    ::int32_t applyuid_;
+    ::google::protobuf::internal::ArenaStringPtr icon_;
+    ::int32_t fromuid_;
     ::int32_t touid_;
+    ::int32_t sex_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
   union { Impl_ _impl_; };
@@ -4523,28 +4552,28 @@ inline void LoginResponse::set_allocated_token(::std::string* PROTOBUF_NULLABLE 
 
 // AddFriendRequest
 
-// int32 applyUid = 1;
-inline void AddFriendRequest::clear_applyuid() {
+// int32 fromUid = 1;
+inline void AddFriendRequest::clear_fromuid() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.applyuid_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000004U;
+  _impl_.fromuid_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000008U;
 }
-inline ::int32_t AddFriendRequest::applyuid() const {
-  // @@protoc_insertion_point(field_get:message.AddFriendRequest.applyUid)
-  return _internal_applyuid();
+inline ::int32_t AddFriendRequest::fromuid() const {
+  // @@protoc_insertion_point(field_get:message.AddFriendRequest.fromUid)
+  return _internal_fromuid();
 }
-inline void AddFriendRequest::set_applyuid(::int32_t value) {
-  _internal_set_applyuid(value);
-  _impl_._has_bits_[0] |= 0x00000004U;
-  // @@protoc_insertion_point(field_set:message.AddFriendRequest.applyUid)
+inline void AddFriendRequest::set_fromuid(::int32_t value) {
+  _internal_set_fromuid(value);
+  _impl_._has_bits_[0] |= 0x00000008U;
+  // @@protoc_insertion_point(field_set:message.AddFriendRequest.fromUid)
 }
-inline ::int32_t AddFriendRequest::_internal_applyuid() const {
+inline ::int32_t AddFriendRequest::_internal_fromuid() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.applyuid_;
+  return _impl_.fromuid_;
 }
-inline void AddFriendRequest::_internal_set_applyuid(::int32_t value) {
+inline void AddFriendRequest::_internal_set_fromuid(::int32_t value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.applyuid_ = value;
+  _impl_.fromuid_ = value;
 }
 
 // string name = 2;
@@ -4681,7 +4710,7 @@ inline void AddFriendRequest::set_allocated_desc(::std::string* PROTOBUF_NULLABL
 inline void AddFriendRequest::clear_touid() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.touid_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000008U;
+  _impl_._has_bits_[0] &= ~0x00000010U;
 }
 inline ::int32_t AddFriendRequest::touid() const {
   // @@protoc_insertion_point(field_get:message.AddFriendRequest.toUid)
@@ -4689,7 +4718,7 @@ inline ::int32_t AddFriendRequest::touid() const {
 }
 inline void AddFriendRequest::set_touid(::int32_t value) {
   _internal_set_touid(value);
-  _impl_._has_bits_[0] |= 0x00000008U;
+  _impl_._has_bits_[0] |= 0x00000010U;
   // @@protoc_insertion_point(field_set:message.AddFriendRequest.toUid)
 }
 inline ::int32_t AddFriendRequest::_internal_touid() const {
@@ -4699,6 +4728,95 @@ inline ::int32_t AddFriendRequest::_internal_touid() const {
 inline void AddFriendRequest::_internal_set_touid(::int32_t value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.touid_ = value;
+}
+
+// int32 sex = 5;
+inline void AddFriendRequest::clear_sex() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.sex_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000020U;
+}
+inline ::int32_t AddFriendRequest::sex() const {
+  // @@protoc_insertion_point(field_get:message.AddFriendRequest.sex)
+  return _internal_sex();
+}
+inline void AddFriendRequest::set_sex(::int32_t value) {
+  _internal_set_sex(value);
+  _impl_._has_bits_[0] |= 0x00000020U;
+  // @@protoc_insertion_point(field_set:message.AddFriendRequest.sex)
+}
+inline ::int32_t AddFriendRequest::_internal_sex() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.sex_;
+}
+inline void AddFriendRequest::_internal_set_sex(::int32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.sex_ = value;
+}
+
+// string icon = 6;
+inline void AddFriendRequest::clear_icon() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.icon_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000004U;
+}
+inline const ::std::string& AddFriendRequest::icon() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:message.AddFriendRequest.icon)
+  return _internal_icon();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void AddFriendRequest::set_icon(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_._has_bits_[0] |= 0x00000004U;
+  _impl_.icon_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:message.AddFriendRequest.icon)
+}
+inline ::std::string* PROTOBUF_NONNULL AddFriendRequest::mutable_icon()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::std::string* _s = _internal_mutable_icon();
+  // @@protoc_insertion_point(field_mutable:message.AddFriendRequest.icon)
+  return _s;
+}
+inline const ::std::string& AddFriendRequest::_internal_icon() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.icon_.Get();
+}
+inline void AddFriendRequest::_internal_set_icon(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_._has_bits_[0] |= 0x00000004U;
+  _impl_.icon_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL AddFriendRequest::_internal_mutable_icon() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_._has_bits_[0] |= 0x00000004U;
+  return _impl_.icon_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE AddFriendRequest::release_icon() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:message.AddFriendRequest.icon)
+  if ((_impl_._has_bits_[0] & 0x00000004U) == 0) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000004U;
+  auto* released = _impl_.icon_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.icon_.Set("", GetArena());
+  }
+  return released;
+}
+inline void AddFriendRequest::set_allocated_icon(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000004U;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000004U;
+  }
+  _impl_.icon_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.icon_.IsDefault()) {
+    _impl_.icon_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:message.AddFriendRequest.icon)
 }
 
 // -------------------------------------------------------------------
@@ -4729,28 +4847,28 @@ inline void AddFriendResponse::_internal_set_error(::int32_t value) {
   _impl_.error_ = value;
 }
 
-// int32 applyUid = 2;
-inline void AddFriendResponse::clear_applyuid() {
+// int32 fromUid = 2;
+inline void AddFriendResponse::clear_fromuid() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.applyuid_ = 0;
+  _impl_.fromuid_ = 0;
   _impl_._has_bits_[0] &= ~0x00000002U;
 }
-inline ::int32_t AddFriendResponse::applyuid() const {
-  // @@protoc_insertion_point(field_get:message.AddFriendResponse.applyUid)
-  return _internal_applyuid();
+inline ::int32_t AddFriendResponse::fromuid() const {
+  // @@protoc_insertion_point(field_get:message.AddFriendResponse.fromUid)
+  return _internal_fromuid();
 }
-inline void AddFriendResponse::set_applyuid(::int32_t value) {
-  _internal_set_applyuid(value);
+inline void AddFriendResponse::set_fromuid(::int32_t value) {
+  _internal_set_fromuid(value);
   _impl_._has_bits_[0] |= 0x00000002U;
-  // @@protoc_insertion_point(field_set:message.AddFriendResponse.applyUid)
+  // @@protoc_insertion_point(field_set:message.AddFriendResponse.fromUid)
 }
-inline ::int32_t AddFriendResponse::_internal_applyuid() const {
+inline ::int32_t AddFriendResponse::_internal_fromuid() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.applyuid_;
+  return _impl_.fromuid_;
 }
-inline void AddFriendResponse::_internal_set_applyuid(::int32_t value) {
+inline void AddFriendResponse::_internal_set_fromuid(::int32_t value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.applyuid_ = value;
+  _impl_.fromuid_ = value;
 }
 
 // int32 toUid = 3;
@@ -4781,28 +4899,28 @@ inline void AddFriendResponse::_internal_set_touid(::int32_t value) {
 
 // ReplyFriendRequest
 
-// int32 replyUid = 1;
-inline void ReplyFriendRequest::clear_replyuid() {
+// int32 fromUid = 1;
+inline void ReplyFriendRequest::clear_fromuid() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.replyuid_ = 0;
+  _impl_.fromuid_ = 0;
   _impl_._has_bits_[0] &= ~0x00000001U;
 }
-inline ::int32_t ReplyFriendRequest::replyuid() const {
-  // @@protoc_insertion_point(field_get:message.ReplyFriendRequest.replyUid)
-  return _internal_replyuid();
+inline ::int32_t ReplyFriendRequest::fromuid() const {
+  // @@protoc_insertion_point(field_get:message.ReplyFriendRequest.fromUid)
+  return _internal_fromuid();
 }
-inline void ReplyFriendRequest::set_replyuid(::int32_t value) {
-  _internal_set_replyuid(value);
+inline void ReplyFriendRequest::set_fromuid(::int32_t value) {
+  _internal_set_fromuid(value);
   _impl_._has_bits_[0] |= 0x00000001U;
-  // @@protoc_insertion_point(field_set:message.ReplyFriendRequest.replyUid)
+  // @@protoc_insertion_point(field_set:message.ReplyFriendRequest.fromUid)
 }
-inline ::int32_t ReplyFriendRequest::_internal_replyuid() const {
+inline ::int32_t ReplyFriendRequest::_internal_fromuid() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.replyuid_;
+  return _impl_.fromuid_;
 }
-inline void ReplyFriendRequest::_internal_set_replyuid(::int32_t value) {
+inline void ReplyFriendRequest::_internal_set_fromuid(::int32_t value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.replyuid_ = value;
+  _impl_.fromuid_ = value;
 }
 
 // bool agree = 2;
@@ -4881,28 +4999,28 @@ inline void ReplyFriendResponse::_internal_set_error(::int32_t value) {
   _impl_.error_ = value;
 }
 
-// int32 replyUid = 2;
-inline void ReplyFriendResponse::clear_replyuid() {
+// int32 fromUid = 2;
+inline void ReplyFriendResponse::clear_fromuid() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.replyuid_ = 0;
+  _impl_.fromuid_ = 0;
   _impl_._has_bits_[0] &= ~0x00000002U;
 }
-inline ::int32_t ReplyFriendResponse::replyuid() const {
-  // @@protoc_insertion_point(field_get:message.ReplyFriendResponse.replyUid)
-  return _internal_replyuid();
+inline ::int32_t ReplyFriendResponse::fromuid() const {
+  // @@protoc_insertion_point(field_get:message.ReplyFriendResponse.fromUid)
+  return _internal_fromuid();
 }
-inline void ReplyFriendResponse::set_replyuid(::int32_t value) {
-  _internal_set_replyuid(value);
+inline void ReplyFriendResponse::set_fromuid(::int32_t value) {
+  _internal_set_fromuid(value);
   _impl_._has_bits_[0] |= 0x00000002U;
-  // @@protoc_insertion_point(field_set:message.ReplyFriendResponse.replyUid)
+  // @@protoc_insertion_point(field_set:message.ReplyFriendResponse.fromUid)
 }
-inline ::int32_t ReplyFriendResponse::_internal_replyuid() const {
+inline ::int32_t ReplyFriendResponse::_internal_fromuid() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.replyuid_;
+  return _impl_.fromuid_;
 }
-inline void ReplyFriendResponse::_internal_set_replyuid(::int32_t value) {
+inline void ReplyFriendResponse::_internal_set_fromuid(::int32_t value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.replyuid_ = value;
+  _impl_.fromuid_ = value;
 }
 
 // int32 toUid = 3;

@@ -1,4 +1,6 @@
 #include "../session/Session.h"
+#include "../global/const.h"
+#include "../redis/RedisManager.h"
 #include "../server/LogicSystem.h"
 #include "../server/Server.h"
 #include <boost/uuid/uuid_generators.hpp>
@@ -52,6 +54,7 @@ void Session::Close()
         SPDLOG_WARN("Socket close error: {}", ec.message());
     }
     SPDLOG_INFO("Session {} disconnected!", _session_id);
+    RedisManager::GetInstance()->Del(USERIP_PREFIX + std::to_string(_uid));
 }
 
 void Session::Send(const char* msg, int max_length, uint16_t msg_id)

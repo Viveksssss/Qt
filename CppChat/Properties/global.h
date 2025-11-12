@@ -68,28 +68,37 @@ struct ServerInfo{
 };
 
 struct UserInfo{
-    QString id;
+    int id;
+    int sex;
     QString email;
     QString name;
     QString avatar;
     QString status;
+    QString desc;
 
     UserInfo(){}
-    UserInfo(const QString &id,const QString&name,const QString&avatar,const QString&status)
+    UserInfo(int id,const QString&name,const QString&avatar,const QString&status)
         : id(id)
         , name(name)
         , avatar(avatar)
         , status(status)
     {}
-    UserInfo(const QString &id,const QString&email,const QString&name,const QString&avatar,const QString&status)
+    UserInfo(int id,int sex,const QString&email,const QString&name,const QString&avatar,const QString&status)
         : id(id)
         , email(email)
         , name(name)
         , avatar(avatar)
         , status(status)
     {}
+    UserInfo(int id,int sex,const QString&email,const QString&name,const QString&avatar,const QString&status,QString desc)
+        : id(id)
+        , email(email)
+        , name(name)
+        , avatar(avatar)
+        , status(status)
+        , desc(desc)
+    {}
 };
-
 extern QString gate_url_prefix;
 
 extern std::function<QString(QString)>cryptoString;

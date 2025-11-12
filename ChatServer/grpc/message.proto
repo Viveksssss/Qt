@@ -43,27 +43,29 @@ service StatusService{
 }
 
 message AddFriendRequest{
-    int32 applyUid=1;
+    int32 fromUid=1;
     string name=2;
     string desc = 3;
     int32 toUid=4;
+    int32 sex = 5;
+    string icon =6;
 }
 
 message AddFriendResponse{
     int32 error=1;
-    int32 applyUid=2;
+    int32 fromUid=2;
     int32 toUid=3;
 }
 
 message ReplyFriendRequest{
-    int32 replyUid = 1;
+    int32 fromUid = 1;
     bool agree = 2;
     int32 toUid=3;
 }
 
 message ReplyFriendResponse{
     int32 error=1;
-    int32 replyUid=2;
+    int32 fromUid=2;
     int32 toUid=3;
 }
 

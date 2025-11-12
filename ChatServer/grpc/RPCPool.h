@@ -63,13 +63,14 @@ public:
         _connections.push(std::move(context));
         _cv.notify_one();
     }
+    std::string _host;
+    std::string _port;
 
 private:
     std::shared_ptr<grpc::Channel> _channel;
     std::atomic<bool> _stop;
     std::size_t _size;
-    std::string _host;
-    std::string _port;
+
     std::queue<std::unique_ptr<ServiceStubType>> _connections;
     std::mutex _mutex;
     std::condition_variable _cv;

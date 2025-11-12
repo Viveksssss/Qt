@@ -1,22 +1,21 @@
 #ifndef CHATGRPCCLIENT_H
 #define CHATGRPCCLIENT_H
 
+#include "../data/UserInfo.h"
 #include "../global/Singleton.h"
 #include "../global/const.h"
-#include "../data/UserInfo.h"
 #include "RPCPool.h"
 #include "message.grpc.pb.h"
 #include "message.pb.h"
 
-#include <nlohmann/json.hpp>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/support/status.h>
+#include <nlohmann/json.hpp>
 #include <unordered_map>
 
-
 using grpc::Channel;
-using grpc::Status;
 using grpc::ClientContext;
+using grpc::Status;
 using message::ChatServer;
 
 using message::AddFriendRequest;
@@ -25,29 +24,55 @@ using message::AddFriendResponse;
 using message::AuthFriendRequest;
 using message::AuthFriendResponse;
 
-using message::GetChatServerResponse;
 using message::GetChatServerRequest;
+using message::GetChatServerResponse;
 
+using message::TextChatData;
 using message::TextChatMessageRequest;
 using message::TextChatMessageResponse;
-using message::TextChatData;
 
 class ChatGrpcClient : public Singleton<ChatGrpcClient> {
     friend class Singleton<ChatGrpcClient>;
 
 public:
     ~ChatGrpcClient() = default;
-    GetChatServerResponse NotifyAddFriend(std::string server_ip,const AddFriendRequest&);
-    AuthFriendResponse NotifyAuthFriend(std::string server_ip,const AuthFriendRequest&);
-    TextChatMessageResponse NotifyTextChatMessage(std::string server_ip,const TextChatMessageRequest&req,const json&);
-    bool GetBaseInfo(std::string base_key,int uid,std::shared_ptr<UserInfo>&userinfo);
+    /**
+     * @brief 添加好友请求
+     *
+     * @param server_ip
+     * @return AddFriendResponse
+     */
+    AddFriendResponse NotifyAddFriend(std::string server_ip, const AddFriendRequest&);
+    /**
+     * @brief 好友验证请求
+     *
+     * @param server_ip
+     * @return AuthFriendResponse
+     */
+    AuthFriendResponse NotifyAuthFriend(std::string server_ip, const AuthFriendRequest&);
+    /**
+     * @brief 消息发送
+     *
+     * @param server_ip
+     * @param req
+     * @return TextChatMessageResponse
+     */
+    TextChatMessageResponse NotifyTextChatMessage(std::string server_ip, const TextChatMessageRequest& req, const json&);
+    /**
+     * @brief 获取用户的基本信息
+     *
+     * @param base_key
+     * @param uid
+     * @param userinfo
+     * @return true
+     * @return false
+     */
+    bool GetBaseInfo(std::string base_key, int uid, std::shared_ptr<UserInfo>& userinfo);
 
 private:
     ChatGrpcClient();
 
-    std::unordered_map<std::string,std::unique_ptr<RPCPool<ChatServer, ChatServer::Stub>>>_pool;
+    std::unordered_map<std::string, std::unique_ptr<RPCPool<ChatServer, ChatServer::Stub>>> _pool;
 };
-
-
 
 #endif

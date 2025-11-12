@@ -26,6 +26,17 @@ void UserManager::SetAvatar(const QPixmap &avatar) noexcept
     this->_avatar = avatar;
 }
 
+void UserManager::SetSex(int sex) noexcept
+{
+    this->_sex = sex;
+}
+
+void UserManager::SetDesc(const QString &desc) noexcept
+{
+    this->_desc = desc;
+}
+
+
 int UserManager::GetUid() noexcept
 {
     return this->_uid;
@@ -49,6 +60,21 @@ QString UserManager::GetEmail() noexcept
 QPixmap UserManager::GetAvatar() noexcept
 {
     return this->_avatar;
+}
+
+int UserManager::GetSex() noexcept
+{
+    return this->_sex;
+}
+
+QString UserManager::GetDesc() noexcept
+{
+    return this->_desc;
+}
+
+QString UserManager::GetIcon() noexcept
+{
+    return this->_icon;
 }
 
 void UserManager::SetPeerName(const QString &name) noexcept
@@ -76,6 +102,16 @@ void UserManager::SetPeerAvatar(const QPixmap &avatar) noexcept
     this->_peer_avatar = avatar;
 }
 
+void UserManager::SetPeerSex(int sex) noexcept
+{
+    this->_peer_sex = sex;
+}
+
+void UserManager::SetPeerDesc(const QString &desc) noexcept
+{
+    this->_peer_desc = desc;
+}
+
 int UserManager::GetPeerUid() noexcept
 {
     return this->_peer_uid;
@@ -99,6 +135,21 @@ QString UserManager::GetPeerEmail() noexcept
 QPixmap UserManager::GetPeerAvatar() noexcept
 {
     return this->_peer_avatar;
+}
+
+int UserManager::GetPeerSex() noexcept
+{
+    return this->_peer_sex;
+}
+
+QString UserManager::GetPeerDesc() noexcept
+{
+    return this->_peer_desc;
+}
+
+QString UserManager::GetPeerIcon() noexcept
+{
+    return this->_peer_icon;
 }
 
 UserManager::UserManager()

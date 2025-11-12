@@ -51,7 +51,8 @@ signals:
     void on_switch_interface(); // to MainWindow::do
     void on_login_failed(int);  // to LoginScreen::do_login_failed
     void on_users_searched(QList<std::shared_ptr<UserInfo>>list);   // to AnimatedSearchBox::do_users_searched
-    void on_add_friend(UserInfo&&info,bool ok); // to SideNews::do_add_friend
+    void on_add_friend(const UserInfo&info,bool ok); // to SideNews::do_add_friend
+    void on_auth_friend(std::shared_ptr<UserInfo>info);
 };
 
 #endif // TCPMANAGER_H

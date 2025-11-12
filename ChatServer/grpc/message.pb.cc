@@ -116,7 +116,7 @@ inline constexpr ReplyFriendResponse::Impl_::Impl_(
     ::_pbi::ConstantInitialized) noexcept
       : _cached_size_{0},
         error_{0},
-        replyuid_{0},
+        fromuid_{0},
         touid_{0} {}
 
 template <typename>
@@ -142,7 +142,7 @@ PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
 inline constexpr ReplyFriendRequest::Impl_::Impl_(
     ::_pbi::ConstantInitialized) noexcept
       : _cached_size_{0},
-        replyuid_{0},
+        fromuid_{0},
         agree_{false},
         touid_{0} {}
 
@@ -397,7 +397,7 @@ inline constexpr AddFriendResponse::Impl_::Impl_(
     ::_pbi::ConstantInitialized) noexcept
       : _cached_size_{0},
         error_{0},
-        applyuid_{0},
+        fromuid_{0},
         touid_{0} {}
 
 template <typename>
@@ -429,8 +429,12 @@ inline constexpr AddFriendRequest::Impl_::Impl_(
         desc_(
             &::google::protobuf::internal::fixed_address_empty_string,
             ::_pbi::ConstantInitialized()),
-        applyuid_{0},
-        touid_{0} {}
+        icon_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
+        fromuid_{0},
+        touid_{0},
+        sex_{0} {}
 
 template <typename>
 PROTOBUF_CONSTEXPR AddFriendRequest::AddFriendRequest(::_pbi::ConstantInitialized)
@@ -562,20 +566,24 @@ const ::uint32_t
         0,
         0x081, // bitmap
         PROTOBUF_FIELD_OFFSET(::message::AddFriendRequest, _impl_._has_bits_),
-        7, // hasbit index offset
-        PROTOBUF_FIELD_OFFSET(::message::AddFriendRequest, _impl_.applyuid_),
+        9, // hasbit index offset
+        PROTOBUF_FIELD_OFFSET(::message::AddFriendRequest, _impl_.fromuid_),
         PROTOBUF_FIELD_OFFSET(::message::AddFriendRequest, _impl_.name_),
         PROTOBUF_FIELD_OFFSET(::message::AddFriendRequest, _impl_.desc_),
         PROTOBUF_FIELD_OFFSET(::message::AddFriendRequest, _impl_.touid_),
-        2,
+        PROTOBUF_FIELD_OFFSET(::message::AddFriendRequest, _impl_.sex_),
+        PROTOBUF_FIELD_OFFSET(::message::AddFriendRequest, _impl_.icon_),
+        3,
         0,
         1,
-        3,
+        4,
+        5,
+        2,
         0x081, // bitmap
         PROTOBUF_FIELD_OFFSET(::message::AddFriendResponse, _impl_._has_bits_),
         6, // hasbit index offset
         PROTOBUF_FIELD_OFFSET(::message::AddFriendResponse, _impl_.error_),
-        PROTOBUF_FIELD_OFFSET(::message::AddFriendResponse, _impl_.applyuid_),
+        PROTOBUF_FIELD_OFFSET(::message::AddFriendResponse, _impl_.fromuid_),
         PROTOBUF_FIELD_OFFSET(::message::AddFriendResponse, _impl_.touid_),
         0,
         1,
@@ -583,7 +591,7 @@ const ::uint32_t
         0x081, // bitmap
         PROTOBUF_FIELD_OFFSET(::message::ReplyFriendRequest, _impl_._has_bits_),
         6, // hasbit index offset
-        PROTOBUF_FIELD_OFFSET(::message::ReplyFriendRequest, _impl_.replyuid_),
+        PROTOBUF_FIELD_OFFSET(::message::ReplyFriendRequest, _impl_.fromuid_),
         PROTOBUF_FIELD_OFFSET(::message::ReplyFriendRequest, _impl_.agree_),
         PROTOBUF_FIELD_OFFSET(::message::ReplyFriendRequest, _impl_.touid_),
         0,
@@ -593,7 +601,7 @@ const ::uint32_t
         PROTOBUF_FIELD_OFFSET(::message::ReplyFriendResponse, _impl_._has_bits_),
         6, // hasbit index offset
         PROTOBUF_FIELD_OFFSET(::message::ReplyFriendResponse, _impl_.error_),
-        PROTOBUF_FIELD_OFFSET(::message::ReplyFriendResponse, _impl_.replyuid_),
+        PROTOBUF_FIELD_OFFSET(::message::ReplyFriendResponse, _impl_.fromuid_),
         PROTOBUF_FIELD_OFFSET(::message::ReplyFriendResponse, _impl_.touid_),
         0,
         1,
@@ -670,16 +678,16 @@ static const ::_pbi::MigrationSchema
         {30, sizeof(::message::LoginRequest)},
         {37, sizeof(::message::LoginResponse)},
         {46, sizeof(::message::AddFriendRequest)},
-        {57, sizeof(::message::AddFriendResponse)},
-        {66, sizeof(::message::ReplyFriendRequest)},
-        {75, sizeof(::message::ReplyFriendResponse)},
-        {84, sizeof(::message::SendChatMessageRequest)},
-        {93, sizeof(::message::SendChatMessageResponse)},
-        {102, sizeof(::message::AuthFriendRequest)},
-        {109, sizeof(::message::AuthFriendResponse)},
-        {118, sizeof(::message::TextChatData)},
-        {125, sizeof(::message::TextChatMessageRequest)},
-        {134, sizeof(::message::TextChatMessageResponse)},
+        {61, sizeof(::message::AddFriendResponse)},
+        {70, sizeof(::message::ReplyFriendRequest)},
+        {79, sizeof(::message::ReplyFriendResponse)},
+        {88, sizeof(::message::SendChatMessageRequest)},
+        {97, sizeof(::message::SendChatMessageResponse)},
+        {106, sizeof(::message::AuthFriendRequest)},
+        {113, sizeof(::message::AuthFriendResponse)},
+        {122, sizeof(::message::TextChatData)},
+        {129, sizeof(::message::TextChatMessageRequest)},
+        {138, sizeof(::message::TextChatMessageResponse)},
 };
 static const ::_pb::Message* PROTOBUF_NONNULL const file_default_instances[] = {
     &::message::_GetSecurityCodeRequest_default_instance_._instance,
@@ -711,51 +719,51 @@ const char descriptor_table_protodef_message_2eproto[] ABSL_ATTRIBUTE_SECTION_VA
     "\t\022\r\n\005token\030\004 \001(\t\"*\n\014LoginRequest\022\013\n\003uid\030"
     "\001 \001(\005\022\r\n\005token\030\002 \001(\t\":\n\rLoginResponse\022\r\n"
     "\005error\030\001 \001(\005\022\013\n\003uid\030\002 \001(\005\022\r\n\005token\030\003 \001(\t"
-    "\"O\n\020AddFriendRequest\022\020\n\010applyUid\030\001 \001(\005\022\014"
-    "\n\004name\030\002 \001(\t\022\014\n\004desc\030\003 \001(\t\022\r\n\005toUid\030\004 \001("
-    "\005\"C\n\021AddFriendResponse\022\r\n\005error\030\001 \001(\005\022\020\n"
-    "\010applyUid\030\002 \001(\005\022\r\n\005toUid\030\003 \001(\005\"D\n\022ReplyF"
-    "riendRequest\022\020\n\010replyUid\030\001 \001(\005\022\r\n\005agree\030"
-    "\002 \001(\010\022\r\n\005toUid\030\003 \001(\005\"E\n\023ReplyFriendRespo"
-    "nse\022\r\n\005error\030\001 \001(\005\022\020\n\010replyUid\030\002 \001(\005\022\r\n\005"
-    "toUid\030\003 \001(\005\"I\n\026SendChatMessageRequest\022\017\n"
-    "\007fromUid\030\001 \001(\005\022\r\n\005toUid\030\002 \001(\005\022\017\n\007message"
-    "\030\003 \001(\t\"H\n\027SendChatMessageResponse\022\r\n\005err"
-    "or\030\001 \001(\005\022\017\n\007fromUid\030\002 \001(\005\022\r\n\005toUid\030\003 \001(\005"
-    "\"3\n\021AuthFriendRequest\022\017\n\007fromUid\030\001 \001(\005\022\r"
-    "\n\005toUid\030\002 \001(\005\"C\n\022AuthFriendResponse\022\r\n\005e"
-    "rror\030\001 \001(\005\022\017\n\007fromUid\030\002 \001(\005\022\r\n\005toUid\030\003 \001"
-    "(\005\"1\n\014TextChatData\022\r\n\005msgId\030\001 \001(\t\022\022\n\nmsg"
-    "Content\030\002 \001(\t\"a\n\026TextChatMessageRequest\022"
-    "\017\n\007fromUid\030\001 \001(\005\022\r\n\005toUid\030\002 \001(\005\022\'\n\010textM"
-    "sgs\030\003 \003(\0132\025.message.TextChatData\"q\n\027Text"
-    "ChatMessageResponse\022\r\n\005error\030\001 \001(\005\022\017\n\007fr"
-    "omUid\030\002 \001(\005\022\r\n\005toUid\030\003 \001(\005\022\'\n\010textMsgs\030\004"
-    " \003(\0132\025.message.TextChatData2g\n\rVarifySer"
-    "vice\022V\n\017GetSecurityCode\022\037.message.GetSec"
-    "urityCodeRequest\032 .message.GetSecurityCo"
-    "deResponse\"\0002\233\001\n\rStatusService\022P\n\rGetCha"
-    "tServer\022\035.message.GetChatServerRequest\032\036"
-    ".message.GetChatServerResponse\"\000\0228\n\005Logi"
-    "n\022\025.message.LoginRequest\032\026.message.Login"
-    "Response\"\0002\254\003\n\nChatServer\022J\n\017NotifyAddFr"
-    "iend\022\031.message.AddFriendRequest\032\032.messag"
-    "e.AddFriendResponse\"\000\022M\n\016ReplyAddFriend\022"
-    "\033.message.ReplyFriendRequest\032\034.message.R"
-    "eplyFriendResponse\"\000\022V\n\017SendChatMessage\022"
-    "\037.message.SendChatMessageRequest\032 .messa"
-    "ge.SendChatMessageResponse\"\000\022M\n\020NotifyAu"
-    "thFriend\022\032.message.AuthFriendRequest\032\033.m"
-    "essage.AuthFriendResponse\"\000\022\\\n\025NotifyTex"
-    "tChatMessage\022\037.message.TextChatMessageRe"
-    "quest\032 .message.TextChatMessageResponse\""
-    "\000b\006proto3"
+    "\"i\n\020AddFriendRequest\022\017\n\007fromUid\030\001 \001(\005\022\014\n"
+    "\004name\030\002 \001(\t\022\014\n\004desc\030\003 \001(\t\022\r\n\005toUid\030\004 \001(\005"
+    "\022\013\n\003sex\030\005 \001(\005\022\014\n\004icon\030\006 \001(\t\"B\n\021AddFriend"
+    "Response\022\r\n\005error\030\001 \001(\005\022\017\n\007fromUid\030\002 \001(\005"
+    "\022\r\n\005toUid\030\003 \001(\005\"C\n\022ReplyFriendRequest\022\017\n"
+    "\007fromUid\030\001 \001(\005\022\r\n\005agree\030\002 \001(\010\022\r\n\005toUid\030\003"
+    " \001(\005\"D\n\023ReplyFriendResponse\022\r\n\005error\030\001 \001"
+    "(\005\022\017\n\007fromUid\030\002 \001(\005\022\r\n\005toUid\030\003 \001(\005\"I\n\026Se"
+    "ndChatMessageRequest\022\017\n\007fromUid\030\001 \001(\005\022\r\n"
+    "\005toUid\030\002 \001(\005\022\017\n\007message\030\003 \001(\t\"H\n\027SendCha"
+    "tMessageResponse\022\r\n\005error\030\001 \001(\005\022\017\n\007fromU"
+    "id\030\002 \001(\005\022\r\n\005toUid\030\003 \001(\005\"3\n\021AuthFriendReq"
+    "uest\022\017\n\007fromUid\030\001 \001(\005\022\r\n\005toUid\030\002 \001(\005\"C\n\022"
+    "AuthFriendResponse\022\r\n\005error\030\001 \001(\005\022\017\n\007fro"
+    "mUid\030\002 \001(\005\022\r\n\005toUid\030\003 \001(\005\"1\n\014TextChatDat"
+    "a\022\r\n\005msgId\030\001 \001(\t\022\022\n\nmsgContent\030\002 \001(\t\"a\n\026"
+    "TextChatMessageRequest\022\017\n\007fromUid\030\001 \001(\005\022"
+    "\r\n\005toUid\030\002 \001(\005\022\'\n\010textMsgs\030\003 \003(\0132\025.messa"
+    "ge.TextChatData\"q\n\027TextChatMessageRespon"
+    "se\022\r\n\005error\030\001 \001(\005\022\017\n\007fromUid\030\002 \001(\005\022\r\n\005to"
+    "Uid\030\003 \001(\005\022\'\n\010textMsgs\030\004 \003(\0132\025.message.Te"
+    "xtChatData2g\n\rVarifyService\022V\n\017GetSecuri"
+    "tyCode\022\037.message.GetSecurityCodeRequest\032"
+    " .message.GetSecurityCodeResponse\"\0002\233\001\n\r"
+    "StatusService\022P\n\rGetChatServer\022\035.message"
+    ".GetChatServerRequest\032\036.message.GetChatS"
+    "erverResponse\"\000\0228\n\005Login\022\025.message.Login"
+    "Request\032\026.message.LoginResponse\"\0002\254\003\n\nCh"
+    "atServer\022J\n\017NotifyAddFriend\022\031.message.Ad"
+    "dFriendRequest\032\032.message.AddFriendRespon"
+    "se\"\000\022M\n\016ReplyAddFriend\022\033.message.ReplyFr"
+    "iendRequest\032\034.message.ReplyFriendRespons"
+    "e\"\000\022V\n\017SendChatMessage\022\037.message.SendCha"
+    "tMessageRequest\032 .message.SendChatMessag"
+    "eResponse\"\000\022M\n\020NotifyAuthFriend\022\032.messag"
+    "e.AuthFriendRequest\032\033.message.AuthFriend"
+    "Response\"\000\022\\\n\025NotifyTextChatMessage\022\037.me"
+    "ssage.TextChatMessageRequest\032 .message.T"
+    "extChatMessageResponse\"\000b\006proto3"
 };
 static ::absl::once_flag descriptor_table_message_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_message_2eproto = {
     false,
     false,
-    1889,
+    1912,
     descriptor_table_protodef_message_2eproto,
     "message.proto",
     &descriptor_table_message_2eproto_once,
@@ -2689,7 +2697,8 @@ PROTOBUF_NDEBUG_INLINE AddFriendRequest::Impl_::Impl_(
       : _has_bits_{from._has_bits_},
         _cached_size_{0},
         name_(arena, from.name_),
-        desc_(arena, from.desc_) {}
+        desc_(arena, from.desc_),
+        icon_(arena, from.icon_) {}
 
 AddFriendRequest::AddFriendRequest(
     ::google::protobuf::Arena* PROTOBUF_NULLABLE arena,
@@ -2705,12 +2714,12 @@ AddFriendRequest::AddFriendRequest(
       from._internal_metadata_);
   new (&_impl_) Impl_(internal_visibility(), arena, from._impl_, from);
   ::memcpy(reinterpret_cast<char *>(&_impl_) +
-               offsetof(Impl_, applyuid_),
+               offsetof(Impl_, fromuid_),
            reinterpret_cast<const char *>(&from._impl_) +
-               offsetof(Impl_, applyuid_),
-           offsetof(Impl_, touid_) -
-               offsetof(Impl_, applyuid_) +
-               sizeof(Impl_::touid_));
+               offsetof(Impl_, fromuid_),
+           offsetof(Impl_, sex_) -
+               offsetof(Impl_, fromuid_) +
+               sizeof(Impl_::sex_));
 
   // @@protoc_insertion_point(copy_constructor:message.AddFriendRequest)
 }
@@ -2719,16 +2728,17 @@ PROTOBUF_NDEBUG_INLINE AddFriendRequest::Impl_::Impl_(
     [[maybe_unused]] ::google::protobuf::Arena* PROTOBUF_NULLABLE arena)
       : _cached_size_{0},
         name_(arena),
-        desc_(arena) {}
+        desc_(arena),
+        icon_(arena) {}
 
 inline void AddFriendRequest::SharedCtor(::_pb::Arena* PROTOBUF_NULLABLE arena) {
   new (&_impl_) Impl_(internal_visibility(), arena);
   ::memset(reinterpret_cast<char *>(&_impl_) +
-               offsetof(Impl_, applyuid_),
+               offsetof(Impl_, fromuid_),
            0,
-           offsetof(Impl_, touid_) -
-               offsetof(Impl_, applyuid_) +
-               sizeof(Impl_::touid_));
+           offsetof(Impl_, sex_) -
+               offsetof(Impl_, fromuid_) +
+               sizeof(Impl_::sex_));
 }
 AddFriendRequest::~AddFriendRequest() {
   // @@protoc_insertion_point(destructor:message.AddFriendRequest)
@@ -2743,6 +2753,7 @@ inline void AddFriendRequest::SharedDtor(MessageLite& self) {
   ABSL_DCHECK(this_.GetArena() == nullptr);
   this_._impl_.name_.Destroy();
   this_._impl_.desc_.Destroy();
+  this_._impl_.icon_.Destroy();
   this_._impl_.~Impl_();
 }
 
@@ -2789,16 +2800,16 @@ AddFriendRequest::GetClassData() const {
   return AddFriendRequest_class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<2, 4, 0, 41, 2>
+const ::_pbi::TcParseTable<3, 6, 0, 45, 2>
 AddFriendRequest::_table_ = {
   {
     PROTOBUF_FIELD_OFFSET(AddFriendRequest, _impl_._has_bits_),
     0, // no _extensions_
-    4, 24,  // max_field_number, fast_idx_mask
+    6, 56,  // max_field_number, fast_idx_mask
     offsetof(decltype(_table_), field_lookup_table),
-    4294967280,  // skipmap
+    4294967232,  // skipmap
     offsetof(decltype(_table_), field_entries),
-    4,  // num_field_entries
+    6,  // num_field_entries
     0,  // num_aux_entries
     offsetof(decltype(_table_), field_names),  // no aux_entries
     AddFriendRequest_class_data_.base(),
@@ -2808,36 +2819,49 @@ AddFriendRequest::_table_ = {
     ::_pbi::TcParser::GetTable<::message::AddFriendRequest>(),  // to_prefetch
     #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
   }, {{
-    // int32 toUid = 4;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(AddFriendRequest, _impl_.touid_), 3>(),
-     {32, 3, 0, PROTOBUF_FIELD_OFFSET(AddFriendRequest, _impl_.touid_)}},
-    // int32 applyUid = 1;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(AddFriendRequest, _impl_.applyuid_), 2>(),
-     {8, 2, 0, PROTOBUF_FIELD_OFFSET(AddFriendRequest, _impl_.applyuid_)}},
+    {::_pbi::TcParser::MiniParse, {}},
+    // int32 fromUid = 1;
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(AddFriendRequest, _impl_.fromuid_), 3>(),
+     {8, 3, 0, PROTOBUF_FIELD_OFFSET(AddFriendRequest, _impl_.fromuid_)}},
     // string name = 2;
     {::_pbi::TcParser::FastUS1,
      {18, 0, 0, PROTOBUF_FIELD_OFFSET(AddFriendRequest, _impl_.name_)}},
     // string desc = 3;
     {::_pbi::TcParser::FastUS1,
      {26, 1, 0, PROTOBUF_FIELD_OFFSET(AddFriendRequest, _impl_.desc_)}},
+    // int32 toUid = 4;
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(AddFriendRequest, _impl_.touid_), 4>(),
+     {32, 4, 0, PROTOBUF_FIELD_OFFSET(AddFriendRequest, _impl_.touid_)}},
+    // int32 sex = 5;
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(AddFriendRequest, _impl_.sex_), 5>(),
+     {40, 5, 0, PROTOBUF_FIELD_OFFSET(AddFriendRequest, _impl_.sex_)}},
+    // string icon = 6;
+    {::_pbi::TcParser::FastUS1,
+     {50, 2, 0, PROTOBUF_FIELD_OFFSET(AddFriendRequest, _impl_.icon_)}},
+    {::_pbi::TcParser::MiniParse, {}},
   }}, {{
     65535, 65535
   }}, {{
-    // int32 applyUid = 1;
-    {PROTOBUF_FIELD_OFFSET(AddFriendRequest, _impl_.applyuid_), _Internal::kHasBitsOffset + 2, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
+    // int32 fromUid = 1;
+    {PROTOBUF_FIELD_OFFSET(AddFriendRequest, _impl_.fromuid_), _Internal::kHasBitsOffset + 3, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
     // string name = 2;
     {PROTOBUF_FIELD_OFFSET(AddFriendRequest, _impl_.name_), _Internal::kHasBitsOffset + 0, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
     // string desc = 3;
     {PROTOBUF_FIELD_OFFSET(AddFriendRequest, _impl_.desc_), _Internal::kHasBitsOffset + 1, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
     // int32 toUid = 4;
-    {PROTOBUF_FIELD_OFFSET(AddFriendRequest, _impl_.touid_), _Internal::kHasBitsOffset + 3, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
+    {PROTOBUF_FIELD_OFFSET(AddFriendRequest, _impl_.touid_), _Internal::kHasBitsOffset + 4, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
+    // int32 sex = 5;
+    {PROTOBUF_FIELD_OFFSET(AddFriendRequest, _impl_.sex_), _Internal::kHasBitsOffset + 5, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
+    // string icon = 6;
+    {PROTOBUF_FIELD_OFFSET(AddFriendRequest, _impl_.icon_), _Internal::kHasBitsOffset + 2, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
   }},
   // no aux_entries
   {{
-    "\30\0\4\4\0\0\0\0"
+    "\30\0\4\4\0\0\4\0"
     "message.AddFriendRequest"
     "name"
     "desc"
+    "icon"
   }},
 };
 PROTOBUF_NOINLINE void AddFriendRequest::Clear() {
@@ -2848,18 +2872,21 @@ PROTOBUF_NOINLINE void AddFriendRequest::Clear() {
   (void) cached_has_bits;
 
   cached_has_bits = _impl_._has_bits_[0];
-  if ((cached_has_bits & 0x00000003U) != 0) {
+  if ((cached_has_bits & 0x00000007U) != 0) {
     if ((cached_has_bits & 0x00000001U) != 0) {
       _impl_.name_.ClearNonDefaultToEmpty();
     }
     if ((cached_has_bits & 0x00000002U) != 0) {
       _impl_.desc_.ClearNonDefaultToEmpty();
     }
+    if ((cached_has_bits & 0x00000004U) != 0) {
+      _impl_.icon_.ClearNonDefaultToEmpty();
+    }
   }
-  if ((cached_has_bits & 0x0000000cU) != 0) {
-    ::memset(&_impl_.applyuid_, 0, static_cast<::size_t>(
-        reinterpret_cast<char*>(&_impl_.touid_) -
-        reinterpret_cast<char*>(&_impl_.applyuid_)) + sizeof(_impl_.touid_));
+  if ((cached_has_bits & 0x00000038U) != 0) {
+    ::memset(&_impl_.fromuid_, 0, static_cast<::size_t>(
+        reinterpret_cast<char*>(&_impl_.sex_) -
+        reinterpret_cast<char*>(&_impl_.fromuid_)) + sizeof(_impl_.sex_));
   }
   _impl_._has_bits_.Clear();
   _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
@@ -2883,12 +2910,12 @@ PROTOBUF_NOINLINE void AddFriendRequest::Clear() {
   ::uint32_t cached_has_bits = 0;
   (void)cached_has_bits;
 
-  // int32 applyUid = 1;
-  if ((this_._impl_._has_bits_[0] & 0x00000004U) != 0) {
-    if (this_._internal_applyuid() != 0) {
+  // int32 fromUid = 1;
+  if ((this_._impl_._has_bits_[0] & 0x00000008U) != 0) {
+    if (this_._internal_fromuid() != 0) {
       target =
           ::google::protobuf::internal::WireFormatLite::WriteInt32ToArrayWithField<1>(
-              stream, this_._internal_applyuid(), target);
+              stream, this_._internal_fromuid(), target);
     }
   }
 
@@ -2913,11 +2940,30 @@ PROTOBUF_NOINLINE void AddFriendRequest::Clear() {
   }
 
   // int32 toUid = 4;
-  if ((this_._impl_._has_bits_[0] & 0x00000008U) != 0) {
+  if ((this_._impl_._has_bits_[0] & 0x00000010U) != 0) {
     if (this_._internal_touid() != 0) {
       target =
           ::google::protobuf::internal::WireFormatLite::WriteInt32ToArrayWithField<4>(
               stream, this_._internal_touid(), target);
+    }
+  }
+
+  // int32 sex = 5;
+  if ((this_._impl_._has_bits_[0] & 0x00000020U) != 0) {
+    if (this_._internal_sex() != 0) {
+      target =
+          ::google::protobuf::internal::WireFormatLite::WriteInt32ToArrayWithField<5>(
+              stream, this_._internal_sex(), target);
+    }
+  }
+
+  // string icon = 6;
+  if ((this_._impl_._has_bits_[0] & 0x00000004U) != 0) {
+    if (!this_._internal_icon().empty()) {
+      const ::std::string& _s = this_._internal_icon();
+      ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+          _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "message.AddFriendRequest.icon");
+      target = stream->WriteStringMaybeAliased(6, _s, target);
     }
   }
 
@@ -2946,7 +2992,7 @@ PROTOBUF_NOINLINE void AddFriendRequest::Clear() {
 
   ::_pbi::Prefetch5LinesFrom7Lines(&this_);
   cached_has_bits = this_._impl_._has_bits_[0];
-  if ((cached_has_bits & 0x0000000fU) != 0) {
+  if ((cached_has_bits & 0x0000003fU) != 0) {
     // string name = 2;
     if ((cached_has_bits & 0x00000001U) != 0) {
       if (!this_._internal_name().empty()) {
@@ -2961,18 +3007,32 @@ PROTOBUF_NOINLINE void AddFriendRequest::Clear() {
                                         this_._internal_desc());
       }
     }
-    // int32 applyUid = 1;
+    // string icon = 6;
     if ((cached_has_bits & 0x00000004U) != 0) {
-      if (this_._internal_applyuid() != 0) {
+      if (!this_._internal_icon().empty()) {
+        total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                        this_._internal_icon());
+      }
+    }
+    // int32 fromUid = 1;
+    if ((cached_has_bits & 0x00000008U) != 0) {
+      if (this_._internal_fromuid() != 0) {
         total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
-            this_._internal_applyuid());
+            this_._internal_fromuid());
       }
     }
     // int32 toUid = 4;
-    if ((cached_has_bits & 0x00000008U) != 0) {
+    if ((cached_has_bits & 0x00000010U) != 0) {
       if (this_._internal_touid() != 0) {
         total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
             this_._internal_touid());
+      }
+    }
+    // int32 sex = 5;
+    if ((cached_has_bits & 0x00000020U) != 0) {
+      if (this_._internal_sex() != 0) {
+        total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
+            this_._internal_sex());
       }
     }
   }
@@ -2992,7 +3052,7 @@ void AddFriendRequest::MergeImpl(::google::protobuf::MessageLite& to_msg, const 
   (void) cached_has_bits;
 
   cached_has_bits = from._impl_._has_bits_[0];
-  if ((cached_has_bits & 0x0000000fU) != 0) {
+  if ((cached_has_bits & 0x0000003fU) != 0) {
     if ((cached_has_bits & 0x00000001U) != 0) {
       if (!from._internal_name().empty()) {
         _this->_internal_set_name(from._internal_name());
@@ -3012,13 +3072,27 @@ void AddFriendRequest::MergeImpl(::google::protobuf::MessageLite& to_msg, const 
       }
     }
     if ((cached_has_bits & 0x00000004U) != 0) {
-      if (from._internal_applyuid() != 0) {
-        _this->_impl_.applyuid_ = from._impl_.applyuid_;
+      if (!from._internal_icon().empty()) {
+        _this->_internal_set_icon(from._internal_icon());
+      } else {
+        if (_this->_impl_.icon_.IsDefault()) {
+          _this->_internal_set_icon("");
+        }
       }
     }
     if ((cached_has_bits & 0x00000008U) != 0) {
+      if (from._internal_fromuid() != 0) {
+        _this->_impl_.fromuid_ = from._impl_.fromuid_;
+      }
+    }
+    if ((cached_has_bits & 0x00000010U) != 0) {
       if (from._internal_touid() != 0) {
         _this->_impl_.touid_ = from._impl_.touid_;
+      }
+    }
+    if ((cached_has_bits & 0x00000020U) != 0) {
+      if (from._internal_sex() != 0) {
+        _this->_impl_.sex_ = from._impl_.sex_;
       }
     }
   }
@@ -3042,12 +3116,13 @@ void AddFriendRequest::InternalSwap(AddFriendRequest* PROTOBUF_RESTRICT PROTOBUF
   swap(_impl_._has_bits_[0], other->_impl_._has_bits_[0]);
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.name_, &other->_impl_.name_, arena);
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.desc_, &other->_impl_.desc_, arena);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.icon_, &other->_impl_.icon_, arena);
   ::google::protobuf::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(AddFriendRequest, _impl_.touid_)
-      + sizeof(AddFriendRequest::_impl_.touid_)
-      - PROTOBUF_FIELD_OFFSET(AddFriendRequest, _impl_.applyuid_)>(
-          reinterpret_cast<char*>(&_impl_.applyuid_),
-          reinterpret_cast<char*>(&other->_impl_.applyuid_));
+      PROTOBUF_FIELD_OFFSET(AddFriendRequest, _impl_.sex_)
+      + sizeof(AddFriendRequest::_impl_.sex_)
+      - PROTOBUF_FIELD_OFFSET(AddFriendRequest, _impl_.fromuid_)>(
+          reinterpret_cast<char*>(&_impl_.fromuid_),
+          reinterpret_cast<char*>(&other->_impl_.fromuid_));
 }
 
 ::google::protobuf::Metadata AddFriendRequest::GetMetadata() const {
@@ -3177,9 +3252,9 @@ AddFriendResponse::_table_ = {
     // int32 error = 1;
     {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(AddFriendResponse, _impl_.error_), 0>(),
      {8, 0, 0, PROTOBUF_FIELD_OFFSET(AddFriendResponse, _impl_.error_)}},
-    // int32 applyUid = 2;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(AddFriendResponse, _impl_.applyuid_), 1>(),
-     {16, 1, 0, PROTOBUF_FIELD_OFFSET(AddFriendResponse, _impl_.applyuid_)}},
+    // int32 fromUid = 2;
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(AddFriendResponse, _impl_.fromuid_), 1>(),
+     {16, 1, 0, PROTOBUF_FIELD_OFFSET(AddFriendResponse, _impl_.fromuid_)}},
     // int32 toUid = 3;
     {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(AddFriendResponse, _impl_.touid_), 2>(),
      {24, 2, 0, PROTOBUF_FIELD_OFFSET(AddFriendResponse, _impl_.touid_)}},
@@ -3188,8 +3263,8 @@ AddFriendResponse::_table_ = {
   }}, {{
     // int32 error = 1;
     {PROTOBUF_FIELD_OFFSET(AddFriendResponse, _impl_.error_), _Internal::kHasBitsOffset + 0, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
-    // int32 applyUid = 2;
-    {PROTOBUF_FIELD_OFFSET(AddFriendResponse, _impl_.applyuid_), _Internal::kHasBitsOffset + 1, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
+    // int32 fromUid = 2;
+    {PROTOBUF_FIELD_OFFSET(AddFriendResponse, _impl_.fromuid_), _Internal::kHasBitsOffset + 1, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
     // int32 toUid = 3;
     {PROTOBUF_FIELD_OFFSET(AddFriendResponse, _impl_.touid_), _Internal::kHasBitsOffset + 2, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
   }},
@@ -3241,12 +3316,12 @@ PROTOBUF_NOINLINE void AddFriendResponse::Clear() {
     }
   }
 
-  // int32 applyUid = 2;
+  // int32 fromUid = 2;
   if ((this_._impl_._has_bits_[0] & 0x00000002U) != 0) {
-    if (this_._internal_applyuid() != 0) {
+    if (this_._internal_fromuid() != 0) {
       target =
           ::google::protobuf::internal::WireFormatLite::WriteInt32ToArrayWithField<2>(
-              stream, this_._internal_applyuid(), target);
+              stream, this_._internal_fromuid(), target);
     }
   }
 
@@ -3292,11 +3367,11 @@ PROTOBUF_NOINLINE void AddFriendResponse::Clear() {
             this_._internal_error());
       }
     }
-    // int32 applyUid = 2;
+    // int32 fromUid = 2;
     if ((cached_has_bits & 0x00000002U) != 0) {
-      if (this_._internal_applyuid() != 0) {
+      if (this_._internal_fromuid() != 0) {
         total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
-            this_._internal_applyuid());
+            this_._internal_fromuid());
       }
     }
     // int32 toUid = 3;
@@ -3330,8 +3405,8 @@ void AddFriendResponse::MergeImpl(::google::protobuf::MessageLite& to_msg, const
       }
     }
     if ((cached_has_bits & 0x00000002U) != 0) {
-      if (from._internal_applyuid() != 0) {
-        _this->_impl_.applyuid_ = from._impl_.applyuid_;
+      if (from._internal_fromuid() != 0) {
+        _this->_impl_.fromuid_ = from._impl_.fromuid_;
       }
     }
     if ((cached_has_bits & 0x00000004U) != 0) {
@@ -3405,10 +3480,10 @@ PROTOBUF_NDEBUG_INLINE ReplyFriendRequest::Impl_::Impl_(
 inline void ReplyFriendRequest::SharedCtor(::_pb::Arena* PROTOBUF_NULLABLE arena) {
   new (&_impl_) Impl_(internal_visibility(), arena);
   ::memset(reinterpret_cast<char *>(&_impl_) +
-               offsetof(Impl_, replyuid_),
+               offsetof(Impl_, fromuid_),
            0,
            offsetof(Impl_, touid_) -
-               offsetof(Impl_, replyuid_) +
+               offsetof(Impl_, fromuid_) +
                sizeof(Impl_::touid_));
 }
 ReplyFriendRequest::~ReplyFriendRequest() {
@@ -3488,9 +3563,9 @@ ReplyFriendRequest::_table_ = {
     #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
   }, {{
     {::_pbi::TcParser::MiniParse, {}},
-    // int32 replyUid = 1;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(ReplyFriendRequest, _impl_.replyuid_), 0>(),
-     {8, 0, 0, PROTOBUF_FIELD_OFFSET(ReplyFriendRequest, _impl_.replyuid_)}},
+    // int32 fromUid = 1;
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(ReplyFriendRequest, _impl_.fromuid_), 0>(),
+     {8, 0, 0, PROTOBUF_FIELD_OFFSET(ReplyFriendRequest, _impl_.fromuid_)}},
     // bool agree = 2;
     {::_pbi::TcParser::SingularVarintNoZag1<bool, offsetof(ReplyFriendRequest, _impl_.agree_), 1>(),
      {16, 1, 0, PROTOBUF_FIELD_OFFSET(ReplyFriendRequest, _impl_.agree_)}},
@@ -3500,8 +3575,8 @@ ReplyFriendRequest::_table_ = {
   }}, {{
     65535, 65535
   }}, {{
-    // int32 replyUid = 1;
-    {PROTOBUF_FIELD_OFFSET(ReplyFriendRequest, _impl_.replyuid_), _Internal::kHasBitsOffset + 0, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
+    // int32 fromUid = 1;
+    {PROTOBUF_FIELD_OFFSET(ReplyFriendRequest, _impl_.fromuid_), _Internal::kHasBitsOffset + 0, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
     // bool agree = 2;
     {PROTOBUF_FIELD_OFFSET(ReplyFriendRequest, _impl_.agree_), _Internal::kHasBitsOffset + 1, 0, (0 | ::_fl::kFcOptional | ::_fl::kBool)},
     // int32 toUid = 3;
@@ -3520,9 +3595,9 @@ PROTOBUF_NOINLINE void ReplyFriendRequest::Clear() {
 
   cached_has_bits = _impl_._has_bits_[0];
   if ((cached_has_bits & 0x00000007U) != 0) {
-    ::memset(&_impl_.replyuid_, 0, static_cast<::size_t>(
+    ::memset(&_impl_.fromuid_, 0, static_cast<::size_t>(
         reinterpret_cast<char*>(&_impl_.touid_) -
-        reinterpret_cast<char*>(&_impl_.replyuid_)) + sizeof(_impl_.touid_));
+        reinterpret_cast<char*>(&_impl_.fromuid_)) + sizeof(_impl_.touid_));
   }
   _impl_._has_bits_.Clear();
   _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
@@ -3546,12 +3621,12 @@ PROTOBUF_NOINLINE void ReplyFriendRequest::Clear() {
   ::uint32_t cached_has_bits = 0;
   (void)cached_has_bits;
 
-  // int32 replyUid = 1;
+  // int32 fromUid = 1;
   if ((this_._impl_._has_bits_[0] & 0x00000001U) != 0) {
-    if (this_._internal_replyuid() != 0) {
+    if (this_._internal_fromuid() != 0) {
       target =
           ::google::protobuf::internal::WireFormatLite::WriteInt32ToArrayWithField<1>(
-              stream, this_._internal_replyuid(), target);
+              stream, this_._internal_fromuid(), target);
     }
   }
 
@@ -3599,11 +3674,11 @@ PROTOBUF_NOINLINE void ReplyFriendRequest::Clear() {
   ::_pbi::Prefetch5LinesFrom7Lines(&this_);
   cached_has_bits = this_._impl_._has_bits_[0];
   if ((cached_has_bits & 0x00000007U) != 0) {
-    // int32 replyUid = 1;
+    // int32 fromUid = 1;
     if ((cached_has_bits & 0x00000001U) != 0) {
-      if (this_._internal_replyuid() != 0) {
+      if (this_._internal_fromuid() != 0) {
         total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
-            this_._internal_replyuid());
+            this_._internal_fromuid());
       }
     }
     // bool agree = 2;
@@ -3638,8 +3713,8 @@ void ReplyFriendRequest::MergeImpl(::google::protobuf::MessageLite& to_msg, cons
   cached_has_bits = from._impl_._has_bits_[0];
   if ((cached_has_bits & 0x00000007U) != 0) {
     if ((cached_has_bits & 0x00000001U) != 0) {
-      if (from._internal_replyuid() != 0) {
-        _this->_impl_.replyuid_ = from._impl_.replyuid_;
+      if (from._internal_fromuid() != 0) {
+        _this->_impl_.fromuid_ = from._impl_.fromuid_;
       }
     }
     if ((cached_has_bits & 0x00000002U) != 0) {
@@ -3672,9 +3747,9 @@ void ReplyFriendRequest::InternalSwap(ReplyFriendRequest* PROTOBUF_RESTRICT PROT
   ::google::protobuf::internal::memswap<
       PROTOBUF_FIELD_OFFSET(ReplyFriendRequest, _impl_.touid_)
       + sizeof(ReplyFriendRequest::_impl_.touid_)
-      - PROTOBUF_FIELD_OFFSET(ReplyFriendRequest, _impl_.replyuid_)>(
-          reinterpret_cast<char*>(&_impl_.replyuid_),
-          reinterpret_cast<char*>(&other->_impl_.replyuid_));
+      - PROTOBUF_FIELD_OFFSET(ReplyFriendRequest, _impl_.fromuid_)>(
+          reinterpret_cast<char*>(&_impl_.fromuid_),
+          reinterpret_cast<char*>(&other->_impl_.fromuid_));
 }
 
 ::google::protobuf::Metadata ReplyFriendRequest::GetMetadata() const {
@@ -3804,9 +3879,9 @@ ReplyFriendResponse::_table_ = {
     // int32 error = 1;
     {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(ReplyFriendResponse, _impl_.error_), 0>(),
      {8, 0, 0, PROTOBUF_FIELD_OFFSET(ReplyFriendResponse, _impl_.error_)}},
-    // int32 replyUid = 2;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(ReplyFriendResponse, _impl_.replyuid_), 1>(),
-     {16, 1, 0, PROTOBUF_FIELD_OFFSET(ReplyFriendResponse, _impl_.replyuid_)}},
+    // int32 fromUid = 2;
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(ReplyFriendResponse, _impl_.fromuid_), 1>(),
+     {16, 1, 0, PROTOBUF_FIELD_OFFSET(ReplyFriendResponse, _impl_.fromuid_)}},
     // int32 toUid = 3;
     {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(ReplyFriendResponse, _impl_.touid_), 2>(),
      {24, 2, 0, PROTOBUF_FIELD_OFFSET(ReplyFriendResponse, _impl_.touid_)}},
@@ -3815,8 +3890,8 @@ ReplyFriendResponse::_table_ = {
   }}, {{
     // int32 error = 1;
     {PROTOBUF_FIELD_OFFSET(ReplyFriendResponse, _impl_.error_), _Internal::kHasBitsOffset + 0, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
-    // int32 replyUid = 2;
-    {PROTOBUF_FIELD_OFFSET(ReplyFriendResponse, _impl_.replyuid_), _Internal::kHasBitsOffset + 1, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
+    // int32 fromUid = 2;
+    {PROTOBUF_FIELD_OFFSET(ReplyFriendResponse, _impl_.fromuid_), _Internal::kHasBitsOffset + 1, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
     // int32 toUid = 3;
     {PROTOBUF_FIELD_OFFSET(ReplyFriendResponse, _impl_.touid_), _Internal::kHasBitsOffset + 2, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
   }},
@@ -3868,12 +3943,12 @@ PROTOBUF_NOINLINE void ReplyFriendResponse::Clear() {
     }
   }
 
-  // int32 replyUid = 2;
+  // int32 fromUid = 2;
   if ((this_._impl_._has_bits_[0] & 0x00000002U) != 0) {
-    if (this_._internal_replyuid() != 0) {
+    if (this_._internal_fromuid() != 0) {
       target =
           ::google::protobuf::internal::WireFormatLite::WriteInt32ToArrayWithField<2>(
-              stream, this_._internal_replyuid(), target);
+              stream, this_._internal_fromuid(), target);
     }
   }
 
@@ -3919,11 +3994,11 @@ PROTOBUF_NOINLINE void ReplyFriendResponse::Clear() {
             this_._internal_error());
       }
     }
-    // int32 replyUid = 2;
+    // int32 fromUid = 2;
     if ((cached_has_bits & 0x00000002U) != 0) {
-      if (this_._internal_replyuid() != 0) {
+      if (this_._internal_fromuid() != 0) {
         total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
-            this_._internal_replyuid());
+            this_._internal_fromuid());
       }
     }
     // int32 toUid = 3;
@@ -3957,8 +4032,8 @@ void ReplyFriendResponse::MergeImpl(::google::protobuf::MessageLite& to_msg, con
       }
     }
     if ((cached_has_bits & 0x00000002U) != 0) {
-      if (from._internal_replyuid() != 0) {
-        _this->_impl_.replyuid_ = from._impl_.replyuid_;
+      if (from._internal_fromuid() != 0) {
+        _this->_impl_.fromuid_ = from._impl_.fromuid_;
       }
     }
     if ((cached_has_bits & 0x00000004U) != 0) {
