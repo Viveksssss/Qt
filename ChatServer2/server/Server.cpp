@@ -1,4 +1,5 @@
 #include "Server.h"
+#include "../global/ConfigManager.h"
 #include "../global/UserManager.h"
 #include "../session/Session.h"
 #include "AsioPool.h"
@@ -10,6 +11,8 @@ Server::Server(net::io_context& ioc, uint16_t port)
     , _port(port)
 {
     SPDLOG_INFO("Server Start Success,Listen on port:{}", _port);
+    auto& cfg = ConfigManager::GetInstance();
+    _server_name = cfg["SelfServer"]["name"];
 }
 
 void Server::Start()
@@ -41,7 +44,7 @@ void Server::ClearSession(const std::string& session_id)
     if (CheckValid(session_id)) {
         UserManager::GetInstance()->RemoveUserSession(_sessions[session_id]->GetUid());
     }
-    
+
     {
         std::lock_guard<std::mutex> lock(_mutex);
         _sessions.erase(session_id);

@@ -9,6 +9,7 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QScreen>
+#include <QTimer>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow{parent}
@@ -17,7 +18,9 @@ MainWindow::MainWindow(QWidget *parent)
     setConnections();
     stack = new AuthStack(this);
     setCentralWidget(stack);
-    // emit TcpManager::GetInstance()->on_switch_interface();
+    QTimer::singleShot(50,this,[this](){
+    emit TcpManager::GetInstance()->on_switch_interface();
+    });
 }
 
 void MainWindow::setupUI()
@@ -36,7 +39,7 @@ void MainWindow::setConnections()
 {
     // 登陆界面跳转主页面
     connect(TcpManager::GetInstance().get(),&TcpManager::on_switch_interface,this,[this](){
-        mainScreen = new MainScreen;
+        mainScreen = new MainScreen(this);
         setCentralWidget(mainScreen);
         QScreen *screen = QGuiApplication::primaryScreen();
         QRect screenGeometry = screen->geometry();
@@ -44,6 +47,7 @@ void MainWindow::setConnections()
         // 设置窗口大小为屏幕的 80%（留出边距）
         int width = screenGeometry.width() * 0.4;
         int height = screenGeometry.height() * 0.4;
+        resize(width,height);
 
         setMinimumSize(720,500);
         setMaximumSize(1920,1080);

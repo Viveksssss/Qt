@@ -23,32 +23,32 @@ void MainScreen::setupUI()
 {
 
     // 整体的layout
-    QHBoxLayout *main_hlay = new QHBoxLayout;
+    QHBoxLayout *main_hlay = new QHBoxLayout();
     main_hlay->setContentsMargins(0,0,0,0);
     main_hlay->setSpacing(5);
     setLayout(main_hlay);
 
-    QVBoxLayout *left_vlay = new QVBoxLayout;
+    QVBoxLayout *left_vlay = new QVBoxLayout(this);
     left_vlay->setContentsMargins(0,10,0,0);
     left_vlay->setSpacing(0);
 
     // toptitle
-    topTitlePart = new TopTitlePart;
+    topTitlePart = new TopTitlePart(this);
     left_vlay->addWidget(topTitlePart,1);
 
-    QHBoxLayout *bar_friends_hlay = new QHBoxLayout;
+    QHBoxLayout *bar_friends_hlay = new QHBoxLayout(this);
     bar_friends_hlay->setContentsMargins(0,0,0,0);
     bar_friends_hlay->setSpacing(0);
     left_vlay->addLayout(bar_friends_hlay);
     // SideBarPart
-    sideBarPart = new SideBarPart;
+    sideBarPart = new SideBarPart(this);
     // FriendsListPart
-    friendsListPart = new FriendsListPart;
+    friendsListPart = new FriendsListPart(this);
     bar_friends_hlay->addWidget(sideBarPart,0);
     bar_friends_hlay->addWidget(friendsListPart,0);
 
     // ChatPart
-    chatPart = new ChatPart;
+    chatPart = new ChatPart(this);
     main_hlay->addLayout(left_vlay,1);
     main_hlay->addWidget(chatPart,1);
 

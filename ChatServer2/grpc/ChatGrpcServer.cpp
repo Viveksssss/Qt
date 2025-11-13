@@ -3,7 +3,6 @@
 #include <spdlog/spdlog.h>
 ChatGrpcServer::ChatGrpcServer()
 {
-    SPDLOG_INFO("ChatServer");
 }
 Status ChatGrpcServer::NotifyAddFriend(grpc::ServerContext* context, const AddFriendRequest* request, AddFriendResponse* response)
 {

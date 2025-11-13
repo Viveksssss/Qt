@@ -48,11 +48,11 @@ public slots:
 signals:
     void on_connect_success(bool success); // to LoginScreen::do_connect_success
     void on_send_data(RequestType requestType,QByteArray data); // to TcpManager::do_send_data
-    void on_switch_interface(); // to MainWindow::do
+    void on_switch_interface(); // to MainWindow::[](){}
     void on_login_failed(int);  // to LoginScreen::do_login_failed
     void on_users_searched(QList<std::shared_ptr<UserInfo>>list);   // to AnimatedSearchBox::do_users_searched
-    void on_add_friend(const UserInfo&info,bool ok); // to SideNews::do_add_friend
-    void on_auth_friend(std::shared_ptr<UserInfo>info);
+    void on_add_friend(const UserInfo&info); // to SideNews::do_add_friend
+    void on_auth_friend(std::shared_ptr<UserInfo>info); // to NotificationPanel::do_auth_friend ; TopChatArea::do_show_red_dot
 };
 
 #endif // TCPMANAGER_H

@@ -48,7 +48,7 @@ qt_add_executable(CppChat
     MainInterface/Chat/ChatArea/MessageArea/messagemodel.h MainInterface/Chat/ChatArea/MessageArea/messagemodel.cpp
     MainInterface/Chat/ChatArea/MessageArea/messagedelegate.h MainInterface/Chat/ChatArea/MessageArea/messagedelegate.cpp
 
-    MainInterface/Chat/ChatTopArea/SideNews/sidenews.h MainInterface/Chat/ChatTopArea/SideNews/sidenews.cpp
+
     MainInterface/Chat/ChatTopArea/SideNews/friendsnewsitem.h MainInterface/Chat/ChatTopArea/SideNews/friendsnewsitem.cpp
     MainInterface/Chat/ChatTopArea/SideNews/systemnewsitem.h MainInterface/Chat/ChatTopArea/SideNews/systemnewsitem.cpp
     MainInterface/Chat/ChatTopArea/SideNews/notificationpanel.h MainInterface/Chat/ChatTopArea/SideNews/notificationpanel.cpp

@@ -1,4 +1,6 @@
 #include "MsgNode.h"
+#include "../global/const.h"
+#include <spdlog/spdlog.h>
 
 MsgNode::MsgNode(uint16_t max_len)
     : _total_len(max_len)
@@ -25,7 +27,6 @@ RecvNode::RecvNode(uint16_t max_len, uint16_t msg_id)
 {
 }
 
-#include <spdlog/spdlog.h>
 SendNode::SendNode(const char* msg, uint16_t max_len, uint16_t msg_id)
     : MsgNode(max_len + HEAD_TOTAL_LEN)
     , _msg_id(msg_id)

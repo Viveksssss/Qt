@@ -1,13 +1,13 @@
 #include "ChatGrpcClient.h"
 #include "../global/ConfigManager.h"
-#include "message.pb.h"
 #include <grpcpp/client_context.h>
-#include <new>
 #include <spdlog/spdlog.h>
 #include <string>
 
 AddFriendResponse ChatGrpcClient::NotifyAddFriend(std::string server_ip, const AddFriendRequest& req)
 {
+    SPDLOG_INFO("发送好友请求to:{}", req.touid());
+    SPDLOG_INFO("目标服务名称:{}", server_ip);
 
     AddFriendResponse rsp;
     Defer defer([&rsp, &req]() {
@@ -22,6 +22,7 @@ AddFriendResponse ChatGrpcClient::NotifyAddFriend(std::string server_ip, const A
     }
 
     auto& pool = it->second;
+    SPDLOG_INFO("服务端ip,{}:{}", _pool[server_ip]->_host, _pool[server_ip]->_port);
     grpc::ClientContext context;
     auto stub = pool->GetConnection();
     Defer defer2([&pool, &stub]() {

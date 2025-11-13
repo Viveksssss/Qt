@@ -149,12 +149,9 @@ void TcpManager::initHandlers()
       info.name = jsonObj["fromName"].toString();
       info.status = jsonObj["fromStatus"].toString();
 
-
-      int status = jsonObj["accept"].toInt();
-      bool ok = status == 1;
       // TODO:
-      qDebug() << "添加好友成功";
-      emit on_add_friend(info,ok);
+      qDebug() << "申请添加好友成功";
+      emit on_add_friend(info);
   };
 
     /**

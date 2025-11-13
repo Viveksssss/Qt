@@ -10,7 +10,6 @@
 #include <boost/mpl/base.hpp>
 #include <cstdint>
 #include <spdlog/spdlog.h>
-#include <string>
 
 std::string thread_id_to_string(std::thread::id id)
 {
@@ -138,7 +137,10 @@ void LogicSystem::RegisterCallBacks()
 
         std::string uid_str = std::to_string(toUid);
 
-        MysqlManager::GetInstance()->AddFriendApply(std::to_string(fromUid), uid_str);
+        bool b_apply = MysqlManager::GetInstance()->AddFriendApply(std::to_string(fromUid), uid_str);
+        if (!b_apply) {
+            return;
+        }
 
         auto to_key = USERIP_PREFIX + uid_str;
         std::string to_ip_value;
@@ -151,13 +153,15 @@ void LogicSystem::RegisterCallBacks()
         auto& cfg = ConfigManager::GetInstance();
         auto self_name = cfg["SelfServer"]["name"];
         if (to_ip_value == self_name) {
-            auto session = UserManager::GetInstance()->GetSession(toUid);
-            if (session) {
+            auto session2 = UserManager::GetInstance()->GetSession(toUid);
+            if (session2) {
+                SPDLOG_INFO("FROM UID:{},to:{}", fromUid, toUid);
+                SPDLOG_INFO("FROM SESSION:{},to:{}", session->GetSessionId(), session2->GetSessionId());
                 json jj;
                 jj["error"] = ErrorCodes::SUCCESS;
                 jj["fromUid"] = fromUid;
                 jj["fromName"] = fromName;
-                session->Send(jj.dump(), static_cast<int>(MsgId::ID_NOTIFY_ADD_FRIEND_REQ));
+                session2->Send(jj.dump(), static_cast<int>(MsgId::ID_NOTIFY_ADD_FRIEND_REQ));
             }
             return;
         }

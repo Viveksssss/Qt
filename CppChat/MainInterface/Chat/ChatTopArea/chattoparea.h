@@ -10,6 +10,7 @@
 #include <QPainterPath>
 #include <QPainter>
 #include "../../../Properties/global.h"
+#include "SideNews/notificationpanel.h"
 
 class QVBoxLayout;
 class QTextEdit;
@@ -38,19 +39,23 @@ signals:
     void on_search_friend(const QString&uid);
 public slots:
     void do_show_news();
+    void do_show_red_dot();
+    void do_unshow_red_dot();
 
 private:
     // 变量声明顺序和ui顺序相同
     StatusLabel *statusLabel;
+    QLabel *redDot;
     QPushButton *newsBtn;
     AnimatedSearchBox *searchBox;
     ClearAvatarLabel *headerLabelFromChat;
     QPushButton *foldBtn;
     FriendAddDialog *friendAddDialog;
     QList<std::shared_ptr<UserInfo>>userLists;
+
+    NotificationPanel *newsPanel;
 protected:
     void keyPressEvent(QKeyEvent *event);
-
 };
 
 
@@ -65,6 +70,7 @@ public:
     QString getStatus();
     void setDotColor(const QColor &color);
     void setEnabled(bool enabled = true);
+    void setShowBorder(bool show)noexcept;
 protected:
     void paintEvent(QPaintEvent *event) override;
 
@@ -75,6 +81,8 @@ private:
     bool isHovered = false;
     bool isPressed = false;
     bool isEnabled = true;
+
+    bool showBorder = true;
 signals:
     void clicked();
     void hover();
@@ -95,6 +103,7 @@ public:
     explicit FriendsItem(int uid,const QString&avatar_path = "",const QString&name = "",const QString&status = "在线",QWidget*parent=nullptr);
     void setupUI();
     void setupConnections();
+    void setShowBorder(bool show)noexcept;
 signals:
     void on_apply_clicked(int uid);
 private:
@@ -105,6 +114,7 @@ private:
     StatusLabel *_statusLabel;
     QLabel * _avatar;
     QString _status;
+
 };
 
 
@@ -157,6 +167,8 @@ private:
     // QObject interface
 public:
     bool eventFilter(QObject *watched, QEvent *event);
+
+
 };
 
 

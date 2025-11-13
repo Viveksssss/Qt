@@ -262,13 +262,13 @@ bool MysqlDao::AddFriendApply(const std::string& fromUid, const std::string& toU
 
     try {
         mysqlpp::Query query = conn->query();
-        query << "Insert into friend_apply (from_uid,to_uid) values(%0q,%1q) "
+        query << "Insert into friend_apply (from_uid,to_uid) values(%0,%1) "
               << "on duplicate key update from_uid = from_uid,to_uid=to_uid";
-
         query.parse();
-        mysqlpp::SimpleResult res = query.execute(fromUid, toUid);
+
+        mysqlpp::SimpleResult res = query.execute(std::stoi(fromUid), std::stoi(toUid));
         int rowCount = res.rows();
-        return rowCount == 1;
+        return rowCount >= 0;
     } catch (const mysqlpp::Exception& e) {
         SPDLOG_ERROR("MySQL++ exception: {}", e.what());
         return false;
@@ -288,8 +288,8 @@ std::shared_ptr<UserInfo> MysqlDao::GetUser(int uid)
     try {
         mysqlpp::Query query = conn->query();
         query << "SELECT name, email, password,status FROM user WHERE uid = %0q";
-        query.parse();
 
+        query.parse();
         mysqlpp::StoreQueryResult res = query.store(uid);
 
         /**
@@ -343,11 +343,9 @@ std::vector<std::shared_ptr<UserInfo>> MysqlDao::GetUser(const std::string& name
         mysqlpp::Query query = conn->query();
 
         // 使用预处理语句进行模糊查询
-        query << "SELECT * FROM user WHERE name LIKE ?";
+        query << "SELECT * FROM user WHERE name LIKE " << mysqlpp::quote << ("%" + name + "%");
 
-        std::string search_pattern = "%" + name + "%";
-        mysqlpp::StoreQueryResult res = query.store(search_pattern);
-
+        mysqlpp::StoreQueryResult res = query.store();
         std::vector<std::shared_ptr<UserInfo>> users;
 
         if (res) {
@@ -357,7 +355,7 @@ std::vector<std::shared_ptr<UserInfo>> MysqlDao::GetUser(const std::string& name
                 user_info->uid = res[i]["uid"];
                 user_info->name = std::string(res[i]["name"]);
                 user_info->email = std::string(res[i]["email"]);
-                user_info->status = static_cast<int>(res[i]["status"]);
+                user_info->status = res[i]["status"];
 
                 users.push_back(user_info);
             }

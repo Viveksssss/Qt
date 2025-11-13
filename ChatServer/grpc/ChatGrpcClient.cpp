@@ -1,8 +1,6 @@
 #include "ChatGrpcClient.h"
 #include "../global/ConfigManager.h"
-#include "message.pb.h"
 #include <grpcpp/client_context.h>
-#include <new>
 #include <spdlog/spdlog.h>
 #include <string>
 

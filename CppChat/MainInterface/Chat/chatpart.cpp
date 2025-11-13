@@ -22,12 +22,13 @@ void ChatPart::setupUI()
     main_vlay->setContentsMargins(10,10,10,10);
 
     // chatTopArea
-    chatTopArea = new ChatTopArea;
-    main_vlay->addWidget(chatTopArea);
-
+    chatTopArea = new ChatTopArea(this);
     // chatArea
     chatArea = new ChatArea;
+
+    main_vlay->addWidget(chatTopArea);
     main_vlay->addWidget(chatArea);
+
 }
 
 void ChatPart::setupConnections()

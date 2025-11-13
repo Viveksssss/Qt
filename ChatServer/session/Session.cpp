@@ -54,7 +54,15 @@ void Session::Close()
         SPDLOG_WARN("Socket close error: {}", ec.message());
     }
     SPDLOG_INFO("Session {} disconnected!", _session_id);
+
+    // 减少登录计数
+    RedisManager::GetInstance()->Decr(LOGIN_COUNT_PREFIX + _server->GetServerName());
+    // 删除用户服务器信息
     RedisManager::GetInstance()->Del(USERIP_PREFIX + std::to_string(_uid));
+    // 删除用户基本信息
+    RedisManager::GetInstance()->Del(USER_BASE_INFO_PREFIX + std::to_string(_uid));
+    // 删除用户token
+    RedisManager::GetInstance()->Del(USER_TOKEN_PREFIX + std::to_string(_uid));
 }
 
 void Session::Send(const char* msg, int max_length, uint16_t msg_id)

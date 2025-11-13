@@ -20,6 +20,7 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <QTextEdit>
+#include <QScrollBar>
 ChatTopArea::ChatTopArea(QWidget *parent)
     : QWidget{parent}
 {
@@ -52,6 +53,13 @@ void ChatTopArea::setupUI()
     newsBtn->setIconSize({20,20});
     newsBtn->setFixedSize({30,30});
 
+    redDot = new QLabel(newsBtn);
+    redDot->setVisible(false);
+    redDot->setFixedSize(10, 10);
+    redDot->setStyleSheet("background: red; border-radius: 5px;");
+    redDot->move(newsBtn->width() - 10, 2); // 右上角位置
+    redDot->setAttribute(Qt::WA_TransparentForMouseEvents); // 穿透鼠标事
+
     headerLabelFromChat = new ClearAvatarLabel;
     headerLabelFromChat->setObjectName("headerLabelFromChat");
     headerLabelFromChat->setFixedSize({30,30});
@@ -72,6 +80,10 @@ void ChatTopArea::setupUI()
     main_hlay->addWidget(headerLabelFromChat);
     main_hlay->addWidget(foldBtn);
 
+    newsPanel = new NotificationPanel(this);
+    newsPanel->setObjectName("NotificationPanel");
+    newsPanel->setFixedWidth(250);
+    newsPanel->hide();
 
     qApp->installEventFilter(this);
 }
@@ -82,6 +94,10 @@ void ChatTopArea::setupConnections()
     connect(this,&ChatTopArea::on_search_friend,searchBox,&AnimatedSearchBox::do_text_changed);
 
     connect(newsBtn,&QPushButton::clicked,this,&ChatTopArea::do_show_news);
+
+    connect(newsPanel,&NotificationPanel::on_unshow_red_dot,this,&ChatTopArea::do_unshow_red_dot);
+
+    connect(newsPanel,&NotificationPanel::on_show_red_dot,this,&ChatTopArea::do_show_red_dot);
 
     // 在按钮点击的槽函数中
     connect(statusLabel, &StatusLabel::clicked, this, [this]() {
@@ -132,11 +148,20 @@ void ChatTopArea::setupConnections()
 
 void ChatTopArea::do_show_news()
 {
-
+    newsPanel->showPanel();
 }
 
+void ChatTopArea::do_show_red_dot()
+{
+    qDebug() << "yes";
+    redDot->setVisible(true);
+}
 
-
+void ChatTopArea::do_unshow_red_dot()
+{
+    qDebug() << "no";
+    redDot->setVisible(false);
+}
 
 void ChatTopArea::keyPressEvent(QKeyEvent *event)
 {
@@ -181,6 +206,11 @@ void StatusLabel::setEnabled(bool enabled)
     isEnabled = enabled;
 }
 
+void StatusLabel::setShowBorder(bool show) noexcept
+{
+    this->showBorder = show;
+}
+
 void StatusLabel::paintEvent(QPaintEvent *event)
 {
     Q_UNUSED(event);
@@ -197,9 +227,11 @@ void StatusLabel::paintEvent(QPaintEvent *event)
     }
 
     // 1. 圆角矩形
-    painter.setPen(QPen(dotColor,3));
-    painter.setBrush(QBrush(color));
-    painter.drawRoundedRect(rect.adjusted(2,2,-2,-2),10,10);
+    if (showBorder){
+        painter.setPen(QPen(dotColor,3));
+        painter.setBrush(QBrush(color));
+        painter.drawRoundedRect(rect.adjusted(2,2,-2,-2),10,10);
+    }
 
     // 2. 绘制左侧圆点
     int dotSize = 8;
@@ -318,13 +350,17 @@ void AnimatedSearchBox::setupUI()
 
     resultList = new QListWidget(window());
     resultList->setObjectName("resultList");
-    resultList->setFixedHeight(0);  // 初始高度为0
+    resultList->setFixedSize(380, 320);  // 使用 setFixedSize
+    resultList->setUniformItemSizes(true);
+    resultList->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    resultList->setVerticalScrollMode(QListWidget::ScrollPerItem); // 对滚轮无效。。。
+    resultList->viewport()->installEventFilter(this); // 手写过滤器，每次滚动一项
     resultList->hide();
+    resultList->setSpacing(1);
     QTimer::singleShot(0, this, [this] {
         QWidget *central = window();           // 普通 QWidget 场景
         resultList->setParent(central);
         resultList->setWindowFlags(Qt::Popup);         // 变回普通子控件
-        // resultList->setFocusPolicy(Qt::StrongFocus);
     });
 
     searchLayout->addWidget(searchEdit);
@@ -371,6 +407,8 @@ void AnimatedSearchBox::do_text_changed(const QString &text)
 {
     if (text.length() >= 1){
         getSearchUsers(text.trimmed());
+        // updateResults();
+        // showResults();
     }else{
         hideResults();
     }
@@ -408,12 +446,10 @@ void AnimatedSearchBox::showResults()
 
     QRect r = searchEdit->rect();
     QPoint bottomLeft = searchEdit->mapToGlobal(r.bottomLeft());
-    bottomLeft.setX(bottomLeft.x()-50);
+    bottomLeft.setX(bottomLeft.x()-80);
 
-    // 先设置大小，再移动
-    resultList->setFixedSize(310, 300);  // 使用 setFixedSize
+
     resultList->move(bottomLeft);
-
     resultList->show();
     resultList->raise();
 
@@ -426,21 +462,22 @@ void AnimatedSearchBox::updateResults(){
     resultList->clear();
     for (const std::shared_ptr<UserInfo> &user : this->usersList) {
         QListWidgetItem *item = new QListWidgetItem;
-        item->setSizeHint(QSize(300,50));
+        item->setSizeHint(QSize(350,40));
         // 提取用户ID - 实际项目中从数据结构获取
         FriendsItem *friendItem = new FriendsItem(user->id,user->avatar,user->name,user->status);
         resultList->addItem(item);
         resultList->setItemWidget(item,friendItem);
     }
 
-    // 如果没有结果
     if (resultList->count() == 0) {
-        QListWidgetItem *item = new QListWidgetItem("未找到相关用户");
-        item->setFlags(item->flags() & ~Qt::ItemIsSelectable);
-        item->setForeground(Qt::gray);
-        item->setSizeHint(QSize(300,50));
+        QListWidgetItem *item = new QListWidgetItem;
+        item->setSizeHint(QSize(350,40));
+        // 提取用户ID - 实际项目中从数据结构获取
+        item->setText("未查询到用户");
+        item->setTextAlignment(Qt::AlignCenter);
         resultList->addItem(item);
     }
+
 }
 
 void AnimatedSearchBox::getSearchUsers(const QString &uid)
@@ -496,17 +533,48 @@ bool AnimatedSearchBox::eventFilter(QObject *obj, QEvent *event)
 {
     if (event->type() == QEvent::MouseButtonPress && resultList->isVisible()) {
         QWidget *clickedWidget = qobject_cast<QWidget*>(obj);
-        if (clickedWidget &&
-            clickedWidget != resultList &&
-            !resultList->isAncestorOf(clickedWidget) &&
-            clickedWidget != searchEdit &&
-            clickedWidget != searchButton) {
-            // 点击了resultList、searchEdit、searchButton之外的区域
-            hideResults();
+        if (!clickedWidget) {
+            return QWidget::eventFilter(obj, event);
         }
+
+        // 获取全局鼠标位置
+        QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+        QPoint globalPos = mouseEvent->globalPos();
+
+        // 检查点击是否在resultList区域内
+        QRect resultListRect = resultList->geometry();
+        if (resultListRect.contains(globalPos)) {
+            return QWidget::eventFilter(obj, event);
+        }
+
+        // 检查点击是否在searchEdit区域内
+        QRect searchEditRect = searchEdit->geometry();
+        searchEditRect.moveTopLeft(searchEdit->mapToGlobal(QPoint(0, 0)));
+        if (searchEditRect.contains(globalPos)) {
+            return QWidget::eventFilter(obj, event);
+        }
+
+        // 如果都不在，隐藏结果
+        hideResults();
+    }else if(event->type() == QEvent::Wheel && obj == resultList->viewport()){
+        QWheelEvent*wheelEvent = static_cast<QWheelEvent*>(event);
+        int delta = wheelEvent->angleDelta().y();
+        if (delta == 0){
+            return false;
+        }
+
+        if (delta > 0) {
+            // 向上滚动一个项
+            resultList->verticalScrollBar()->setValue(resultList->verticalScrollBar()->value() - 1);
+        } else {
+            // 向下滚动一个项
+            resultList->verticalScrollBar()->setValue(resultList->verticalScrollBar()->value() + 1);
+        }
+        return true;
     }
     return QWidget::eventFilter(obj, event);
 }
+
 
 FriendAddDialog::FriendAddDialog(QWidget *parent)
     : QDialog(parent)
@@ -655,14 +723,14 @@ void FriendsItem::setupUI()
 {
     QPixmap avatar = SourceManager::GetInstance()->getPixmap(_avatar_path);
     QHBoxLayout*main_hlay = new QHBoxLayout(this);
-    main_hlay->setContentsMargins(0,0,10,0);
+    main_hlay->setContentsMargins(10,0,10,0);
     main_hlay->setSpacing(5);
 
     _avatar = new QLabel;
-    _avatar->setFixedSize(50, 50);
+    _avatar->setFixedSize(35, 35);
     _avatar->setStyleSheet(R"(
         QLabel {
-            border-radius: 25px;
+            border-radius: 17px;
             background-color: #fdf5fe;
             border: 1px solid #CCCCCC;
         }
@@ -671,7 +739,7 @@ void FriendsItem::setupUI()
 
     // 设置头像，确保缩放并居中
     if (!avatar.isNull()) {
-        QPixmap scaledAvatar = avatar.scaled(45, 45, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        QPixmap scaledAvatar = avatar.scaled(27,27 , Qt::KeepAspectRatio, Qt::SmoothTransformation);
         _avatar->setPixmap(scaledAvatar);
     } else {
         // 默认头像
@@ -680,19 +748,28 @@ void FriendsItem::setupUI()
 
     QLabel*name = new QLabel;
     name->setText(_name);
-    name->setStyleSheet("font-weight:bold;color:#333333;font-size:15px;");
+    QFont font = name->font();
+    font.setBold(true);
+    font.setPointSize(10);
+    QPalette plt = name->palette();
+    plt.setColor(QPalette::WindowText,QColor(333333));
+    name->setFont(font);
+    name->setPalette(plt);
+    name->setAlignment(Qt::AlignCenter);
 
     _statusLabel = new StatusLabel;
     _statusLabel->setStatus(_status);
     _statusLabel->setEnabled(false);
     _statusLabel->setFixedSize({60,30});
+    _statusLabel->setShowBorder(false);
 
     _applyFriend = new QPushButton;
     _applyFriend->setText("添加");
-    _applyFriend->setFixedSize({60,35});
+    _applyFriend->setFixedSize({60,30});
     _applyFriend->setStyleSheet(R"(
         QPushButton {
-            background-color: #79fcf7;
+            background-color: #6bb9ef;
+
             color: #ffffff;
             border: none;
             border-radius: 10px;
@@ -705,6 +782,7 @@ void FriendsItem::setupUI()
     )");
 
     main_hlay->addWidget(_avatar);
+    main_hlay->addSpacing(5);
     main_hlay->addWidget(name);
     main_hlay->addStretch();
     main_hlay->addWidget(_statusLabel);
@@ -733,4 +811,9 @@ void FriendsItem::setupConnections()
         this->_applyFriend->setEnabled(false);
         showToolTip(_applyFriend,"已发送好友请求");
     });
+}
+
+void FriendsItem::setShowBorder(bool show) noexcept
+{
+    _statusLabel->setShowBorder(show);
 }

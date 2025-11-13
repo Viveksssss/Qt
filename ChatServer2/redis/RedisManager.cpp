@@ -189,6 +189,43 @@ bool RedisManager::Del(const std::string& key)
     return true;
 }
 
+bool RedisManager::Decr(const std::string& key, int amount)
+{
+    redisReply* reply = nullptr;
+    if (amount == 1) {
+        reply = execute("DECR %s", key.c_str());
+    } else {
+        return this->Set(key, std::to_string((std::stoi(key) - amount)));
+    }
+    if (reply == NULL) {
+        return false;
+    }
+    if (reply->type == REDIS_REPLY_ERROR) {
+        freeReplyObject(reply);
+        return false;
+    }
+    freeReplyObject(reply);
+    return true;
+}
+bool RedisManager::Incr(const std::string& key, int amount)
+{
+    redisReply* reply = nullptr;
+    if (amount == 1) {
+        reply = execute("INCR %s", key.c_str());
+    } else {
+        return this->Set(key, std::to_string((std::stoi(key) + amount)));
+    }
+    if (reply == NULL) {
+        return false;
+    }
+    if (reply->type == REDIS_REPLY_ERROR) {
+        freeReplyObject(reply);
+        return false;
+    }
+    freeReplyObject(reply);
+    return true;
+}
+
 bool RedisManager::ExistsKey(const std::string& key)
 {
     auto* reply = execute("EXISTS %s", key.c_str());
