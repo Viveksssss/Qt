@@ -55,12 +55,19 @@ void FriendsModel::addFriend(const FriendItem &friendItem)
     endInsertRows();
 }
 
+void FriendsModel::addPreFriend(const FriendItem &friendItem)
+{
+    beginInsertRows(QModelIndex(),0,0);
+    _friends.append(friendItem);
+    endInsertRows();
+}
+
 FriendItem FriendsModel::getFriend(int index)
 {
     if (index >= 0 && index < _friends.size()){
         return _friends.at(index);
     }
-    return FriendItem("","");
+    return FriendItem();
 }
 
 bool FriendsModel::removeRows(int row, int count, const QModelIndex &parent)

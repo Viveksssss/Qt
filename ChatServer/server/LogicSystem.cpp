@@ -10,6 +10,7 @@
 #include <boost/mpl/base.hpp>
 #include <cstdint>
 #include <spdlog/spdlog.h>
+#include <string>
 
 std::string thread_id_to_string(std::thread::id id)
 {
@@ -76,7 +77,27 @@ void LogicSystem::RegisterCallBacks()
         jj["icon"] = user_info->icon;
         jj["token"] = token;
 
+        // 获取申请列表
+        std::vector<std::shared_ptr<UserInfo>> apply_list;
+        bool b_apply = MysqlManager::GetInstance()->GetFriendApplyList(uid_str, apply_list);
+        if (b_apply) {
+            // 我们这里规定哪怕数据库操作成功，但是没有数据也算失败，就直接跳过，避免多余判断。
+            json apply_friends;
+            for (auto& apply_user : apply_list) {
+                json apply_friend;
+                apply_friend["uid"] = apply_user->uid;
+                apply_friend["name"] = apply_user->name;
+                apply_friend["email"] = apply_user->email;
+                apply_friend["icon"] = apply_user->icon;
+                apply_friend["sex"] = apply_user->sex;
+                apply_friend["desc"] = apply_user->desc;
+
+                apply_friends.push_back(apply_friend);
+            }
+            jj["apply_friends"] = apply_friends;
+        }
         // 获取消息列表
+
         // 获取好友列表
 
         // 更新登陆数量
@@ -136,7 +157,15 @@ void LogicSystem::RegisterCallBacks()
         auto fromIcon = j.value("fromIcon", "");
 
         std::string uid_str = std::to_string(toUid);
-
+        // 先检查双方是否互相发送请求，如果是直接双方同意。
+        bool apply_each = MysqlManager::GetInstance()->CheckApplied(std::to_string(toUid), std::to_string(fromUid));
+        if (apply_each) {
+            // 直接同意
+            json jj;
+            jj["error"] = ErrorCodes::SUCCESS;
+            jj["to_uid"] = toUid;
+            // jj[""]
+        }
         bool b_apply = MysqlManager::GetInstance()->AddFriendApply(std::to_string(fromUid), uid_str);
         if (!b_apply) {
             return;
@@ -178,6 +207,47 @@ void LogicSystem::RegisterCallBacks()
 
         ChatGrpcClient::GetInstance()->NotifyAddFriend(to_ip_value, req);
     };
+
+    _function_callbacks[MsgId::ID_AUTH_FRIEND_REQ] = [this](std::shared_ptr<Session> session, uint16_t msg_id, const std::string& msg) {
+        json j = json::parse(msg);
+        j["error"] = ErrorCodes::SUCCESS;
+        j["ok"] = false; // 标记失败
+        Defer defer([this, &j, session]() {
+            // 这是给fromUid的回复信息
+            // 目地是如果同意，那么就返回好友的信息
+            session->Send(j.dump(), static_cast<int>(MsgId::ID_AUTH_FRIEND_RSP));
+        });
+
+        auto toUid = j["to_uid"].get<int>();
+        auto fromUid = j["from_uid"].get<int>();
+        bool accept = j["accept"].get<bool>();
+        // 不需要解析其他的信息，只需要按需发给对方即可
+        // fromUid接受或者拒绝，服务器回复给toUid
+        if (accept) {
+            MysqlManager::GetInstance()->ChangeApplyStatus(std::to_string(fromUid), std::to_string(toUid), 1);
+            MysqlManager::GetInstance()->MakeFriends(std::to_string(fromUid), std::to_string(toUid));
+            // 获取好友的信息。
+            std::string base_key = USER_BASE_INFO_PREFIX + std::to_string(toUid);
+            auto apply_info = std::make_shared<UserInfo>();
+            bool b_info = GetBaseInfo(base_key, toUid, apply_info);
+            if (!b_info) {
+                return;
+            } else {
+                j["to_uid"] = apply_info->uid;
+                j["to_sex"] = apply_info->sex;
+                j["to_status"] = apply_info->status;
+                j["to_name"] = apply_info->name;
+                j["to_email"] = apply_info->email;
+                j["to_icon"] = apply_info->icon;
+                j["to_desc"] = apply_info->desc;
+                j["to_meseage"] = apply_info->back; // 备用字段，用来展示最近消息
+                j["ok"] = true; // 标记成功
+            }
+        } else {
+            MysqlManager::GetInstance()->ChangeApplyStatus(std::to_string(fromUid), std::to_string(toUid), -1);
+            j["ok"] = false; // 标记失败
+        }
+    };
 }
 
 void LogicSystem::DealMsg()
@@ -218,6 +288,7 @@ bool LogicSystem::GetBaseInfo(std::string base_key, int uid, std::shared_ptr<Use
         userinfo->email = j["email"].get<std::string>();
         userinfo->uid = j["uid"].get<int>();
         userinfo->sex = j["sex"].get<int>();
+        userinfo->status = j["status"].get<int>();
         userinfo->nick = j["nick"].get<std::string>();
         userinfo->desc = j["desc"].get<std::string>();
         userinfo->icon = j["icon"].get<std::string>();
@@ -235,6 +306,7 @@ bool LogicSystem::GetBaseInfo(std::string base_key, int uid, std::shared_ptr<Use
         j["nick"] = userinfo->nick;
         j["desc"] = userinfo->desc;
         j["icon"] = userinfo->icon;
+        j["status"] = userinfo->status;
         RedisManager::GetInstance()->Set(base_key, j.dump());
     }
     return true;

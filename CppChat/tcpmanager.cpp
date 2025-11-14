@@ -45,12 +45,40 @@ void TcpManager::initHandlers()
             return;
         }
 
+        qDebug() << jsonObj;
+
+        // 基本信息
         UserManager::GetInstance()->SetName(jsonObj["name"].toString());
         UserManager::GetInstance()->SetEmail(jsonObj["email"].toString());
         UserManager::GetInstance()->SetToken(jsonObj["token"].toString());
         UserManager::GetInstance()->SetSex(jsonObj["sex"].toInt());
         UserManager::GetInstance()->SetUid(jsonObj["uid"].toInt());
         UserManager::GetInstance()->SetIcon(jsonObj["icon"].toString());
+
+        qDebug() << "reday to apply_list";
+        // 申请列表
+        if (jsonObj.contains("apply_friends")){
+            QJsonArray apply_friends = jsonObj["apply_friends"].toArray();
+            std::vector<std::shared_ptr<UserInfo>>apply_list;
+            for(const QJsonValue&value:apply_friends){
+                QJsonObject obj = value.toObject();
+                auto user_info = std::make_shared<UserInfo>();
+                user_info->id = obj["uid"].toInt();
+                user_info->name = obj["name"].toString();
+                user_info->email = obj["email"].toString();
+                user_info->avatar = obj["icon"].toString();
+                user_info->sex = obj["sex"].toInt();
+                user_info->desc = obj["desc"].toString();
+                apply_list.push_back(user_info);
+            }
+            emit on_get_apply_list(apply_list);
+            qDebug() <<"size:" <<apply_list.size();
+        }
+
+
+        //TODO: 好友列表
+
+        //TODO: 消息列表
 
         // 发出信号跳转到主页面
         emit on_switch_interface();
@@ -104,12 +132,12 @@ void TcpManager::initHandlers()
                     }
 
                     int id = userObj["uid"].toInt();
+                    int status = userObj["status"].toInt();
                     int sex = userObj["sex"].toInt();
                     QString email = userObj["email"].toString();
                     QString name = userObj["name"].toString();
-                    QString status = userObj["status"].toString();
                     QString avatar_path = tempFilePath;
-                    auto user_info = std::make_shared<UserInfo>(id,sex,email,name,avatar_path,status);
+                    auto user_info = std::make_shared<UserInfo>(id,status,sex,name,avatar_path,email);
 
                     userList.append(user_info);
                 }
@@ -147,7 +175,7 @@ void TcpManager::initHandlers()
       info.id = jsonObj["fromUid"].toInt();
       info.email = jsonObj["fromEmail"].toString();
       info.name = jsonObj["fromName"].toString();
-      info.status = jsonObj["fromStatus"].toString();
+      info.status = jsonObj["fromStatus"].toInt();
 
       // TODO:
       qDebug() << "申请添加好友成功";
@@ -157,7 +185,6 @@ void TcpManager::initHandlers()
     /**
      * @brief 用户请求添加好友通知处理
      */
-
     _handlers[RequestType::ID_NOTIFY_ADD_FRIEND_REQ] = [this](RequestType requestType,int len,QByteArray data){
         QJsonDocument jsonDoc = QJsonDocument::fromJson(data);
         if (jsonDoc.isNull()){
@@ -189,6 +216,39 @@ void TcpManager::initHandlers()
 
         qDebug() << "收到好友请求";
         emit on_auth_friend(user_info);
+    };
+
+    /**
+     * @brief 用户请求添加好友通知回包
+     */
+    _handlers[RequestType::ID_ADD_FRIEND_RSP] = [this](RequestType requestType,int len,QByteArray data){
+        QJsonDocument jsonDoc = QJsonDocument::fromJson(data);
+        if (jsonDoc.isNull()){
+            return;
+        }
+        QJsonObject jsonObj = jsonDoc.object();
+        if (!jsonObj.contains("error")){
+            int err = static_cast<int>(ErrorCodes::ERROR_JSON);
+            return;
+        }
+
+        int err = jsonObj["error"].toInt();
+        if (err != static_cast<int>(ErrorCodes::SUCCESS)){
+            return;
+        }
+        // 接受信息如果成功，然后将对方信息加入好友列表
+        if (jsonObj.contains("ok") && jsonObj["ok"].toBool()){
+            auto info = std::make_shared<UserInfo>();
+            info->id = jsonObj["to_uid"].toInt();
+            info->status = jsonObj["to_status"].toInt();
+            info->sex = jsonObj["to_sex"].toInt();
+            info->name = jsonObj["to_name"].toString();
+            info->avatar = jsonObj["to_icon"].toString();
+            info->desc = jsonObj["to_desc"].toString();
+            info->back = jsonObj["to_message"].toString();
+            emit on_add_friend_to_list(info);
+        }
+
     };
 }
 

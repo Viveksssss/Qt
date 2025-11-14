@@ -1,13 +1,17 @@
 #include "friendsnewsitem.h"
+#include <QJsonObject>
 #include <QLabel>
 #include <QPushButton>
 #include <QVBoxLayout>
+#include "../../../../usermanager.h"
 #include "../../../../Properties/sourcemanager.h"
+#include "../../../../tcpmanager.h"
 
 
-FriendsNewsItem::FriendsNewsItem(bool isReply,int uid,const QString &iconPath, const QString &name, const QString &content, QWidget *parent)
+FriendsNewsItem::FriendsNewsItem(bool isReply,int uid,int sex,const QString &iconPath, const QString &name, const QString &content, QWidget *parent)
     : QWidget(parent)
     , _uid(uid)
+    , _isRely(isReply)
 
 {
     setupUI();
@@ -57,16 +61,19 @@ void FriendsNewsItem::setupUI()
         acceptButton = new QPushButton;
         acceptButton->setObjectName("FriendsNewsItem_AcceptButton");
         acceptButton->setFixedSize(90,30);
+        acceptButton->setText("确认");
         button_hlay->addWidget(acceptButton,Qt::AlignCenter);
         button_hlay->addStretch();
     }else{
         acceptButton = new QPushButton;
         acceptButton->setObjectName("FriendsNewsItem_AcceptButton");
         acceptButton->setFixedSize(90,30);
+        acceptButton->setText("接受");
 
         rejectButton = new QPushButton;
         rejectButton->setObjectName("FriendsNewsItem_RejectButton");
         rejectButton->setFixedSize(90,30);
+        rejectButton->setText("拒绝");
 
         button_hlay->addWidget(acceptButton);
         button_hlay->addWidget(rejectButton);
@@ -92,13 +99,25 @@ void FriendsNewsItem::do_accept_clicked()
     if (_isRely){
         emit on_confirm_clicked();
     }else{
-        emit on_accepted_clicked();
-        //TODO:
+        emit on_accepted_clicked(); // 提示消除item
+        // 下面回复请求为接受
+        QJsonObject jsonObj;
+        jsonObj["from_uid"] = UserManager::GetInstance()->GetUid();
+        jsonObj["to_uid"] = _uid;
+        jsonObj["accept"] = true;
+        QJsonDocument doc(jsonObj);
+        TcpManager::GetInstance()->do_send_data(RequestType::ID_AUTH_FRIEND_REQ,doc.toJson(QJsonDocument::Compact));
     }
 }
 
 void FriendsNewsItem::do_reject_clcked()
 {
     emit on_rejected_clicked();
-    //TODO:
+    // 下面回复请求为拒绝
+    QJsonObject jsonObj;
+    jsonObj["from_uid"] = UserManager::GetInstance()->GetUid();
+    jsonObj["to_uid"] = _uid;
+    jsonObj["accept"] = false;
+    QJsonDocument doc(jsonObj);
+    TcpManager::GetInstance()->do_send_data(RequestType::ID_AUTH_FRIEND_REQ,doc.toJson(QJsonDocument::Compact));
 }

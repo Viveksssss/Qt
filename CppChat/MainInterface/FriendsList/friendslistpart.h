@@ -19,6 +19,8 @@ class FriendItemDelegate;
 class QListView;
 class QPushButton;
 class QLabel;
+
+struct UserInfo;
 class FriendsListPart : public QWidget
 {
     Q_OBJECT
@@ -34,13 +36,13 @@ signals:
 
 private slots:
     void do_loading_users();
+    void do_add_friend_to_list(std::shared_ptr<UserInfo>); // from TcpManager::on_add_frined_to_list;
 private:
     QLabel *title;
     QPushButton *findButton;
     QListView *friendsList;
     FriendsModel *friendsModel;
     FriendItemDelegate *friendsDelegate;
-
     // 是否正在加载列表
     bool isLoading;
 

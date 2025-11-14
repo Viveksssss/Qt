@@ -53,6 +53,8 @@ signals:
     void on_users_searched(QList<std::shared_ptr<UserInfo>>list);   // to AnimatedSearchBox::do_users_searched
     void on_add_friend(const UserInfo&info); // to SideNews::do_add_friend
     void on_auth_friend(std::shared_ptr<UserInfo>info); // to NotificationPanel::do_auth_friend ; TopChatArea::do_show_red_dot
+    void on_get_apply_list(const std::vector<std::shared_ptr<UserInfo>>&list); // to NotificationPanel::do_get_apply_list;
+    void on_add_friend_to_list(std::shared_ptr<UserInfo>); // to Friend
 };
 
 #endif // TCPMANAGER_H

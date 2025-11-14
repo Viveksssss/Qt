@@ -758,8 +758,6 @@ QListWidget#newsList::item:selected {
     color: white;
     border: none;
     border-radius: 5px;
-    padding-top:10px;
-    padding-bottom:10px;
     font-size: 12px;
     margin-bottom:2px;
 }

@@ -70,27 +70,29 @@ struct ServerInfo{
 struct UserInfo{
     int id;
     int sex;
+    int status;
     QString email;
     QString name;
     QString avatar;
-    QString status;
     QString desc;
+    QString back;   // 备用字段
 
     UserInfo(){}
-    UserInfo(int id,const QString&name,const QString&avatar,const QString&status)
+    UserInfo(int id,const QString&name,const QString&avatar,int status)
         : id(id)
         , name(name)
         , avatar(avatar)
         , status(status)
     {}
-    UserInfo(int id,int sex,const QString&email,const QString&name,const QString&avatar,const QString&status)
+    UserInfo(int id,int status,int sex,const QString&name,const QString&avatar,const QString&email)
         : id(id)
+        , status(status)
+        , sex(sex)
+        , name(name)
+        , avatar(avatar)
         , email(email)
-        , name(name)
-        , avatar(avatar)
-        , status(status)
     {}
-    UserInfo(int id,int sex,const QString&email,const QString&name,const QString&avatar,const QString&status,QString desc)
+    UserInfo(int id,int status,int sex,const QString&email,const QString&name,const QString&avatar,QString desc)
         : id(id)
         , email(email)
         , name(name)

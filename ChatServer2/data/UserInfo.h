@@ -9,7 +9,7 @@ struct UserInfo {
         , nick("")
         , desc("")
         , icon("")
-        , back("")
+        , back("") // 备用字段
         , token("")
         , status(0)
         , sex(0)

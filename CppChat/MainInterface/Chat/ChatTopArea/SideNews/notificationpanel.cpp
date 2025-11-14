@@ -27,15 +27,17 @@ NotificationPanel::NotificationPanel(QWidget *parent)
     setupConnections();
 }
 
-void NotificationPanel::addFriendNews(bool isReply, int uid, const QString &iconPath, const QString &name, const QString &content)
+void NotificationPanel::addFriendNews(bool isReply, int uid, int sex,const QString &iconPath, const QString &name, const QString &content)
 {
     emit on_show_red_dot();
-    FriendsNewsItem *itemWidget = new FriendsNewsItem(isReply,uid,iconPath, name, content);
+    FriendsNewsItem *itemWidget = new FriendsNewsItem(isReply,uid,sex,iconPath, name, content);
     QListWidgetItem*item = new QListWidgetItem;
     item->setSizeHint(itemWidget->sizeHint());
 
     friendsNews->addItem(item);
     friendsNews->setItemWidget(item,itemWidget);
+
+    friendsNews->update();
 
     connect(itemWidget, &FriendsNewsItem::on_accepted_clicked, [this, item]() {
         do_friend_accept(item);
@@ -58,6 +60,8 @@ void NotificationPanel::addSystemNews(bool isReply, int uid, const QString &icon
 
     systemNews->addItem(item);
     systemNews->setItemWidget(item,itemWidget);
+
+    systemNews->update();
 
     connect(itemWidget, &SystemNewsItem::on_accepted_clicked, [this, item]() {
         do_system_accept(item);
@@ -160,6 +164,7 @@ void NotificationPanel::setupUI()
 
 void NotificationPanel::setupConnections()
 {
+    connect(TcpManager::GetInstance().get(),&TcpManager::on_get_apply_list,this,&NotificationPanel::do_get_apply_list);
     connect(TcpManager::GetInstance().get(),&TcpManager::on_auth_friend,this,&NotificationPanel::do_auth_friend);
 }
 
@@ -221,7 +226,15 @@ void NotificationPanel::do_system_confirm_clicked(QListWidgetItem *item)
 
 void NotificationPanel::do_auth_friend(std::shared_ptr<UserInfo> info)
 {
-    addFriendNews(false,info->id,info->avatar,info->name,"😄向您发来好友申请😄");
+    addFriendNews(false,info->id,info->sex,info->avatar,info->name,"😄向您发来好友申请😄");
+}
+
+void NotificationPanel::do_get_apply_list(const std::vector<std::shared_ptr<UserInfo>>&list)
+{
+
+    for(const auto&apply:list){
+        addFriendNews(false,apply->id,apply->sex,apply->avatar,apply->name,"😄向您发来好友申请😄");
+    }
 }
 
 

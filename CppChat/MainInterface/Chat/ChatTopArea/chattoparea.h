@@ -54,6 +54,8 @@ private:
     QList<std::shared_ptr<UserInfo>>userLists;
 
     NotificationPanel *newsPanel;
+
+    bool padding = false;   // 防止多次发送查询请求
 protected:
     void keyPressEvent(QKeyEvent *event);
 };
@@ -100,7 +102,7 @@ class FriendsItem :public QWidget
 {
     Q_OBJECT
 public:
-    explicit FriendsItem(int uid,const QString&avatar_path = "",const QString&name = "",const QString&status = "在线",QWidget*parent=nullptr);
+    explicit FriendsItem(int uid,const QString&avatar_path = "",const QString&name = "",int status = 0,QWidget*parent=nullptr);
     void setupUI();
     void setupConnections();
     void setShowBorder(bool show)noexcept;
@@ -113,7 +115,7 @@ private:
     QPushButton *_applyFriend;
     StatusLabel *_statusLabel;
     QLabel * _avatar;
-    QString _status;
+    int _status;
 
 };
 

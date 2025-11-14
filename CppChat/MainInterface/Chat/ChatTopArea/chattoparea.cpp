@@ -153,21 +153,25 @@ void ChatTopArea::do_show_news()
 
 void ChatTopArea::do_show_red_dot()
 {
-    qDebug() << "yes";
     redDot->setVisible(true);
 }
 
 void ChatTopArea::do_unshow_red_dot()
 {
-    qDebug() << "no";
     redDot->setVisible(false);
 }
 
 void ChatTopArea::keyPressEvent(QKeyEvent *event)
 {
     if(event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter){
-        emit on_search_friend(this->searchBox->getContent());
-        return ;
+        if(!padding){
+            padding = true;
+            QTimer::singleShot(1000,[this]()mutable{
+                this->padding = false;
+            });
+            emit on_search_friend(this->searchBox->getContent());
+        }
+        return;
     }
     else{
         QWidget::keyPressEvent(event);
@@ -447,6 +451,7 @@ void AnimatedSearchBox::showResults()
     QRect r = searchEdit->rect();
     QPoint bottomLeft = searchEdit->mapToGlobal(r.bottomLeft());
     bottomLeft.setX(bottomLeft.x()-80);
+    bottomLeft.setY(bottomLeft.y()+5);
 
 
     resultList->move(bottomLeft);
@@ -548,11 +553,11 @@ bool AnimatedSearchBox::eventFilter(QObject *obj, QEvent *event)
         }
 
         // 检查点击是否在searchEdit区域内
-        QRect searchEditRect = searchEdit->geometry();
-        searchEditRect.moveTopLeft(searchEdit->mapToGlobal(QPoint(0, 0)));
-        if (searchEditRect.contains(globalPos)) {
-            return QWidget::eventFilter(obj, event);
-        }
+        // QRect searchEditRect = searchEdit->geometry();
+        // searchEditRect.moveTopLeft(searchEdit->mapToGlobal(QPoint(0, 0)));
+        // if (searchEditRect.contains(globalPos)) {
+        //     return QWidget::eventFilter(obj, event);
+        // }
 
         // 如果都不在，隐藏结果
         hideResults();
@@ -708,7 +713,7 @@ void FriendAddDialog::do_add_friend(int uid)
 }
 
 
-FriendsItem::FriendsItem(int uid, const QString &avatar_path, const QString &name, const QString &status,QWidget*parent)
+FriendsItem::FriendsItem(int uid, const QString &avatar_path, const QString &name,int status,QWidget*parent)
     : QWidget(parent)
     , _uid(uid)
     , _avatar_path(avatar_path)
@@ -758,13 +763,18 @@ void FriendsItem::setupUI()
     name->setAlignment(Qt::AlignCenter);
 
     _statusLabel = new StatusLabel;
-    _statusLabel->setStatus(_status);
+    _statusLabel->setStatus(_status==0?"离线":"在线");
     _statusLabel->setEnabled(false);
     _statusLabel->setFixedSize({60,30});
     _statusLabel->setShowBorder(false);
 
     _applyFriend = new QPushButton;
-    _applyFriend->setText("添加");
+    if (_uid == UserManager::GetInstance()->GetUid()){
+        _applyFriend->setText("已添加");
+        _applyFriend->setEnabled(false);    // 不允许自己添加自己。
+    }else{
+        _applyFriend->setText("添加");
+    }
     _applyFriend->setFixedSize({60,30});
     _applyFriend->setStyleSheet(R"(
         QPushButton {

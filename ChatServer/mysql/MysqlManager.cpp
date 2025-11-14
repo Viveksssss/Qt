@@ -28,8 +28,9 @@ bool MysqlManager::CheckPwd(const std::string& user, const std::string& password
     return _dao.CheckPwd(user, password, userInfo);
 }
 
-bool MysqlManager::AddFriendApply(const std::string&fromUid,const std::string&toUid){
-    return _dao.AddFriendApply(fromUid,toUid);
+bool MysqlManager::AddFriendApply(const std::string& fromUid, const std::string& toUid)
+{
+    return _dao.AddFriendApply(fromUid, toUid);
 }
 
 std::shared_ptr<UserInfo> MysqlManager::GetUser(int uid)
@@ -41,18 +42,27 @@ std::vector<std::shared_ptr<UserInfo>> MysqlManager::GetUser(const std::string& 
     return _dao.GetUser(name);
 }
 
-// bool MysqlManager::CheckEmail(const std::string& name, const std::string& email)
-// {
-// }
+bool MysqlManager::GetFriendApplyList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& applyList)
+{
+    return _dao.GetFriendApplyList(uid, applyList);
+}
 
-// bool MysqlManager::UpdatePassword(const std::string& name, const std::string& email)
-// {
-// }
+bool MysqlManager::CheckApplied(const std::string& fromUid, const std::string& toUid)
+{
+    return _dao.CheckApplied(fromUid, toUid);
+}
 
-// bool MysqlManager::CheckPassword(const std::string& email, const std::string& pwd, UserInfo& userInfo)
-// {
-// }
+bool MysqlManager::ChangeApplyStatus(const std::string& fromUid, const std::string& toUid, int status)
+{
+    return _dao.ChangeApplyStatus(fromUid, toUid, status);
+}
 
-// bool MysqlManager::TestProcedure(const std::string& name, const std::string& email)
-// {
-// }
+bool MysqlManager::MakeFriends(const std::string& fromUid, const std::string& toUid)
+{
+    return _dao.MakeFriends(fromUid, toUid);
+}
+
+bool MysqlManager::CheckIsFriend(const std::string& fromUid, const std::string& toUid)
+{
+    return _dao.CheckIsFriend(fromUid, toUid);
+}

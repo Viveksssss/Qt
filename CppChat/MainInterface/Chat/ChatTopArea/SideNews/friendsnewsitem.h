@@ -11,7 +11,7 @@ class FriendsNewsItem : public QWidget
 {
     Q_OBJECT
 public:
-    explicit FriendsNewsItem(bool isReply,int uid,const QString&iconPath,const QString&name,const QString&content,QWidget *parent = nullptr);
+    explicit FriendsNewsItem(bool isReply,int uid,int sex,const QString&iconPath,const QString&name,const QString&content,QWidget *parent = nullptr);
 private:
     void setupUI();
     void setConnections();

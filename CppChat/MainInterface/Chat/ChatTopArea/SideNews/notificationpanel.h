@@ -17,7 +17,7 @@ class NotificationPanel:public QWidget
 public:
     explicit NotificationPanel(QWidget*parent = nullptr);
     ~NotificationPanel() = default;
-    void addFriendNews(bool isReply,int uid,const QString &iconPath, const QString &name, const QString &content);
+    void addFriendNews(bool isReply,int uid,int sex,const QString &iconPath, const QString &name, const QString &content);
     void addSystemNews(bool isReply,int uid,const QString &iconPath, const QString &name, const QString &content);
     void showPanel();
     void hidePanel();
@@ -36,7 +36,8 @@ public slots:
     void do_system_reject(QListWidgetItem*item);
     void do_system_confirm_clicked(QListWidgetItem*item);
 
-    void do_auth_friend(std::shared_ptr<UserInfo>info);
+    void do_get_apply_list(const std::vector<std::shared_ptr<UserInfo>>&list); // from TcpManager::on_get_apply_list
+    void do_auth_friend(std::shared_ptr<UserInfo>info); // from TcpManager::on_auth_friend
 private:
     QListWidget *friendsNews;
     QListWidget *systemNews;

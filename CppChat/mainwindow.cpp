@@ -17,10 +17,11 @@ MainWindow::MainWindow(QWidget *parent)
     setupUI();
     setConnections();
     stack = new AuthStack(this);
+    mainScreen = new MainScreen;
     setCentralWidget(stack);
-    QTimer::singleShot(50,this,[this](){
-    emit TcpManager::GetInstance()->on_switch_interface();
-    });
+    // QTimer::singleShot(50,this,[this](){
+    //     emit TcpManager::GetInstance()->on_switch_interface();
+    // });
 }
 
 void MainWindow::setupUI()
@@ -39,7 +40,7 @@ void MainWindow::setConnections()
 {
     // 登陆界面跳转主页面
     connect(TcpManager::GetInstance().get(),&TcpManager::on_switch_interface,this,[this](){
-        mainScreen = new MainScreen(this);
+        mainScreen->setParent(this);
         setCentralWidget(mainScreen);
         QScreen *screen = QGuiApplication::primaryScreen();
         QRect screenGeometry = screen->geometry();

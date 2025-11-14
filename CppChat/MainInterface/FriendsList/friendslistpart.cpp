@@ -2,6 +2,7 @@
 #include "frienditemdelegate.h"
 #include "friendsmodel.h"
 #include "frienditem.h"
+#include "../../../../Properties/global.h"
 
 #include <QHBoxLayout>
 #include <QLabel>
@@ -145,20 +146,15 @@ void FriendsListPart::do_loading_users()
 
     isLoading = true;
 
-    // auto friend_list = UserManager::GetInstance()->GetChatListPerPage();
-    // if(!friend_list.empty()){
-    //     for(auto&friend:friend_list){
-    //         friendsModel->addFriend(FriendItem(friend.id,friend.name,friend.avatar,friend.status,friend.message));
-    //     }
-    // }
-
-
-    friendsModel->addFriend(FriendItem("1", "张三", ":/avatars/1.png", "在线", "今天天气真好"));
-    friendsModel->addFriend(FriendItem("2", "李四", ":/avatars/2.png", "离线", "忙碌中"));
-    friendsModel->addFriend(FriendItem("3", "王五", ":/avatars/3.png", "在线", "你好世界"));
-    friendsModel->addFriend(FriendItem("4", "赵六", ":/avatars/4.png", "忙碌", "请勿打扰"));
+    //TODO:
+    // 动态获取信息
 
     QTimer::singleShot(1000,this,[this](){
         this->setLoading(false);
     });
+}
+
+void FriendsListPart::do_add_friend_to_list(std::shared_ptr<UserInfo>info)
+{
+    friendsModel->addFriend(FriendItem(info->id, info->status,info->sex,info->name,info->avatar,info->back ));
 }
