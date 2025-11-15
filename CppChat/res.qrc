@@ -38,5 +38,6 @@
         <file>Resources/main/play.png</file>
         <file>Resources/main/volume.png</file>
         <file>Resources/main/no-volume.png</file>
+        <file>Resources/main/header-default.png</file>
     </qresource>
 </RCC>

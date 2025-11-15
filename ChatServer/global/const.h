@@ -41,6 +41,7 @@ enum class MsgId {
     ID_NOTIFY_OFF_LINE_REQ = 1021, // 通知用户下线
     ID_HEART_BEAT_REQ = 1023, // 心跳请求
     ID_HEARTBEAT_RSP = 1024, // 心跳回复
+    ID_NOTIFY_FRIENDS = 1025, // 通知用户建立好友关系
 };
 
 enum class ErrorCodes {
@@ -54,6 +55,11 @@ enum class ErrorCodes {
     ERROR_USER_OR_PASSWORD_INCORRECT = 1007,
     ERROR_UID_INVALID = 1008,
     ERROR_TOKEN_INVALID = 1009,
+};
+
+enum class NotificationCodes {
+    ID_NOTIFY_MAKE_FRIENDS = 1001,
+    ID_NOTIFY_NOT_FRIENDS = 1002,
 };
 
 class ConfigManager;
@@ -72,6 +78,7 @@ extern ConfigManager cfgMgr;
 #define EMAIL_PREFIX "email_"
 #define USER_PREFIX "user_"
 #define USERIP_PREFIX "uip_" // 用户所处的服务器
+#define USER_STATUS_PREFIX "user_status_"
 #define USER_TOKEN_PREFIX "user_token_"
 #define LOGIN_COUNT_PREFIX "login_count_"
 #define USER_BASE_INFO_PREFIX "user_base_info_"

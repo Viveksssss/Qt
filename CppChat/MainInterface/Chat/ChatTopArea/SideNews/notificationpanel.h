@@ -37,7 +37,11 @@ public slots:
     void do_system_confirm_clicked(QListWidgetItem*item);
 
     void do_get_apply_list(const std::vector<std::shared_ptr<UserInfo>>&list); // from TcpManager::on_get_apply_list
+    void do_add_friend(const UserInfo&info); // from TcpManager::on_add_friend();
     void do_auth_friend(std::shared_ptr<UserInfo>info); // from TcpManager::on_auth_friend
+    void do_message_to_list(const std::vector<std::shared_ptr<UserInfo>>&list);
+    void do_notify_friend(std::shared_ptr<UserInfo>info,bool accept);   // from TcpManager::on_notify_friend
+    void do_notify_friend2(std::shared_ptr<UserInfo>info,bool accept);   // from TcpManager::on_notify_friend2
 private:
     QListWidget *friendsNews;
     QListWidget *systemNews;

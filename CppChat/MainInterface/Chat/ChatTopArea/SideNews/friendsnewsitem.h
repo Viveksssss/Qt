@@ -24,6 +24,7 @@ private:
 
     int _uid;
     bool _isRely; // 判断是好友申请还是申请回复，申请需要两个按钮，回复只需要一个按钮：使用acceptButton代替确认
+    int _sex;
 private slots:
     void do_accept_clicked();
     void do_reject_clcked();

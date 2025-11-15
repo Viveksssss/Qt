@@ -68,6 +68,13 @@ void LogicSystem::RegisterCallBacks()
 
         jj["error"] = ErrorCodes::SUCCESS;
 
+        // 将登陆人的状态信息改变为1
+        std::string key = USER_STATUS_PREFIX + uid_str;
+        RedisManager::GetInstance()->Set(key, "1");
+
+        // 登陆成功，通知所有在线好友
+        // TODO:
+
         jj["uid"] = uid;
         jj["name"] = user_info->name;
         jj["email"] = user_info->email;
@@ -80,7 +87,7 @@ void LogicSystem::RegisterCallBacks()
         // 获取申请列表
         std::vector<std::shared_ptr<UserInfo>> apply_list;
         bool b_apply = MysqlManager::GetInstance()->GetFriendApplyList(uid_str, apply_list);
-        if (b_apply) {
+        if (b_apply && apply_list.size() > 0) {
             // 我们这里规定哪怕数据库操作成功，但是没有数据也算失败，就直接跳过，避免多余判断。
             json apply_friends;
             for (auto& apply_user : apply_list) {
@@ -91,11 +98,27 @@ void LogicSystem::RegisterCallBacks()
                 apply_friend["icon"] = apply_user->icon;
                 apply_friend["sex"] = apply_user->sex;
                 apply_friend["desc"] = apply_user->desc;
-
+                apply_friend["back"] = apply_user->back; // 时间
                 apply_friends.push_back(apply_friend);
             }
             jj["apply_friends"] = apply_friends;
         }
+        // 获取通知列表
+        std::vector<std::shared_ptr<UserInfo>> notification_list;
+        bool b_notify = MysqlManager::GetInstance()->GetNotificationList(uid_str, notification_list);
+        if (b_notify && notification_list.size() > 0) {
+            json notifications;
+            for (auto& notification : notification_list) {
+                json item;
+                item["uid"] = notification->uid;
+                item["type"] = notification->status; // 用status代表type借用UserInfo的结构。
+                item["message"] = notification->desc; // 用desc代表message借用UserInfo的结构。
+                item["time"] = notification->back; // 备用字段表示时间。
+                notifications.push_back(item);
+            }
+            jj["notifications"] = notifications;
+        }
+
         // 获取消息列表
 
         // 获取好友列表
@@ -160,12 +183,53 @@ void LogicSystem::RegisterCallBacks()
         // 先检查双方是否互相发送请求，如果是直接双方同意。
         bool apply_each = MysqlManager::GetInstance()->CheckApplied(std::to_string(toUid), std::to_string(fromUid));
         if (apply_each) {
-            // 直接同意
             json jj;
             jj["error"] = ErrorCodes::SUCCESS;
-            jj["to_uid"] = toUid;
-            // jj[""]
+            jj["from_uid"] = fromUid;
+            jj["from_name"] = fromName;
+            jj["from_sex"] = fromSex;
+            jj["from_icon"] = fromIcon;
+            std::string key;
+            bool b_get = RedisManager::GetInstance()->Get(USER_STATUS_PREFIX + std::to_string(fromUid), key);
+            if (b_get) {
+                jj["from_status"] = std::stoi(key);
+            } else {
+                jj["from_status"] = 0;
+            }
+            jj["ok"] = true; // 标记成功
+            MysqlManager::GetInstance()->AddNotification(uid_str, static_cast<int>(NotificationCodes::ID_NOTIFY_MAKE_FRIENDS), "成功和" + fromName + "成为好友");
+            // 给对方发送请求信息
+            auto& cfg = ConfigManager::GetInstance();
+            auto self_name = cfg["SelfServer"]["name"];
+
+            auto to_key = USERIP_PREFIX + uid_str;
+            std::string to_ip_value;
+            bool b_ip = RedisManager::GetInstance()->Get(to_key, to_ip_value);
+            if (b_ip) {
+                if (to_ip_value == self_name) {
+                    auto session2 = UserManager::GetInstance()->GetSession(toUid);
+                    if (session2) {
+                        SPDLOG_INFO("FROM UID:{},to:{}", fromUid, toUid);
+                        session2->Send(jj.dump(), static_cast<int>(MsgId::ID_NOTIFY_AUTH_FRIEND_REQ));
+                    }
+                    return;
+                } else {
+                    NotifyMakeFriendsRequest req;
+                    req.set_fromuid(fromUid);
+                    req.set_touid(toUid);
+                    req.set_fromname(fromName);
+                    req.set_fromsex(fromSex);
+                    req.set_fromicon(fromIcon);
+                    req.set_type(static_cast<int>(NotificationCodes::ID_NOTIFY_MAKE_FRIENDS));
+                    req.set_message("成功和" + fromName + "成为好友");
+                    ChatGrpcClient::GetInstance()->NotifyMakeFriends(to_ip_value, req);
+                }
+            } else {
+                // 这里没有查询到，不发送无妨。因为已经存入数据库，用户登录就可以直接获取。
+                return;
+            }
         }
+
         bool b_apply = MysqlManager::GetInstance()->AddFriendApply(std::to_string(fromUid), uid_str);
         if (!b_apply) {
             return;
@@ -178,7 +242,7 @@ void LogicSystem::RegisterCallBacks()
             return;
         }
 
-        // 是对方发送请求信息
+        // 给对方发送请求信息
         auto& cfg = ConfigManager::GetInstance();
         auto self_name = cfg["SelfServer"]["name"];
         if (to_ip_value == self_name) {
@@ -194,9 +258,6 @@ void LogicSystem::RegisterCallBacks()
             }
             return;
         }
-        // std::string base_key = USER_BASE_INFO_PREFIX + toUid;
-        // auto apply_info = std::make_shared<UserInfo>();
-        // bool b_info = GetBaseInfo(base_key, std::stoi(toUid),apply_info);
         AddFriendRequest req;
         req.set_fromuid(fromUid);
         req.set_touid(toUid);
@@ -220,32 +281,78 @@ void LogicSystem::RegisterCallBacks()
 
         auto toUid = j["to_uid"].get<int>();
         auto fromUid = j["from_uid"].get<int>();
+        auto fromName = j["from_name"].get<std::string>();
+        auto fromSex = j["from_sex"].get<int>();
+        auto fromIcon = j["from_icon"].get<std::string>();
+        int fromStatus = 0;
+        std::string key;
+        bool b_get = RedisManager::GetInstance()->Get(USER_STATUS_PREFIX + std::to_string(fromUid), key);
+        if (b_get) {
+            fromStatus = std::stoi(key);
+        } else {
+            fromStatus = 0;
+        }
+
         bool accept = j["accept"].get<bool>();
         // 不需要解析其他的信息，只需要按需发给对方即可
         // fromUid接受或者拒绝，服务器回复给toUid
+        std::string base_key = USER_BASE_INFO_PREFIX + std::to_string(toUid);
+        auto apply_info = std::make_shared<UserInfo>();
+        bool b_info = GetBaseInfo(base_key, toUid, apply_info);
+        if (!b_info) {
+            j["ok"] = true;
+            return;
+        } else {
+            j["to_uid"] = apply_info->uid;
+            j["to_sex"] = apply_info->sex;
+            j["to_status"] = apply_info->status;
+            j["to_name"] = apply_info->name;
+            j["to_email"] = apply_info->email;
+            j["to_icon"] = apply_info->icon;
+            j["to_desc"] = apply_info->desc;
+            j["to_meseage"] = apply_info->back; // 备用字段，用来展示最近消息
+            j["ok"] = true;
+        }
         if (accept) {
             MysqlManager::GetInstance()->ChangeApplyStatus(std::to_string(fromUid), std::to_string(toUid), 1);
             MysqlManager::GetInstance()->MakeFriends(std::to_string(fromUid), std::to_string(toUid));
-            // 获取好友的信息。
-            std::string base_key = USER_BASE_INFO_PREFIX + std::to_string(toUid);
-            auto apply_info = std::make_shared<UserInfo>();
-            bool b_info = GetBaseInfo(base_key, toUid, apply_info);
-            if (!b_info) {
-                return;
-            } else {
-                j["to_uid"] = apply_info->uid;
-                j["to_sex"] = apply_info->sex;
-                j["to_status"] = apply_info->status;
-                j["to_name"] = apply_info->name;
-                j["to_email"] = apply_info->email;
-                j["to_icon"] = apply_info->icon;
-                j["to_desc"] = apply_info->desc;
-                j["to_meseage"] = apply_info->back; // 备用字段，用来展示最近消息
-                j["ok"] = true; // 标记成功
-            }
+            // 接下来就是获取好友信息，发送给被申请人
         } else {
             MysqlManager::GetInstance()->ChangeApplyStatus(std::to_string(fromUid), std::to_string(toUid), -1);
-            j["ok"] = false; // 标记失败
+        }
+
+        // TODO:接下来就是发送给申请人，也就是将from_uid的信息发送给to_uid
+        std::string to_key = USERIP_PREFIX + std::to_string(toUid);
+        std::string to_ip_value;
+        bool b_ip = RedisManager::GetInstance()->Get(to_key, to_ip_value);
+        if (!b_ip) {
+            return;
+        }
+        auto& cfg = ConfigManager::GetInstance();
+        auto self_name = cfg["SelfServer"]["name"];
+        if (to_ip_value == self_name) {
+            auto session2 = UserManager::GetInstance()->GetSession(toUid);
+            if (session2) {
+                SPDLOG_INFO("FROM UID:{},to:{}", fromUid, toUid);
+                SPDLOG_INFO("FROM SESSION:{},to:{}", session->GetSessionId(), session2->GetSessionId());
+                session2->Send(j.dump(), static_cast<int>(MsgId::ID_NOTIFY_AUTH_FRIEND_REQ));
+            }
+        } else {
+            NotifyMakeFriendsRequest req;
+            req.set_fromuid(fromUid);
+            req.set_touid(toUid);
+            req.set_fromname(fromName);
+            req.set_fromsex(fromSex);
+            req.set_fromicon(fromIcon);
+            req.set_fromstatus(fromStatus);
+            if (!accept) {
+                req.set_type(static_cast<int>(NotificationCodes::ID_NOTIFY_NOT_FRIENDS));
+                req.set_message(fromName + "拒绝了你的好友申请");
+            } else {
+                req.set_type(static_cast<int>(NotificationCodes::ID_NOTIFY_MAKE_FRIENDS));
+                req.set_message(fromName + "同意了您的好友申请");
+            }
+            ChatGrpcClient::GetInstance()->NotifyMakeFriends(to_ip_value, req);
         }
     };
 }

@@ -166,6 +166,9 @@ void NotificationPanel::setupConnections()
 {
     connect(TcpManager::GetInstance().get(),&TcpManager::on_get_apply_list,this,&NotificationPanel::do_get_apply_list);
     connect(TcpManager::GetInstance().get(),&TcpManager::on_auth_friend,this,&NotificationPanel::do_auth_friend);
+    connect(TcpManager::GetInstance().get(),&TcpManager::on_notify_friend,this,&NotificationPanel::do_notify_friend);
+    connect(TcpManager::GetInstance().get(),&TcpManager::on_notify_friend2,this,&NotificationPanel::do_notify_friend2);
+    connect(TcpManager::GetInstance().get(),&TcpManager::on_message_to_list,this,&NotificationPanel::do_message_to_list);
 }
 
 void NotificationPanel::checkIsEmpty()
@@ -175,7 +178,6 @@ void NotificationPanel::checkIsEmpty()
     }
 }
 
-// TODO:
 void NotificationPanel::do_friend_accept(QListWidgetItem *item)
 {
     int row = friendsNews->row(item);
@@ -229,12 +231,42 @@ void NotificationPanel::do_auth_friend(std::shared_ptr<UserInfo> info)
     addFriendNews(false,info->id,info->sex,info->avatar,info->name,"😄向您发来好友申请😄");
 }
 
+void NotificationPanel::do_message_to_list(const std::vector<std::shared_ptr<UserInfo> > &list)
+{
+    for(auto&item:list){
+        addFriendNews(true,item->id,-1,item->avatar,"时间"+item->back,item->desc);
+    }
+}
+
+void NotificationPanel::do_notify_friend(std::shared_ptr<UserInfo> info, bool accept)
+{
+    if (accept)
+        addFriendNews(true,info->id,info->sex,info->avatar,info->name,"😄对方同意了您的好友申请😄");
+    else
+        addFriendNews(true,info->id,info->sex,info->avatar,info->name,"😢对方拒绝了您的好友请求😢");
+}
+
+void NotificationPanel::do_notify_friend2(std::shared_ptr<UserInfo> info, bool accept)
+{
+    if (accept)
+        addFriendNews(true,info->id,info->sex,info->avatar,info->name,"😄对方同意了您的好友申请😄");
+    else
+        addFriendNews(true,info->id,info->sex,info->avatar,info->name,"😢对方拒绝了您的好友请求😢");
+}
+
 void NotificationPanel::do_get_apply_list(const std::vector<std::shared_ptr<UserInfo>>&list)
 {
 
     for(const auto&apply:list){
         addFriendNews(false,apply->id,apply->sex,apply->avatar,apply->name,"😄向您发来好友申请😄");
     }
+}
+
+void NotificationPanel::do_add_friend(const UserInfo &info)
+{
+    /*addFriendNews(bool isReply, int uid, int sex,
+     * const QString &iconPath, const QString &name, const QString &content) */
+    addFriendNews(true,info.id,-1,":/Resources/main/header-default.png","好友申请通知",QString("😄向用户 %1 的请求已发出😄").arg(info.id));
 }
 
 

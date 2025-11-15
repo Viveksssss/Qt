@@ -45,11 +45,12 @@ public slots:
 private:
     // 变量声明顺序和ui顺序相同
     StatusLabel *statusLabel;
-    QLabel *redDot;
-    QPushButton *newsBtn;
     AnimatedSearchBox *searchBox;
     ClearAvatarLabel *headerLabelFromChat;
+    QLabel *redDot;
+    QPushButton *newsBtn;
     QPushButton *foldBtn;
+
     FriendAddDialog *friendAddDialog;
     QList<std::shared_ptr<UserInfo>>userLists;
 
@@ -189,20 +190,26 @@ protected:
 
         // 绘制头像
         if (!pixmap().isNull()) {
-            QPixmap scaledPixmap = getHighQualityPixmap();
+            // 获取高质量图片并缩放到合适尺寸
+            QPixmap originalPixmap = getHighQualityPixmap();
+            QPixmap scaledPixmap = originalPixmap.scaled(size(), Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
 
             // 圆形裁剪
             QPainterPath path;
             path.addEllipse(rect());
             painter.setClipPath(path);
 
-            // 绘制图片
-            painter.drawPixmap(rect(), scaledPixmap);
+            // 计算居中位置
+            int x = (scaledPixmap.width() - width()) / 2;
+            int y = (scaledPixmap.height() - height()) / 2;
+
+            // 绘制图片（居中裁剪）
+            painter.drawPixmap(rect(), scaledPixmap, QRect(x, y, width(), height()));
         }
 
         // 绘制边框
         painter.setClipping(false);
-        painter.setPen(QPen(QColor("#3b3b3b"), 2));
+        painter.setPen(QPen(QColor("#3b3b3b"), 1));
         painter.drawEllipse(rect().adjusted(1, 1, -1, -1));
     }
 

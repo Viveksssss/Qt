@@ -6,7 +6,6 @@
 #include <mysql++/connection.h>
 #include <mysql++/exceptions.h>
 #include <mysql++/result.h>
-#include <mysql.h>
 #include <spdlog/spdlog.h>
 
 MysqlPool::MysqlPool(const std::string& url, const std::string& user, const std::string& password, const std::string& schedma, const std::string& port, int poolSize)
@@ -292,7 +291,7 @@ std::shared_ptr<UserInfo> MysqlDao::GetUser(int uid)
 
     try {
         mysqlpp::Query query = conn->query();
-        query << "SELECT name, email, password,status FROM user WHERE uid = %0q";
+        query << "SELECT * FROM user WHERE uid = %0q";
 
         query.parse();
         mysqlpp::StoreQueryResult res = query.store(uid);
@@ -500,57 +499,6 @@ bool MysqlDao::ChangeApplyStatus(const std::string& fromUid, const std::string& 
     }
 }
 
-bool MysqlDao::MakeFriends(const std::string& fromUid, const std::string& toUid)
-{
-    if (fromUid == toUid) {
-        return false;
-    }
-
-    auto conn = _pool->GetConnection();
-    if (!conn) {
-        SPDLOG_ERROR("Failed to get connection from pool");
-        return false;
-    }
-    Defer defer([this, &conn]() {
-        _pool->ReturnConnection(std::move(conn));
-    });
-    try {
-        mysqlpp::Transaction trans(*conn);
-        // 添加好友应该是双向的，所以需要插入两条记录
-        mysqlpp::Query query1 = conn->query();
-        mysqlpp::Query query2 = conn->query();
-        query1 << "INSERT INTO friends (self_id,friend_id) VALUES(%0q,%1q)";
-        query2 << "INSERT INTO friends (self_id,friend_id) VALUES(%1q,%0q)";
-        query1.parse();
-        query2.parse();
-        mysqlpp::SimpleResult res1 = query1.execute(std::stoi(fromUid), std::stoi(toUid));
-        mysqlpp::SimpleResult res2 = query2.execute(std::stoi(toUid), std::stoi(fromUid));
-        if (res1 && res2) {
-            int affected_rows1 = res1.rows();
-            int affected_rows2 = res2.rows();
-            if (affected_rows1 > 0 && affected_rows2 > 0) {
-                trans.commit();
-                SPDLOG_INFO("Friends added successfully for from_uid: {}, to_uid: {}", fromUid, toUid);
-                return true;
-            } else {
-                trans.rollback();
-                SPDLOG_WARN("Failed to add friends for from_uid: {}, to_uid: {}", fromUid, toUid);
-                return false;
-            }
-        } else {
-            trans.rollback();
-            SPDLOG_ERROR("Failed to add friends for from_uid: {}, to_uid: {}", fromUid, toUid);
-            return false;
-        }
-    } catch (const mysqlpp::Exception& e) {
-        SPDLOG_ERROR("MySQL++ exception: {}", e.what());
-        return false;
-    } catch (const std::exception& e) {
-        SPDLOG_ERROR("Exception: {}", e.what());
-        return false;
-    }
-}
-
 bool MysqlDao::CheckIsFriend(const std::string& fromUid, const std::string& toUid)
 {
     if (fromUid == toUid) {
@@ -575,6 +523,136 @@ bool MysqlDao::CheckIsFriend(const std::string& fromUid, const std::string& toUi
             return count == 2;
         }
         return false;
+    } catch (const mysqlpp::Exception& e) {
+        SPDLOG_ERROR("MySQL++ exception: {}", e.what());
+        return false;
+    } catch (const std::exception& e) {
+        SPDLOG_ERROR("Exception: {}", e.what());
+        return false;
+    }
+}
+
+bool MysqlDao::AddNotification(const std::string& uid, int type, const std::string& message)
+{
+    auto conn = _pool->GetConnection();
+    if (!conn) {
+        SPDLOG_ERROR("Failed to get connection from pool");
+        return false;
+    }
+    Defer defer([this, &conn]() {
+        _pool->ReturnConnection(std::move(conn));
+    });
+    try {
+        mysqlpp::Query query = conn->query();
+        query << "INSERT INTO notifications (uid,type,message) VALUES(%0q,%1q,%2q))";
+        query.parse();
+        mysqlpp::SimpleResult res = query.execute(std::stoi(uid), type, message);
+        if (res) {
+            int affected_rows = res.rows();
+            if (affected_rows > 0) {
+                SPDLOG_INFO("Notification added successfully for uid: {}, type: {}, message: {}", uid, type, message);
+                return true;
+            } else {
+                SPDLOG_WARN("Failed to add notification for uid: {}, type: {}, message: {}", uid, type, message);
+                return false;
+            }
+        } else {
+            SPDLOG_ERROR("Failed to add notification: {}", query.error());
+
+            return false;
+        }
+    } catch (const mysqlpp::Exception& e) {
+        SPDLOG_ERROR("MySQL++ exception: {}", e.what());
+        return false;
+    } catch (const std::exception& e) {
+        SPDLOG_ERROR("Exception: {}", e.what());
+        return false;
+    }
+}
+
+bool MysqlDao::GetNotificationList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& notificationList)
+{
+    auto conn = _pool->GetConnection();
+    if (!conn) {
+        SPDLOG_ERROR("Failed to get connection from pool");
+        return false;
+    }
+    Defer defer([this, &conn]() {
+        _pool->ReturnConnection(std::move(conn));
+    });
+    try {
+        mysqlpp::Query query = conn->query();
+        query << "SELECT u.uid,u.name,u.icon,u.sex,n.type,n.message,n.time from"
+              << " user u, notifications n"
+              << " WHERE u.uid = n.uid AND u.uid = %0q"
+              << " AND n.status = 0"
+              << " ORDER BY n.time DESC";
+        query.parse();
+        mysqlpp::StoreQueryResult res = query.store(std::stoi(uid));
+        int count = res.num_rows();
+        if (res && res.num_rows() > 0) {
+            notificationList.reserve(res.num_rows()); // 预分配内存
+            for (size_t i = 0; i < res.num_rows(); ++i) {
+                auto user_info = std::make_shared<UserInfo>();
+                user_info->uid = res[i]["uid"];
+                user_info->status = res[i]["type"];
+                user_info->desc = std::string(res[i]["message"]);
+                user_info->back = std::string(res[i]["time"]);
+                user_info->sex = res[i]["sex"];
+                user_info->name = std::string(res[i]["name"]);
+                user_info->icon = std::string(res[i]["icon"]);
+                notificationList.push_back(user_info);
+            }
+            return true;
+        }
+        return false;
+    } catch (const mysqlpp::Exception& e) {
+        SPDLOG_ERROR("MySQL++ exception: {}", e.what());
+        return false;
+    } catch (const std::exception& e) {
+        SPDLOG_ERROR("Exception: {}", e.what());
+        return false;
+    }
+}
+
+bool MysqlDao::MakeFriends(const std::string& fromUid, const std::string& toUid)
+{
+    if (fromUid == toUid) {
+        return false;
+    }
+
+    auto conn = _pool->GetConnection();
+    if (!conn) {
+        SPDLOG_ERROR("Failed to get connection from pool");
+        return false;
+    }
+    Defer defer([this, &conn]() {
+        _pool->ReturnConnection(std::move(conn));
+    });
+    try {
+        mysqlpp::Transaction trans(*conn);
+        // 添加好友应该是双向的，所以需要插入两条记录
+        mysqlpp::Query query1 = conn->query();
+        query1 << "INSERT INTO friends (self_id,friend_id) VALUES(%0q,%1q),"
+               << "(%1q,%0q)";
+        query1.parse();
+        mysqlpp::SimpleResult res1 = query1.execute(std::stoi(fromUid), std::stoi(toUid));
+        if (res1) {
+            int affected_rows1 = res1.rows();
+            if (affected_rows1 > 0) {
+                trans.commit();
+                SPDLOG_INFO("Friends added successfully for from_uid: {}, to_uid: {}", fromUid, toUid);
+                return true;
+            } else {
+                trans.rollback();
+                SPDLOG_WARN("Failed to add friends for from_uid: {}, to_uid: {}", fromUid, toUid);
+                return false;
+            }
+        } else {
+            trans.rollback();
+            SPDLOG_ERROR("Failed to add friends for from_uid: {}, to_uid: {}", fromUid, toUid);
+            return false;
+        }
     } catch (const mysqlpp::Exception& e) {
         SPDLOG_ERROR("MySQL++ exception: {}", e.what());
         return false;

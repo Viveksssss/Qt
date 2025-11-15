@@ -45,3 +45,37 @@ bool ChatGrpcServer::ChatGrpcServer::GetBaseInfo(std::string base_key, int uid, 
 {
     return true;
 }
+
+Status ChatGrpcServer::NotifyMakeFriends(grpc::ServerContext* context, const NotifyMakeFriendsRequest* request, NotifyMakeFriendsResponse* response)
+{
+
+    SPDLOG_INFO("Make Friends From {} to {}", request->fromuid(), request->touid());
+    // 首先在本服务器查询
+    auto to_uid = request->touid();
+    auto session = UserManager::GetInstance()->GetSession(to_uid);
+    Defer defer([request, response]() {
+        response->set_error(static_cast<int>(ErrorCodes::SUCCESS));
+        response->set_fromuid(request->fromuid());
+        response->set_touid(request->touid());
+    });
+
+    // 不在内存中
+    if (session == nullptr) {
+        return Status::OK;
+    }
+    // 在内存中z直接发送通知
+    json j;
+    j["error"] = ErrorCodes::SUCCESS;
+    j["to_uid"] = request->touid();
+    j["from_uid"] = request->fromuid();
+    j["from_name"] = request->fromname();
+    j["from_sex"] = request->fromsex();
+    j["from_icon"] = request->fromicon();
+    j["from_status"] = request->fromstatus();
+    j["type"] = request->type();
+    j["message"] = request->message();
+
+    session->Send(j.dump(), static_cast<int>(MsgId::ID_NOTIFY_AUTH_FRIEND_REQ));
+
+    return Status::OK;
+}

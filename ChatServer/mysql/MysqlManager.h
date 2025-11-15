@@ -113,6 +113,25 @@ public:
      * @return false
      */
     bool CheckIsFriend(const std::string& fromUid, const std::string& toUid);
+    /**
+     * @brief 添加通知
+     *
+     * @param uid
+     * @param type
+     * @param message
+     * @return true
+     * @return false
+     */
+    bool AddNotification(const std::string& uid, int type, const std::string& message);
+    /**
+     * @brief 获取通知列表
+     *
+     * @param uid
+     * @param notificationList
+     * @return true
+     * @return false
+     */
+    bool GetNotificationList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& notificationList);
 
 private:
     MysqlManager();

@@ -109,8 +109,28 @@ message TextChatMessageResponse{
     repeated TextChatData textMsgs = 4;
 }
 
+message NotifyMakeFriendsRequest{
+    int32 fromUid = 1;
+    int32 toUid = 2;
+    int32 type = 3;
+    int32 fromSex = 4;
+    string fromIcon = 5;
+    string fromName = 6;
+    string message = 7;
+    int32 fromStatus = 8;
+}
+
+message NotifyMakeFriendsResponse{
+    int32 error=1;
+    int32 fromUid=2;
+    int32 toUid=3;
+}
+
+
 
 service ChatServer{
+    // 通知消息
+    rpc NotifyMakeFriends(NotifyMakeFriendsRequest)returns(NotifyMakeFriendsResponse){}
     // 后端调用，通知另一个服务器消息。
     rpc NotifyAddFriend(AddFriendRequest)returns(AddFriendResponse){}
     rpc ReplyAddFriend(ReplyFriendRequest)returns(ReplyFriendResponse){}

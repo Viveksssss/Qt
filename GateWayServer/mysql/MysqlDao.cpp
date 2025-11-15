@@ -403,7 +403,7 @@ bool MysqlDao::CheckPwd(const std::string& user, const std::string& password, Us
         }
 
         int count = mysql_stmt_num_rows(stmt);
-        if (count != 1) {
+        if (count == 0) {
             mysql_stmt_close(stmt);
             return false;
         }

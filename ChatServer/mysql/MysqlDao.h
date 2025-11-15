@@ -72,6 +72,8 @@ public:
     bool ChangeApplyStatus(const std::string& fromUid, const std::string& toUid, int status);
     bool MakeFriends(const std::string& fromUid, const std::string& toUid);
     bool CheckIsFriend(const std::string& fromUid, const std::string& toUid);
+    bool AddNotification(const std::string& uid, int type, const std::string& message);
+    bool GetNotificationList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& notificationList);
 
 private:
     std::unique_ptr<MysqlPool> _pool;

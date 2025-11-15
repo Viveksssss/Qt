@@ -12,6 +12,7 @@ FriendsNewsItem::FriendsNewsItem(bool isReply,int uid,int sex,const QString &ico
     : QWidget(parent)
     , _uid(uid)
     , _isRely(isReply)
+    , _sex(sex)
 
 {
     setupUI();
@@ -33,8 +34,9 @@ void FriendsNewsItem::setupUI()
     iconLabel = new QLabel;
     iconLabel->setFixedSize(40,40);
     iconLabel->setObjectName("FriendsNewItem_IconLabel");
-
     iconLabel->setAlignment(Qt::AlignCenter);
+    iconLabel->setProperty("sex",QString::number(_sex));
+
 
     // 名称+内容
     QVBoxLayout*text_vlay = new QVBoxLayout;
@@ -104,6 +106,9 @@ void FriendsNewsItem::do_accept_clicked()
         QJsonObject jsonObj;
         jsonObj["from_uid"] = UserManager::GetInstance()->GetUid();
         jsonObj["to_uid"] = _uid;
+        jsonObj["from_name"] = UserManager::GetInstance()->GetName();
+        jsonObj["from_sex"] = UserManager::GetInstance()->GetSex();
+        jsonObj["from_icon"] =UserManager::GetInstance()->GetIcon();
         jsonObj["accept"] = true;
         QJsonDocument doc(jsonObj);
         TcpManager::GetInstance()->do_send_data(RequestType::ID_AUTH_FRIEND_REQ,doc.toJson(QJsonDocument::Compact));
@@ -117,6 +122,8 @@ void FriendsNewsItem::do_reject_clcked()
     QJsonObject jsonObj;
     jsonObj["from_uid"] = UserManager::GetInstance()->GetUid();
     jsonObj["to_uid"] = _uid;
+    jsonObj["from_name"] = UserManager::GetInstance()->GetName();
+    jsonObj["from_sex"] = UserManager::GetInstance()->GetSex();
     jsonObj["accept"] = false;
     QJsonDocument doc(jsonObj);
     TcpManager::GetInstance()->do_send_data(RequestType::ID_AUTH_FRIEND_REQ,doc.toJson(QJsonDocument::Compact));

@@ -63,6 +63,8 @@ void Session::Close()
     RedisManager::GetInstance()->Del(USER_BASE_INFO_PREFIX + std::to_string(_uid));
     // 删除用户token
     RedisManager::GetInstance()->Del(USER_TOKEN_PREFIX + std::to_string(_uid));
+    // 删除用户的状态
+    RedisManager::GetInstance()->Del(USER_STATUS_PREFIX + std::to_string(_uid));
 }
 
 void Session::Send(const char* msg, int max_length, uint16_t msg_id)

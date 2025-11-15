@@ -64,7 +64,7 @@ void ChatTopArea::setupUI()
     headerLabelFromChat->setObjectName("headerLabelFromChat");
     headerLabelFromChat->setFixedSize({30,30});
     // 默认图片
-    QPixmap pixmap(":/Resources/main/header.png");
+    QPixmap pixmap(":/Resources/main/header-default.png");
     headerLabelFromChat->setPixmap(pixmap);
     headerLabelFromChat->setScaledContents(true);
 
@@ -748,7 +748,7 @@ void FriendsItem::setupUI()
         _avatar->setPixmap(scaledAvatar);
     } else {
         // 默认头像
-        _avatar->setText("👤");
+        _avatar->setPixmap(UserManager::GetInstance()->GetAvatar());
     }
 
     QLabel*name = new QLabel;

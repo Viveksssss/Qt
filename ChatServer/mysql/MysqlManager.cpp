@@ -66,3 +66,13 @@ bool MysqlManager::CheckIsFriend(const std::string& fromUid, const std::string& 
 {
     return _dao.CheckIsFriend(fromUid, toUid);
 }
+
+bool MysqlManager::AddNotification(const std::string& uid, int type, const std::string& message)
+{
+    return _dao.AddNotification(uid, type, message);
+}
+
+bool MysqlManager::GetNotificationList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& notificationList)
+{
+    return _dao.GetNotificationList(uid, notificationList);
+}

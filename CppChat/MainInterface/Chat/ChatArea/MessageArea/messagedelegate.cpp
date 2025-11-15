@@ -120,6 +120,10 @@ void MessageDelegate::paintAvatar(QPainter *painter, const QRect &rect, const QP
     painter->drawPixmap(rect.topLeft(), scaled.copy(x, y, rect.width(), rect.height()));
 
     painter->restore();
+    painter->setPen(QPen(QColor("#3b3b3b"), 1));
+    painter->drawEllipse(rect.adjusted(1, 1, -1, -1));
+
+    painter->restore();
 }
 
 void MessageDelegate::paintUserName(QPainter *painter, const QRect &rect, const QString &name,bool isMe) const
@@ -360,7 +364,7 @@ bool MessageDelegate::editorEvent(QEvent *event, QAbstractItemModel *model, cons
                 // QDesktopServices::openUrl(QUrl(filePath));
                 openFile(filePath);
                 return true;
-            }else{
+            }else if (type == MessageType::OtherFileMessage){
                 QDesktopServices::openUrl(QUrl(filePath));
                 return true;
             }

@@ -28,10 +28,24 @@ using message::GetChatServerResponse;
 using message::TextChatData;
 using message::TextChatMessageRequest;
 using message::TextChatMessageResponse;
+
+using message::NotifyMakeFriendsRequest;
+using message::NotifyMakeFriendsResponse;
+
 class ChatGrpcServer final : public message::ChatServer::Service {
 public:
     ChatGrpcServer();
-    
+
+    /**
+     * @brief 用户基本信息回包
+     *
+     * @param base_key
+     * @param uid
+     * @param userinfo
+     * @return true
+     * @return false
+     */
+    bool GetBaseInfo(std::string base_key, int uid, std::shared_ptr<UserInfo>& userinfo);
     /**
      * @brief 好友请求回包
      *
@@ -60,15 +74,13 @@ public:
      */
     Status NotifyTextChatMessage(grpc::ServerContext* context, const TextChatMessageRequest* request, TextChatMessageResponse* response) override;
     /**
-     * @brief 用户基本信息回包
+     * @brief 通知好友已经建立好友关系
      *
-     * @param base_key
-     * @param uid
-     * @param userinfo
-     * @return true
-     * @return false
+     * @param server_ip
+     * @param req
+     * @return NotifyMakeFriendsResponse
      */
-    bool GetBaseInfo(std::string base_key, int uid, std::shared_ptr<UserInfo>& userinfo);
+    Status NotifyMakeFriends(grpc::ServerContext* context, const NotifyMakeFriendsRequest* request, NotifyMakeFriendsResponse* response) override;
 
 private:
 };

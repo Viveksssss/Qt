@@ -16,12 +16,13 @@ class UserManager
 public:
     ~UserManager() = default;
     // self
-    void SetName(const QString&)noexcept;
-    void SetToken(const QString&)noexcept;
     void SetUid(int)noexcept;
+    void SetStatus(int status = 1)noexcept;
+    void SetSex(int sex)noexcept;
+    void SetName(const QString&name = "卡皮巴拉")noexcept;
+    void SetToken(const QString&)noexcept;
     void SetEmail(const QString&)noexcept;
     void SetAvatar(const QPixmap&)noexcept;
-    void SetSex(int sex)noexcept;
     void SetDesc(const QString&)noexcept;
 
     template <typename T>
@@ -33,21 +34,23 @@ public:
     }
 
     int GetUid()noexcept;
+    int GetStatus()noexcept;
+    int GetSex()noexcept;
     QString GetName()noexcept;
     QString GetToken()noexcept;
     QString GetEmail()noexcept;
     QPixmap GetAvatar()noexcept;
-    int GetSex()noexcept;
     QString GetDesc()noexcept;
     QString GetIcon()noexcept;
 
     // peer
+    void SetPeerUid(int)noexcept;
+    void SetPeerSex(int sex)noexcept;
+    void SetPeerStatus(int status = 1)noexcept;
     void SetPeerName(const QString&)noexcept;
     void SetPeerToken(const QString&)noexcept;
-    void SetPeerUid(int)noexcept;
     void SetPeerEmail(const QString&)noexcept;
     void SetPeerAvatar(const QPixmap&)noexcept;
-    void SetPeerSex(int sex)noexcept;
     void SetPeerDesc(const QString&)noexcept;
 
     template <typename T>
@@ -59,11 +62,12 @@ public:
     }
 
     int GetPeerUid()noexcept;
+    int GetPeerSex()noexcept;
+    int GetPeerStatus()noexcept;
     QString GetPeerName()noexcept;
     QString GetPeerToken()noexcept;
     QString GetPeerEmail()noexcept;
     QPixmap GetPeerAvatar()noexcept;
-    int GetPeerSex()noexcept;
     QString GetPeerDesc()noexcept;
     QString GetPeerIcon()noexcept;
 
@@ -74,20 +78,22 @@ private:
     QString _token;
     QString _name;
     QString _email;
-    int _uid;
     QPixmap _avatar;
-    int _sex;
     QString _desc;
-    QString _icon;
+    QString _icon;  // base64
+    int _uid;
+    int _sex;
+    int _status;
 
     QString _peer_token;
     QString _peer_name;
     QString _peer_email;
-    int _peer_uid;
     QPixmap _peer_avatar;
-    int _peer_sex;
     QString _peer_desc;
     QString _peer_icon;
+    int _peer_uid;
+    int _peer_sex;
+    int _peer_status;
 };
 
 #endif // USERMANAGER_H

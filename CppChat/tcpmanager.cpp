@@ -45,17 +45,18 @@ void TcpManager::initHandlers()
             return;
         }
 
-        qDebug() << jsonObj;
-
         // 基本信息
         UserManager::GetInstance()->SetName(jsonObj["name"].toString());
         UserManager::GetInstance()->SetEmail(jsonObj["email"].toString());
         UserManager::GetInstance()->SetToken(jsonObj["token"].toString());
-        UserManager::GetInstance()->SetSex(jsonObj["sex"].toInt());
-        UserManager::GetInstance()->SetUid(jsonObj["uid"].toInt());
         UserManager::GetInstance()->SetIcon(jsonObj["icon"].toString());
+        UserManager::GetInstance()->SetUid(jsonObj["uid"].toInt());
+        UserManager::GetInstance()->SetSex(jsonObj["sex"].toInt());
+        UserManager::GetInstance()->SetStatus(1);
 
         qDebug() << "reday to apply_list";
+
+
         // 申请列表
         if (jsonObj.contains("apply_friends")){
             QJsonArray apply_friends = jsonObj["apply_friends"].toArray();
@@ -69,12 +70,28 @@ void TcpManager::initHandlers()
                 user_info->avatar = obj["icon"].toString();
                 user_info->sex = obj["sex"].toInt();
                 user_info->desc = obj["desc"].toString();
+                user_info->back = obj["back"].toString();//备用字段这里存放时间
                 apply_list.push_back(user_info);
             }
             emit on_get_apply_list(apply_list);
-            qDebug() <<"size:" <<apply_list.size();
         }
 
+        //TODO: 通知列表
+        if(jsonObj.contains("notifications")){
+            QJsonArray notification_array = jsonObj["notifications"].toArray();
+            std::vector<std::shared_ptr<UserInfo>>notification_list;
+            for(const QJsonValue&value:notification_array){
+                QJsonObject obj = value.toObject();
+                auto user_info = std::make_shared<UserInfo>();
+                user_info->id = obj["uid"].toInt();
+                user_info->status = obj["type"].toInt();
+                user_info->desc = obj["message"].toString();
+                user_info->back = obj["time"].toString();
+                notification_list.push_back(user_info);
+            }
+            qDebug() <<  notification_list.size();
+            emit on_message_to_list(notification_list);
+        }
 
         //TODO: 好友列表
 
@@ -173,10 +190,6 @@ void TcpManager::initHandlers()
       }
       UserInfo info;
       info.id = jsonObj["fromUid"].toInt();
-      info.email = jsonObj["fromEmail"].toString();
-      info.name = jsonObj["fromName"].toString();
-      info.status = jsonObj["fromStatus"].toInt();
-
       // TODO:
       qDebug() << "申请添加好友成功";
       emit on_add_friend(info);
@@ -214,14 +227,13 @@ void TcpManager::initHandlers()
         user_info->avatar = from_icon;
         user_info->desc = from_desc;
 
-        qDebug() << "收到好友请求";
         emit on_auth_friend(user_info);
     };
 
     /**
      * @brief 用户请求添加好友通知回包
      */
-    _handlers[RequestType::ID_ADD_FRIEND_RSP] = [this](RequestType requestType,int len,QByteArray data){
+    _handlers[RequestType::ID_AUTH_FRIEND_RSP] = [this](RequestType requestType,int len,QByteArray data){
         QJsonDocument jsonDoc = QJsonDocument::fromJson(data);
         if (jsonDoc.isNull()){
             return;
@@ -247,6 +259,40 @@ void TcpManager::initHandlers()
             info->desc = jsonObj["to_desc"].toString();
             info->back = jsonObj["to_message"].toString();
             emit on_add_friend_to_list(info);
+            emit on_notify_friend(info,jsonObj["accept"].toBool());
+        }else{
+            //TODO: 暂时忽略
+        }
+    };
+
+    _handlers[RequestType::ID_NOTIFY_AUTH_FRIEND_REQ] = [this](RequestType requestType,int len,QByteArray data){
+        QJsonDocument jsonDoc = QJsonDocument::fromJson(data);
+        if (jsonDoc.isNull()){
+            return;
+        }
+        QJsonObject jsonObj = jsonDoc.object();
+        if (!jsonObj.contains("error")){
+            int err = static_cast<int>(ErrorCodes::ERROR_JSON);
+            return;
+        }
+
+        int err = jsonObj["error"].toInt();
+        if (err != static_cast<int>(ErrorCodes::SUCCESS)){
+            return;
+        }
+
+        auto info = std::make_shared<UserInfo>();
+        info->id = jsonObj["from_uid"].toInt();
+        info->name = jsonObj["from_name"].toString();
+        info->sex = jsonObj["from_sex"].toInt();
+        info->avatar = jsonObj["from_icon"].toString();
+        info->status = jsonObj["from_status"].toInt();
+        info->desc = jsonObj["message"].toString();     // 临时存放消息
+        if (jsonObj["type"].toInt() == static_cast<int>(NotificationCodes::ID_NOTIFY_MAKE_FRIENDS)){
+            emit on_add_friend_to_list(info);
+            emit on_notify_friend2(info,true);
+        }else{
+            emit on_notify_friend2(info,false);
         }
 
     };
