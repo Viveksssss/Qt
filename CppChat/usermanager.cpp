@@ -1,5 +1,7 @@
 #include "usermanager.h"
 
+#include <QBuffer>
+
 
 void UserManager::SetName(const QString &name)noexcept
 {
@@ -84,7 +86,7 @@ QString UserManager::GetDesc() noexcept
 
 QString UserManager::GetIcon() noexcept
 {
-    return this->_icon;
+    return this->_icon.isEmpty()?":/Resources/main/header-default.png":this->_icon;
 }
 
 void UserManager::SetPeerName(const QString &name) noexcept
@@ -177,3 +179,26 @@ UserManager::UserManager()
     , _token("")
     , _uid(0)
 {}
+
+
+
+QString UserManager::pixmapToBase64(const QPixmap& pixmap, const QString& format) {
+    if (pixmap.isNull()) {
+        return "";
+    }
+
+    QByteArray byteArray;
+    QBuffer buffer(&byteArray);
+    buffer.open(QIODevice::WriteOnly);
+
+    // 保存图片数据到 buffer
+    bool success = pixmap.save(&buffer, format.toUtf8().constData());
+    if (!success) {
+        return "";
+    }
+
+    // 转换为 Base64
+    QString base64 = QString::fromLatin1(byteArray.toBase64());
+    return base64;
+}
+

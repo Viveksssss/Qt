@@ -469,7 +469,9 @@ void AnimatedSearchBox::updateResults(){
         QListWidgetItem *item = new QListWidgetItem;
         item->setSizeHint(QSize(350,40));
         // 提取用户ID - 实际项目中从数据结构获取
-        FriendsItem *friendItem = new FriendsItem(user->id,user->avatar,user->name,user->status);
+        qDebug() <<
+                 "-----------------------------"<< user->avatar;
+        FriendsItem *friendItem = new FriendsItem(user->id,user->avatar,user->name,user->sex,user->status);
         resultList->addItem(item);
         resultList->setItemWidget(item,friendItem);
     }
@@ -713,12 +715,13 @@ void FriendAddDialog::do_add_friend(int uid)
 }
 
 
-FriendsItem::FriendsItem(int uid, const QString &avatar_path, const QString &name,int status,QWidget*parent)
+FriendsItem::FriendsItem(int uid, const QString &avatar, const QString &name,int sex,int status,QWidget*parent)
     : QWidget(parent)
     , _uid(uid)
-    , _avatar_path(avatar_path)
+    , _icon(avatar)
     , _name(name)
     , _status(status)
+    , _sex(sex)
 {
     setupUI();
     setupConnections();
@@ -726,30 +729,52 @@ FriendsItem::FriendsItem(int uid, const QString &avatar_path, const QString &nam
 
 void FriendsItem::setupUI()
 {
-    QPixmap avatar = SourceManager::GetInstance()->getPixmap(_avatar_path);
     QHBoxLayout*main_hlay = new QHBoxLayout(this);
     main_hlay->setContentsMargins(10,0,10,0);
     main_hlay->setSpacing(5);
 
     _avatar = new QLabel;
-    _avatar->setFixedSize(35, 35);
-    _avatar->setStyleSheet(R"(
-        QLabel {
-            border-radius: 17px;
-            background-color: #fdf5fe;
-            border: 1px solid #CCCCCC;
-        }
-    )");
+    _avatar->setFixedSize(44, 44);  // 与finalPixmap尺寸一致
     _avatar->setAlignment(Qt::AlignCenter);  // 关键：内容居中
 
-    // 设置头像，确保缩放并居中
-    if (!avatar.isNull()) {
-        QPixmap scaledAvatar = avatar.scaled(27,27 , Qt::KeepAspectRatio, Qt::SmoothTransformation);
-        _avatar->setPixmap(scaledAvatar);
-    } else {
-        // 默认头像
-        _avatar->setPixmap(UserManager::GetInstance()->GetAvatar());
+    // 使用原来的数据加载逻辑
+    QPixmap originalPixmap;
+    // 创建带边框的圆形图片
+    if (_icon.startsWith(":/")){
+        originalPixmap = QPixmap(_icon);
+    }else{
+        QByteArray imageData = QByteArray::fromBase64(_icon.toUtf8());
+        originalPixmap.loadFromData(imageData);
     }
+
+    // 使用原来的绘制逻辑，改小尺寸
+    QPixmap finalPixmap(36, 36);
+    finalPixmap.fill(Qt::transparent);
+
+    QPainter painter(&finalPixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform);
+
+    // 1. 先绘制边框
+    QColor borderColor = (_sex == 1) ? QColor("#00F5FF") : QColor("#FF69B4");
+    painter.setBrush(borderColor);
+    painter.setPen(Qt::NoPen);
+    painter.drawEllipse(0, 0, 36, 36);
+
+    // 2. 绘制背景
+    painter.setBrush(QColor("#E3F2FD"));
+    painter.drawEllipse(2, 2, 32, 32);  // 边框内部
+
+    // 3. 裁剪并绘制头像
+    QPainterPath clipPath;
+    clipPath.addEllipse(2, 2, 32, 32);  // 头像区域
+    painter.setClipPath(clipPath);
+    painter.drawPixmap(2, 2, 32, 32, originalPixmap.scaled(32, 32, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation));
+
+    // 设置最终的头像图片
+    _avatar->setPixmap(finalPixmap);
+    _avatar->setAlignment(Qt::AlignCenter);  // 关键：内容居中
+
 
     QLabel*name = new QLabel;
     name->setText(_name);
@@ -791,7 +816,7 @@ void FriendsItem::setupUI()
         }
     )");
 
-    main_hlay->addWidget(_avatar);
+    main_hlay->addWidget(_avatar,Qt::AlignCenter);
     main_hlay->addSpacing(5);
     main_hlay->addWidget(name);
     main_hlay->addStretch();
@@ -808,7 +833,11 @@ void FriendsItem::setupConnections()
         obj["fromEmail"] = UserManager::GetInstance()->GetEmail();
         obj["fromDesc"] = UserManager::GetInstance()->GetDesc();
         obj["fromSex"] = UserManager::GetInstance()->GetSex();
-        obj["fromIcon"] = UserManager::GetInstance()->GetIcon();
+        if (UserManager::GetInstance()->GetIcon().startsWith(":/")){
+            obj["fromIcon"] = UserManager::GetInstance()->pixmapToBase64(UserManager::GetInstance()->GetIcon());
+        }else{
+            obj["fromIcon"] = UserManager::GetInstance()->GetIcon();
+        }
 
         obj["toUid"] = this->_uid; // 对方的uid
         qDebug() << "fromUid" << obj["fromUid"] << "\t" << "toUid" << this->_uid;

@@ -14,6 +14,10 @@ class UserManager
     Q_OBJECT
     friend class Singleton<UserManager>;
 public:
+
+    QString pixmapToBase64(const QPixmap& pixmap, const QString& format = "PNG");
+
+
     ~UserManager() = default;
     // self
     void SetUid(int)noexcept;

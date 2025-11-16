@@ -57,6 +57,11 @@ bool MysqlManager::ChangeApplyStatus(const std::string& fromUid, const std::stri
     return _dao.ChangeApplyStatus(fromUid, toUid, status);
 }
 
+bool MysqlManager::ChangeMessageStatus(const std::string& uid, int status)
+{
+    return _dao.ChangeMessageStatus(uid, status);
+}
+
 bool MysqlManager::MakeFriends(const std::string& fromUid, const std::string& toUid)
 {
     return _dao.MakeFriends(fromUid, toUid);

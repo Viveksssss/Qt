@@ -96,6 +96,16 @@ public:
      */
     bool ChangeApplyStatus(const std::string& fromUid, const std::string& toUid, int status);
     /**
+     * @brief 改变消息状态,1已读0未读
+     *
+     * @param fromUid
+     * @param toUid
+     * @param status
+     * @return true
+     * @return false
+     */
+    bool ChangeMessageStatus(const std::string& uid, int status);
+    /**
      * @brief 建立好友关系
      *
      * @param fromUid

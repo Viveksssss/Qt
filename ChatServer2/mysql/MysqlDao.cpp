@@ -94,6 +94,14 @@ MysqlDao::~MysqlDao()
     _pool->Close();
 }
 
+std::string MysqlDao::ValueOrEmpty(const std::string& value)
+{
+    if (value == "NULL") {
+        return "";
+    }
+    return value;
+}
+
 int MysqlDao::TestUidAndEmail(const std::string& uid, const std::string& email)
 {
     auto conn = _pool->GetConnection();
@@ -409,10 +417,10 @@ bool MysqlDao::GetFriendApplyList(const std::string& uid, std::vector<std::share
                 auto user_info = std::make_shared<UserInfo>();
                 user_info->uid = res[i]["uid"];
                 user_info->sex = res[i]["sex"];
-                user_info->name = std::string(res[i]["name"]);
-                user_info->icon = std::string(res[i]["icon"]);
-                user_info->desc = std::string(res[i]["desc"]);
-                user_info->back = std::string(res[i]["time"]);
+                user_info->name = ValueOrEmpty(std::string(res[i]["name"]));
+                user_info->icon = ValueOrEmpty(std::string(res[i]["icon"]));
+                user_info->desc = ValueOrEmpty(std::string(res[i]["desc"]));
+                user_info->back = ValueOrEmpty(std::string(res[i]["time"]));
                 applyList.push_back(user_info);
             }
             return true;
@@ -448,6 +456,44 @@ bool MysqlDao::CheckApplied(const std::string& fromUid, const std::string& toUid
             return count > 0;
         }
         return false;
+    } catch (const mysqlpp::Exception& e) {
+        SPDLOG_ERROR("MySQL++ exception: {}", e.what());
+        return false;
+    } catch (const std::exception& e) {
+        SPDLOG_ERROR("Exception: {}", e.what());
+        return false;
+    }
+}
+
+bool MysqlDao::ChangeMessageStatus(const std::string& uid, int status)
+{
+    auto conn = _pool->GetConnection();
+    if (!conn) {
+        SPDLOG_ERROR("Failed to get connection from pool");
+        return false;
+    }
+    Defer defer([this, &conn]() {
+        _pool->ReturnConnection(std::move(conn));
+    });
+
+    try {
+        mysqlpp::Query query = conn->query();
+        query << "UPDATE notifications SET status = %0q WHERE uid = %1q";
+        query.parse();
+        mysqlpp::SimpleResult res = query.execute(status, std::stoi(uid));
+        if (res) {
+            int affected_rows = res.rows();
+            if (affected_rows > 0) {
+                SPDLOG_INFO("Message status changed successfully for uid: {}, status: {}", uid, status);
+                return true;
+            } else {
+                SPDLOG_WARN("No message found with uid: {}", uid);
+                return false;
+            }
+        } else {
+            SPDLOG_ERROR("Failed to change message status: {}", query.error());
+            return false;
+        }
     } catch (const mysqlpp::Exception& e) {
         SPDLOG_ERROR("MySQL++ exception: {}", e.what());
         return false;

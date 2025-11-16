@@ -103,7 +103,7 @@ class FriendsItem :public QWidget
 {
     Q_OBJECT
 public:
-    explicit FriendsItem(int uid,const QString&avatar_path = "",const QString&name = "",int status = 0,QWidget*parent=nullptr);
+    explicit FriendsItem(int uid,const QString&avatar_path = "",const QString&name = "",int sex = 1,int status = 0,QWidget*parent=nullptr);
     void setupUI();
     void setupConnections();
     void setShowBorder(bool show)noexcept;
@@ -111,11 +111,12 @@ signals:
     void on_apply_clicked(int uid);
 private:
     int _uid;
-    QString _avatar_path;
+    QString _icon;
     QString _name;
     QPushButton *_applyFriend;
     StatusLabel *_statusLabel;
     QLabel * _avatar;
+    int _sex;
     int _status;
 
 };

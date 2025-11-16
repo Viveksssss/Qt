@@ -132,20 +132,15 @@ void TcpManager::initHandlers()
                 if (userValue.isObject()) {
                     QJsonObject userObj = userValue.toObject();
 
-                    QPixmap avatar;
+                    QString avatar;
                     QString tempFilePath;
-                    if (userObj.contains("icon")) {
+                    if (userObj.contains("icon")&&userObj["icon"]!="NULL"&&!userObj["icon"].isNull()) {
                         QString base64Avatar = userObj["icon"].toString();
                         QByteArray avatarData = QByteArray::fromBase64(base64Avatar.toUtf8());
-                        avatar.loadFromData(avatarData);
-                        tempFilePath = QDir::tempPath() + "/tmp_from_quick_chat_image_" + QUuid::createUuid().toString(QUuid::WithoutBraces) + ".png";
-                        // 如果加载失败，使用默认头像
-                        if (avatar.isNull()) {
-                            avatar = QPixmap(":/Resources/main/header.png");
-                        }
+                        avatar = avatarData;
                     } else {
                         // 没有头像字段，使用默认头像
-                        avatar = QPixmap(":/Resources/main/header.png");
+                        avatar = ":/Resources/main/header-default.png";
                     }
 
                     int id = userObj["uid"].toInt();
@@ -153,8 +148,7 @@ void TcpManager::initHandlers()
                     int sex = userObj["sex"].toInt();
                     QString email = userObj["email"].toString();
                     QString name = userObj["name"].toString();
-                    QString avatar_path = tempFilePath;
-                    auto user_info = std::make_shared<UserInfo>(id,status,sex,name,avatar_path,email);
+                    auto user_info = std::make_shared<UserInfo>(id,status,sex,name,avatar,email);
 
                     userList.append(user_info);
                 }

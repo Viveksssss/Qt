@@ -30,7 +30,9 @@ NotificationPanel::NotificationPanel(QWidget *parent)
 void NotificationPanel::addFriendNews(bool isReply, int uid, int sex,const QString &iconPath, const QString &name, const QString &content)
 {
     emit on_show_red_dot();
-    FriendsNewsItem *itemWidget = new FriendsNewsItem(isReply,uid,sex,iconPath, name, content);
+    qDebug() << "iconPath" << iconPath;
+    QString icon = (iconPath.isNull() || iconPath.isEmpty())?  ":/Resources/main/header-default.png":iconPath;
+    FriendsNewsItem *itemWidget = new FriendsNewsItem(isReply,uid,sex,icon, name, content);
     QListWidgetItem*item = new QListWidgetItem;
     item->setSizeHint(itemWidget->sizeHint());
 
@@ -166,6 +168,7 @@ void NotificationPanel::setupConnections()
 {
     connect(TcpManager::GetInstance().get(),&TcpManager::on_get_apply_list,this,&NotificationPanel::do_get_apply_list);
     connect(TcpManager::GetInstance().get(),&TcpManager::on_auth_friend,this,&NotificationPanel::do_auth_friend);
+    connect(TcpManager::GetInstance().get(),&TcpManager::on_add_friend,this,&NotificationPanel::do_add_friend);
     connect(TcpManager::GetInstance().get(),&TcpManager::on_notify_friend,this,&NotificationPanel::do_notify_friend);
     connect(TcpManager::GetInstance().get(),&TcpManager::on_notify_friend2,this,&NotificationPanel::do_notify_friend2);
     connect(TcpManager::GetInstance().get(),&TcpManager::on_message_to_list,this,&NotificationPanel::do_message_to_list);
@@ -241,9 +244,7 @@ void NotificationPanel::do_message_to_list(const std::vector<std::shared_ptr<Use
 void NotificationPanel::do_notify_friend(std::shared_ptr<UserInfo> info, bool accept)
 {
     if (accept)
-        addFriendNews(true,info->id,info->sex,info->avatar,info->name,"😄对方同意了您的好友申请😄");
-    else
-        addFriendNews(true,info->id,info->sex,info->avatar,info->name,"😢对方拒绝了您的好友请求😢");
+        addFriendNews(true,info->id,info->sex,info->avatar,info->name,"😄双方已建立好友关系！😄");
 }
 
 void NotificationPanel::do_notify_friend2(std::shared_ptr<UserInfo> info, bool accept)

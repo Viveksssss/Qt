@@ -1,6 +1,8 @@
 #include "friendsnewsitem.h"
 #include <QJsonObject>
 #include <QLabel>
+#include <QPainter>
+#include <QPainterPath>
 #include <QPushButton>
 #include <QVBoxLayout>
 #include "../../../../usermanager.h"
@@ -13,6 +15,7 @@ FriendsNewsItem::FriendsNewsItem(bool isReply,int uid,int sex,const QString &ico
     , _uid(uid)
     , _isRely(isReply)
     , _sex(sex)
+    , _icon(iconPath)
 
 {
     setupUI();
@@ -20,7 +23,42 @@ FriendsNewsItem::FriendsNewsItem(bool isReply,int uid,int sex,const QString &ico
 
     nameLabel->setText(name);
     contentLabel->setText(content);
-    iconLabel->setPixmap(SourceManager::GetInstance()->getPixmap(iconPath).scaled(40,40));
+
+
+
+    QPixmap originalPixmap;
+    // 创建带边框的圆形图片
+    if (_icon.startsWith(":/")){
+        originalPixmap = QPixmap(_icon);
+    }else{
+        QByteArray imageData = QByteArray::fromBase64(_icon.toUtf8());
+        originalPixmap.loadFromData(imageData);
+    }
+
+    QPixmap finalPixmap(44, 44);
+    finalPixmap.fill(Qt::transparent);
+
+    QPainter painter(&finalPixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform);
+
+    // 1. 先绘制边框
+    QColor borderColor = (_sex == 1) ? QColor("#00F5FF") : QColor("#FF69B4");
+    painter.setBrush(borderColor);
+    painter.setPen(Qt::NoPen);
+    painter.drawEllipse(0, 0, 44, 44);
+
+    // 2. 绘制背景
+    painter.setBrush(QColor("#E3F2FD"));
+    painter.drawEllipse(2, 2, 40, 40);  // 边框内部
+
+    // 3. 裁剪并绘制头像
+    QPainterPath clipPath;
+    clipPath.addEllipse(2, 2, 40, 40);  // 头像区域
+    painter.setClipPath(clipPath);
+    painter.drawPixmap(2, 2, 40, 40, originalPixmap.scaled(40, 40, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation));
+
+    iconLabel->setPixmap(finalPixmap);
 }
 
 void FriendsNewsItem::setupUI()
@@ -32,11 +70,8 @@ void FriendsNewsItem::setupUI()
     main_vlay->setSpacing(0);
 
     iconLabel = new QLabel;
-    iconLabel->setFixedSize(40,40);
-    iconLabel->setObjectName("FriendsNewItem_IconLabel");
+    iconLabel->setFixedSize(44,44);
     iconLabel->setAlignment(Qt::AlignCenter);
-    iconLabel->setProperty("sex",QString::number(_sex));
-
 
     // 名称+内容
     QVBoxLayout*text_vlay = new QVBoxLayout;
@@ -100,6 +135,12 @@ void FriendsNewsItem::do_accept_clicked()
 {
     if (_isRely){
         emit on_confirm_clicked();
+        QJsonObject jsonObj;
+        jsonObj["from_uid"] = UserManager::GetInstance()->GetUid();
+        jsonObj["reply"] = true;
+        QJsonDocument doc(jsonObj);
+        TcpManager::GetInstance()->do_send_data(RequestType::ID_AUTH_FRIEND_REQ,doc.toJson(QJsonDocument::Compact));
+
     }else{
         emit on_accepted_clicked(); // 提示消除item
         // 下面回复请求为接受
