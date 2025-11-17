@@ -29,6 +29,9 @@ public:
     FriendItem getFriend(int index);
 
 
+    // 在 FriendsModel 类中添加方法
+    QModelIndex indexFromUid(int uid) const;
+
 private:
     QVector<FriendItem>_friends;
 
@@ -36,6 +39,7 @@ private:
 public:
     bool removeRows(int row, int count, const QModelIndex &parent)override;
     bool moveRows(const QModelIndex &sourceParent, int sourceRow, int count, const QModelIndex &destinationParent, int destinationChild)override;
+    bool setData(const QModelIndex &index, const QVariant &value, int role)override;
 };
 
 #endif // FRIENDSMODEL_H

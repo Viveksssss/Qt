@@ -10,6 +10,7 @@ find_package(Qt6 REQUIRED COMPONENTS Core)
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core)
 
 
 qt_standard_project_setup()
@@ -52,6 +53,7 @@ qt_add_executable(CppChat
     MainInterface/Chat/ChatTopArea/SideNews/friendsnewsitem.h MainInterface/Chat/ChatTopArea/SideNews/friendsnewsitem.cpp
     MainInterface/Chat/ChatTopArea/SideNews/systemnewsitem.h MainInterface/Chat/ChatTopArea/SideNews/systemnewsitem.cpp
     MainInterface/Chat/ChatTopArea/SideNews/notificationpanel.h MainInterface/Chat/ChatTopArea/SideNews/notificationpanel.cpp
+    Properties/signalrouter.h Properties/signalrouter.cpp
 )
 
 
@@ -96,6 +98,7 @@ target_link_libraries(CppChat PRIVATE Qt6::Core)
 target_link_libraries(CppChat PRIVATE Qt6::Core Qt6::Widgets)
 target_link_libraries(CppChat PRIVATE Qt6::Core Qt6::Widgets)
 target_link_libraries(CppChat PRIVATE Qt6::Core Qt6::Widgets)
+target_link_libraries(CppChat PRIVATE Qt6::Core)
 
 target_include_directories(CppChat PRIVATE ${ASIO_INCLUDE_DIR})
 

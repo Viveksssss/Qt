@@ -3,6 +3,9 @@
 #include "friendsmodel.h"
 #include "frienditem.h"
 #include "../../../../Properties/global.h"
+#include "../../../../Properties/signalrouter.h"
+#include "../../../../tcpmanager.h"
+
 
 #include <QHBoxLayout>
 #include <QLabel>
@@ -110,7 +113,13 @@ void FriendsListPart::setupConnections()
 {
     // 滚动接受新的列表
     connect(this,&FriendsListPart::on_loading_users,this,&FriendsListPart::do_loading_users);
-
+    // 改变登陆状态
+    connect(&SignalRouter::GetInstance(),&SignalRouter::on_change_friend_status,this,&FriendsListPart::do_change_friend_status);
+    connect(TcpManager::GetInstance().get(),&TcpManager::on_change_friend_status,this,&FriendsListPart::do_change_friend_status);
+    // 添加好友
+    connect(TcpManager::GetInstance().get(),&TcpManager::on_add_friend_to_list,this,&FriendsListPart::do_add_friend_to_list);
+    // 添加好友列表
+    connect(TcpManager::GetInstance().get(),&TcpManager::on_add_friends_to_list,this,&FriendsListPart::do_add_friends_to_list);
 }
 
 bool FriendsListPart::eventFilter(QObject *obj, QEvent *event)
@@ -157,4 +166,17 @@ void FriendsListPart::do_loading_users()
 void FriendsListPart::do_add_friend_to_list(std::shared_ptr<UserInfo>info)
 {
     friendsModel->addFriend(FriendItem(info->id, info->status,info->sex,info->name,info->avatar,info->back ));
+}
+
+void FriendsListPart::do_add_friends_to_list(const std::vector<std::shared_ptr<UserInfo> > &list)
+{
+    for (auto&item:list){
+        friendsModel->addFriend(FriendItem(item->id, item->status,item->sex,item->name,item->avatar,item->back ));
+    }
+}
+
+void FriendsListPart::do_change_friend_status(int uid,int status)
+{
+    auto index = friendsModel->indexFromUid(uid);
+    friendsModel->setData(index,status,FriendsModel::StatusRole);
 }

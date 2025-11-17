@@ -296,28 +296,16 @@ std::shared_ptr<UserInfo> MysqlDao::GetUser(int uid)
         query.parse();
         mysqlpp::StoreQueryResult res = query.store(uid);
 
-        /**
-                            jj["uid"] = uid;
-                            jj["name"] = user_info->name;
-                            jj["email"] = user_info->email;
-                            jj["nick"] = user_info->nick;
-                            jj["sex"] = user_info->sex;
-                            jj["desc"] = user_info->desc;
-                            jj["icon"] = user_info->icon;
-                            jj["token"] = token;
-         *
-         */
-
         if (res && res.num_rows() == 1) {
             auto user_info = std::make_shared<UserInfo>();
             user_info->uid = uid;
             user_info->sex = res[0]["sex"];
             user_info->status = res[0]["status"];
-            user_info->name = std::string(res[0]["name"]);
-            user_info->email = std::string(res[0]["email"]);
-            user_info->icon = std::string(res[0]["icon"]);
-            user_info->desc = std::string(res[0]["desc"]);
-            // user_info->nick = std::string(res[0]["nick"]);
+            user_info->name = ValueOrEmpty(std::string(res[0]["name"]));
+            user_info->email = ValueOrEmpty(std::string(res[0]["email"]));
+            user_info->icon = ValueOrEmpty(std::string(res[0]["icon"]));
+            user_info->desc = ValueOrEmpty(std::string(res[0]["desc"]));
+            // user_info->nick = ValueOrEmpty(std::string(res[0]["nick"]));
 
             _pool->ReturnConnection(std::move(conn));
             return user_info;
@@ -363,15 +351,15 @@ std::vector<std::shared_ptr<UserInfo>> MysqlDao::GetUser(const std::string& name
                 user_info->uid = res[i]["uid"];
                 user_info->sex = res[i]["sex"];
                 user_info->status = res[i]["status"];
-                user_info->name = std::string(res[i]["name"]);
-                user_info->email = std::string(res[i]["email"]);
-                user_info->icon = std::string(res[0]["icon"]);
-                user_info->desc = std::string(res[0]["desc"]);
-                // user_info->nick = std::string(res[0]["nick"]);
+                user_info->name = ValueOrEmpty(std::string(res[i]["name"]));
+                user_info->email = ValueOrEmpty(std::string(res[i]["email"]));
+                user_info->icon = ValueOrEmpty(std::string(res[i]["icon"]));
+                user_info->desc = ValueOrEmpty(std::string(res[i]["desc"]));
+                // user_info->nick = ValueOrEmpty(std::string(res[i]["nick"]));
 
                 users.push_back(user_info);
             }
-            SPDLOG_DEBUG("Found {} users matching pattern: '{}'", users.size(), search_pattern);
+            SPDLOG_DEBUG("Found {} users matching pattern: '{}'", users.size(), name);
         }
         return users;
     } catch (const mysqlpp::Exception& e) {
@@ -409,10 +397,10 @@ bool MysqlDao::GetFriendApplyList(const std::string& uid, std::vector<std::share
                 auto user_info = std::make_shared<UserInfo>();
                 user_info->uid = res[i]["uid"];
                 user_info->sex = res[i]["sex"];
-                user_info->name = std::string(res[i]["name"]);
-                user_info->icon = std::string(res[i]["icon"]);
-                user_info->desc = std::string(res[i]["desc"]);
-                user_info->back = std::string(res[i]["time"]);
+                user_info->name = ValueOrEmpty(std::string(res[i]["name"]));
+                user_info->icon = ValueOrEmpty(std::string(res[i]["icon"]));
+                user_info->desc = ValueOrEmpty(std::string(res[i]["desc"]));
+                user_info->back = ValueOrEmpty(std::string(res[i]["time"]));
                 applyList.push_back(user_info);
             }
             return true;
@@ -634,11 +622,11 @@ bool MysqlDao::GetNotificationList(const std::string& uid, std::vector<std::shar
                 auto user_info = std::make_shared<UserInfo>();
                 user_info->uid = res[i]["uid"];
                 user_info->status = res[i]["type"];
-                user_info->desc = std::string(res[i]["message"]);
-                user_info->back = std::string(res[i]["time"]);
+                user_info->desc = ValueOrEmpty(std::string(res[i]["message"]));
+                user_info->back = ValueOrEmpty(std::string(res[i]["time"]));
                 user_info->sex = res[i]["sex"];
-                user_info->name = std::string(res[i]["name"]);
-                user_info->icon = std::string(res[i]["icon"]);
+                user_info->name = ValueOrEmpty(std::string(res[i]["name"]));
+                user_info->icon = ValueOrEmpty(std::string(res[i]["icon"]));
                 notificationList.push_back(user_info);
             }
             return true;
@@ -698,4 +686,56 @@ bool MysqlDao::MakeFriends(const std::string& fromUid, const std::string& toUid)
         SPDLOG_ERROR("Exception: {}", e.what());
         return false;
     }
+}
+
+bool MysqlDao::GetFriendList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& friendList)
+{
+    auto conn = _pool->GetConnection();
+    if (!conn) {
+        SPDLOG_ERROR("Failed to get connection from pool");
+        return false;
+    }
+    Defer defer([this, &conn]() {
+        _pool->ReturnConnection(std::move(conn));
+    });
+    try {
+        mysqlpp::Query query = conn->query();
+        // 使用显式JOIN，更清晰
+        query << "SELECT u.uid, u.name, u.icon, u.email, u.sex, u.desc"
+              << " FROM user u"
+              << " INNER JOIN friends f ON u.uid = f.friend_id"
+              << " WHERE f.self_id = %0q"
+              << " ORDER BY f.friend_id DESC";
+        query.parse();
+        mysqlpp::StoreQueryResult res = query.store(std::stoi(uid));
+        int count = res.num_rows();
+        if (res && res.num_rows() > 0) {
+            friendList.reserve(res.num_rows()); // 预分配内存
+            for (size_t i = 0; i < res.num_rows(); ++i) {
+                auto user_info = std::make_shared<UserInfo>();
+                user_info->uid = res[i]["uid"];
+                user_info->sex = res[i]["sex"];
+                user_info->name = ValueOrEmpty(std::string(res[i]["name"]));
+                user_info->icon = ValueOrEmpty(std::string(res[i]["icon"]));
+                user_info->email = ValueOrEmpty(std::string(res[i]["email"]));
+                user_info->desc = ValueOrEmpty(std::string(res[i]["desc"]));
+                friendList.push_back(user_info);
+            }
+            return true;
+        }
+        return false;
+    } catch (const mysqlpp::Exception& e) {
+        SPDLOG_ERROR("MySQL++ exception: {}", e.what());
+        return false;
+    } catch (const std::exception& e) {
+        SPDLOG_ERROR("Exception: {}", e.what());
+        return false;
+    }
+}
+std::string MysqlDao::ValueOrEmpty(std::string value)
+{
+    if (value == "null" || value == "NULL" || value == "EMPTY") {
+        return "";
+    }
+    return value;
 }

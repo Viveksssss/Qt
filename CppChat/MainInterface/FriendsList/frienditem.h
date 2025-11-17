@@ -21,7 +21,6 @@ struct FriendItem : public UserInfo {
         this->avatar = avatar;
         this->sex = sex;
     }
-
     explicit FriendItem(){}
 };
 

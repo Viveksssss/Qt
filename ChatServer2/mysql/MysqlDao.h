@@ -60,7 +60,6 @@ class MysqlDao {
 public:
     MysqlDao();
     ~MysqlDao();
-    std::string ValueOrEmpty(const std::string& value);
     int TestUidAndEmail(const std::string& uid, const std::string& email);
     int RegisterUser(const std::string& name, const std::string& email, const std::string& password);
     int ResetPassword(const std::string& email, const std::string& password);
@@ -76,6 +75,9 @@ public:
     bool CheckIsFriend(const std::string& fromUid, const std::string& toUid);
     bool AddNotification(const std::string& uid, int type, const std::string& message);
     bool GetNotificationList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& notificationList);
+    bool GetFriendList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& friendList);
+
+    std::string ValueOrEmpty(std::string value);
 
 private:
     std::unique_ptr<MysqlPool> _pool;

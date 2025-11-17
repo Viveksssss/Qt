@@ -79,3 +79,28 @@ Status ChatGrpcServer::NotifyMakeFriends(grpc::ServerContext* context, const Not
 
     return Status::OK;
 }
+
+Status ChatGrpcServer::NotifyFriendOnline(grpc::ServerContext* context, const NotifyFriendOnlineRequest* request, NotifyFriendOnlineResponse* response)
+{
+    auto to_uid = request->touid();
+    auto session = UserManager::GetInstance()->GetSession(to_uid);
+    Defer defer([request, response]() {
+        response->set_error(static_cast<int>(ErrorCodes::SUCCESS));
+    });
+
+    // 不在内存中
+    if (session == nullptr) {
+        return Status::OK;
+    }
+    // 在内存中z直接发送通知
+    json j;
+    j["uid"] = request->fromuid();
+    j["name"] = request->name();
+    j["type"] = request->type();
+    j["icon"] = request->icon();
+    j["message"] = request->message();
+
+    session->Send(j.dump(), static_cast<int>(MsgId::ID_NOTIFY));
+
+    return Status::OK;
+}

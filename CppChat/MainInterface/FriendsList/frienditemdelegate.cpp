@@ -52,7 +52,7 @@ void FriendItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
     // 2. 获取数据
     QString name = index.data(FriendsModel::NameRole).toString();
     QString avatarPath = index.data(FriendsModel::AvatarRole).toString();
-    QString status = index.data(FriendsModel::StatusRole).toString();
+    int status = index.data(FriendsModel::StatusRole).toInt();
     QString message = index.data(FriendsModel::MessageRole).toString();
 
     // 3. 绘制头像
@@ -75,13 +75,27 @@ void FriendItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
 
     // 4. 状态标记 - 修正后的布局计算
     QColor statusColor;
-    if(status == "在线") statusColor = QColor(0x58f376);
-    else if(status == "忙碌") statusColor = QColor(0xe90739);
-    else if(status == "离开") statusColor = QColor(0x51615f);
-    else statusColor = QColor(0xcccccc); // 默认颜色
+    QString statusStr;
+    if(status == 1) {
+        statusColor = QColor(0x58f376);
+        statusStr = "在线";
+    }
+
+    else if(status == 2){
+        statusColor = QColor(0xe90739);
+        statusStr = "忙碌";
+    }
+    else if(status == 0){
+        statusColor = QColor(0x51615f);
+        statusStr = "离线";
+    }
+    else{
+        statusColor = QColor(0x51615f); // 默认颜色
+        statusStr = "离线";
+    }
 
     QFontMetrics fm(painter->font());
-    int textWidth = fm.horizontalAdvance(status);
+    int textWidth = fm.horizontalAdvance(statusStr);
     int dotSize = 8;  // 圆点大小
     int spacing = 5;  // 圆点和文字间距
 
@@ -106,7 +120,7 @@ void FriendItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
     statusFont.setPointSize(8);
     painter->setFont(statusFont);
     QRect statusTextRect(dotRect.right() + spacing, statusY - dotSize/2, textWidth, dotSize*2);
-    painter->drawText(statusTextRect, Qt::AlignLeft | Qt::AlignVCenter, status);
+    painter->drawText(statusTextRect, Qt::AlignLeft | Qt::AlignVCenter, statusStr);
     painter->restore();
 
     // 5. 绘制昵称 - 修正宽度计算

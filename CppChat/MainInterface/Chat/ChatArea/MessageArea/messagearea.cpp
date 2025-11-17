@@ -40,16 +40,6 @@ void MessageArea::setupUI()
 
 void MessageArea::setupConnections()
 {
-    MessageContent msg;
-    msg.data = "asdsad";
-    msg.type = MessageType::TextMessage;
-
-    MessageItem item;
-    item.recvId = "1";
-    item.contents = {msg};
-    item.type = MessageType::TextMessage;
-
-    model->addMessage(item);
 }
 
 MessageModel *MessageArea::getModel()

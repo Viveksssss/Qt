@@ -70,6 +70,18 @@ FriendItem FriendsModel::getFriend(int index)
     return FriendItem();
 }
 
+QModelIndex FriendsModel::indexFromUid(int uid) const
+{
+    // 遍历所有行，检查uid角色
+    for (int row = 0; row < rowCount(); ++row) {
+        QModelIndex index = createIndex(row, 0);
+        if (data(index, IdRole).toInt() == uid) {
+            return index;
+        }
+    }
+    return QModelIndex();
+}
+
 bool FriendsModel::removeRows(int row, int count, const QModelIndex &parent)
 {
     if (parent.isValid() || row < 0 || row > _friends.size()){
@@ -101,6 +113,40 @@ bool FriendsModel::moveRows(const QModelIndex &sourceParent, int sourceRow, int 
         _friends.remove(sourceRow + 1);   // 因为刚插完index+1
     }
     endMoveRows();
+    return true;
+}
+
+bool FriendsModel::setData(const QModelIndex &index, const QVariant &value, int role)
+{
+    if (!index.isValid() || index.row() >= _friends.size()){
+        return false;
+    }
+
+    FriendItem& friendItem = _friends[index.row()];
+
+    switch(role){
+    case Qt::DisplayRole:
+        break;
+    case NameRole:
+        friendItem.name = value.toString();
+        break;
+    case IdRole:
+        friendItem.id = value.toInt();
+        break;
+    case AvatarRole:
+        friendItem.avatar = value.toString();
+        break;
+    case StatusRole:
+        friendItem.status = value.toInt();
+        break;
+    case MessageRole:
+        friendItem.message = value.toString();
+        break;
+    default:
+        return false;
+    }
+
+    emit dataChanged(index, index, {role});
     return true;
 }
 

@@ -126,11 +126,24 @@ message NotifyMakeFriendsResponse{
     int32 toUid=3;
 }
 
+message NotifyFriendOnlineRequest{
+    int32 fromUid = 1;
+    int32 toUid = 2;
+    int32 type = 3;
+    string name = 4;
+    string message = 5;
+    string icon = 6;
+}
+message NotifyFriendOnlineResponse{
+    int32 error=1;
+}
 
 
 service ChatServer{
     // 通知消息
     rpc NotifyMakeFriends(NotifyMakeFriendsRequest)returns(NotifyMakeFriendsResponse){}
+    // 通知上线
+    rpc NotifyFriendOnline(NotifyFriendOnlineRequest)returns(NotifyFriendOnlineResponse){}
     // 后端调用，通知另一个服务器消息。
     rpc NotifyAddFriend(AddFriendRequest)returns(AddFriendResponse){}
     rpc ReplyAddFriend(ReplyFriendRequest)returns(ReplyFriendResponse){}

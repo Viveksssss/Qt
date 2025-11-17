@@ -142,6 +142,14 @@ public:
      * @return false
      */
     bool GetNotificationList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& notificationList);
+    /**
+     * @brief 返回好友列表
+     *
+     * @param uid
+     * @return true
+     * @return false
+     */
+    bool GetFriendList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>&);
 
 private:
     MysqlManager();

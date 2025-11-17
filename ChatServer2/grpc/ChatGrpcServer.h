@@ -32,6 +32,9 @@ using message::TextChatMessageResponse;
 using message::NotifyMakeFriendsRequest;
 using message::NotifyMakeFriendsResponse;
 
+using message::NotifyFriendOnlineRequest;
+using message::NotifyFriendOnlineResponse;
+
 class ChatGrpcServer final : public message::ChatServer::Service {
 public:
     ChatGrpcServer();
@@ -81,6 +84,15 @@ public:
      * @return NotifyMakeFriendsResponse
      */
     Status NotifyMakeFriends(grpc::ServerContext* context, const NotifyMakeFriendsRequest* request, NotifyMakeFriendsResponse* response) override;
+    /**
+     * @brief 通知好友上线
+     *
+     * @param context
+     * @param request
+     * @param response
+     * @return Status
+     */
+    Status NotifyFriendOnline(grpc::ServerContext* context, const NotifyFriendOnlineRequest* request, NotifyFriendOnlineResponse* response) override;
 
 private:
 };

@@ -113,3 +113,31 @@ NotifyMakeFriendsResponse ChatGrpcClient::NotifyMakeFriends(std::string server_i
 
     return rsp;
 }
+
+NotifyFriendOnlineResponse ChatGrpcClient::NotifyFriendOnline(std::string server_ip, const NotifyFriendOnlineRequest& req)
+{
+    NotifyFriendOnlineResponse rsp;
+    Defer defer([&rsp, &req]() {
+        rsp.set_error(static_cast<int>(ErrorCodes::SUCCESS));
+    });
+
+    auto it = _pool.find(server_ip);
+    if (it == _pool.end()) {
+        return rsp;
+    }
+
+    auto& pool = it->second;
+    // SPDLOG_INFO("服务端ip,{}:{}", _pool[server_ip]->_host, _pool[server_ip]->_port);
+    grpc::ClientContext context;
+    auto stub = pool->GetConnection();
+    Defer defer2([&pool, &stub]() {
+        pool->ReturnConnection(std::move(stub));
+    });
+
+    Status status = stub->NotifyFriendOnline(&context, req, &rsp);
+    if (!status.ok()) {
+        rsp.set_error(static_cast<int>(ErrorCodes::RPCFAILED));
+        return rsp;
+    }
+    return rsp;
+}

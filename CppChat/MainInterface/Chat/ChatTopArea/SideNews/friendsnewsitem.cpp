@@ -6,16 +6,17 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include "../../../../usermanager.h"
-#include "../../../../Properties/sourcemanager.h"
+#include "../../../../Properties/signalrouter.h"
 #include "../../../../tcpmanager.h"
 
 
-FriendsNewsItem::FriendsNewsItem(bool isReply,int uid,int sex,const QString &iconPath, const QString &name, const QString &content, QWidget *parent)
+FriendsNewsItem::FriendsNewsItem(bool isReply,int code,int uid,int sex,const QString &iconPath, const QString &name, const QString &content, QWidget *parent)
     : QWidget(parent)
     , _uid(uid)
     , _isRely(isReply)
     , _sex(sex)
     , _icon(iconPath)
+    , _code(code)
 
 {
     setupUI();
@@ -23,7 +24,6 @@ FriendsNewsItem::FriendsNewsItem(bool isReply,int uid,int sex,const QString &ico
 
     nameLabel->setText(name);
     contentLabel->setText(content);
-
 
 
     QPixmap originalPixmap;
@@ -63,7 +63,7 @@ FriendsNewsItem::FriendsNewsItem(bool isReply,int uid,int sex,const QString &ico
 
 void FriendsNewsItem::setupUI()
 {
-    setFixedSize({200,100});
+    setFixedSize({250,100});
 
     QVBoxLayout*main_vlay = new QVBoxLayout(this);
     main_vlay->setContentsMargins(0,10,0,10);
@@ -79,6 +79,7 @@ void FriendsNewsItem::setupUI()
 
     nameLabel = new QLabel;
     nameLabel->setObjectName("FriendsNewItem_NameLabel");
+    nameLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 
     contentLabel = new QLabel;
     contentLabel->setObjectName("FriendsNewsItem_ContentLabel");
@@ -133,14 +134,18 @@ void FriendsNewsItem::setConnections()
 
 void FriendsNewsItem::do_accept_clicked()
 {
+    qDebug() << _isRely;
     if (_isRely){
         emit on_confirm_clicked();
-        QJsonObject jsonObj;
-        jsonObj["from_uid"] = UserManager::GetInstance()->GetUid();
-        jsonObj["reply"] = true;
-        QJsonDocument doc(jsonObj);
-        TcpManager::GetInstance()->do_send_data(RequestType::ID_AUTH_FRIEND_REQ,doc.toJson(QJsonDocument::Compact));
-
+        if (_code == static_cast<int>(NotificationCodes::ID_NOTIFY_MAKE_FRIENDS)){
+            QJsonObject jsonObj;
+            jsonObj["from_uid"] = UserManager::GetInstance()->GetUid();
+            jsonObj["reply"] = true;
+            QJsonDocument doc(jsonObj);
+            TcpManager::GetInstance()->do_send_data(RequestType::ID_AUTH_FRIEND_REQ,doc.toJson(QJsonDocument::Compact));
+        }else if (_code == static_cast<int>(NotificationCodes::ID_NOTIFY_FRIEND_ONLINE)){
+            emit SignalRouter::GetInstance().on_change_friend_status(_uid,1);
+        }
     }else{
         emit on_accepted_clicked(); // 提示消除item
         // 下面回复请求为接受

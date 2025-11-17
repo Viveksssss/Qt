@@ -34,6 +34,9 @@ using message::TextChatMessageResponse;
 using message::NotifyMakeFriendsRequest;
 using message::NotifyMakeFriendsResponse;
 
+using message::NotifyFriendOnlineRequest;
+using message::NotifyFriendOnlineResponse;
+
 class ChatGrpcClient : public Singleton<ChatGrpcClient> {
     friend class Singleton<ChatGrpcClient>;
 
@@ -79,6 +82,14 @@ public:
      * @return NotifyMakeFriendsResponse
      */
     NotifyMakeFriendsResponse NotifyMakeFriends(std::string server_ip, const NotifyMakeFriendsRequest& req);
+    /**
+     * @brief 通知好友上线
+     *
+     * @param server_ip
+     * @param req
+     * @return NotifyFriendOnlineResponse
+     */
+    NotifyFriendOnlineResponse NotifyFriendOnline(std::string server_ip, const NotifyFriendOnlineRequest& req);
 
 private:
     ChatGrpcClient();

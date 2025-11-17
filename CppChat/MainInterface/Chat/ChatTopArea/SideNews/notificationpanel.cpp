@@ -27,12 +27,12 @@ NotificationPanel::NotificationPanel(QWidget *parent)
     setupConnections();
 }
 
-void NotificationPanel::addFriendNews(bool isReply, int uid, int sex,const QString &iconPath, const QString &name, const QString &content)
+void NotificationPanel::addFriendNews(bool isReply,int code ,int uid, int sex,const QString &iconPath, const QString &name, const QString &content)
 {
     emit on_show_red_dot();
     qDebug() << "iconPath" << iconPath;
     QString icon = (iconPath.isNull() || iconPath.isEmpty())?  ":/Resources/main/header-default.png":iconPath;
-    FriendsNewsItem *itemWidget = new FriendsNewsItem(isReply,uid,sex,icon, name, content);
+    FriendsNewsItem *itemWidget = new FriendsNewsItem(isReply,code,uid,sex,icon, name, content);
     QListWidgetItem*item = new QListWidgetItem;
     item->setSizeHint(itemWidget->sizeHint());
 
@@ -231,35 +231,36 @@ void NotificationPanel::do_system_confirm_clicked(QListWidgetItem *item)
 
 void NotificationPanel::do_auth_friend(std::shared_ptr<UserInfo> info)
 {
-    addFriendNews(false,info->id,info->sex,info->avatar,info->name,"😄向您发来好友申请😄");
+    addFriendNews(false,info->status,info->id,info->sex,info->avatar,info->name,"😄向您发来好友申请😄");
 }
 
-void NotificationPanel::do_message_to_list(const std::vector<std::shared_ptr<UserInfo> > &list)
+void NotificationPanel::do_message_to_list(const std::vector<std::shared_ptr<UserInfo>> &list)
 {
+    qDebug() << "yes...";
     for(auto&item:list){
-        addFriendNews(true,item->id,-1,item->avatar,"时间"+item->back,item->desc);
+        addFriendNews(true,item->status,item->id,-1,item->avatar,"时间"+item->back,item->desc);
     }
 }
 
 void NotificationPanel::do_notify_friend(std::shared_ptr<UserInfo> info, bool accept)
 {
     if (accept)
-        addFriendNews(true,info->id,info->sex,info->avatar,info->name,"😄双方已建立好友关系！😄");
+        addFriendNews(true,info->status,info->id,info->sex,info->avatar,info->name,"😄双方已建立好友关系！😄");
 }
 
 void NotificationPanel::do_notify_friend2(std::shared_ptr<UserInfo> info, bool accept)
 {
     if (accept)
-        addFriendNews(true,info->id,info->sex,info->avatar,info->name,"😄对方同意了您的好友申请😄");
+        addFriendNews(true,info->status,info->id,info->sex,info->avatar,info->name,"😄对方同意了您的好友申请😄");
     else
-        addFriendNews(true,info->id,info->sex,info->avatar,info->name,"😢对方拒绝了您的好友请求😢");
+        addFriendNews(true,info->status,info->id,info->sex,info->avatar,info->name,"😢对方拒绝了您的好友请求😢");
 }
 
 void NotificationPanel::do_get_apply_list(const std::vector<std::shared_ptr<UserInfo>>&list)
 {
 
     for(const auto&apply:list){
-        addFriendNews(false,apply->id,apply->sex,apply->avatar,apply->name,"😄向您发来好友申请😄");
+        addFriendNews(false,apply->status,apply->id,apply->sex,apply->avatar,apply->name,"😄向您发来好友申请😄");
     }
 }
 
@@ -267,7 +268,7 @@ void NotificationPanel::do_add_friend(const UserInfo &info)
 {
     /*addFriendNews(bool isReply, int uid, int sex,
      * const QString &iconPath, const QString &name, const QString &content) */
-    addFriendNews(true,info.id,-1,":/Resources/main/header-default.png","好友申请通知",QString("😄向用户 %1 的请求已发出😄").arg(info.id));
+    addFriendNews(true,info.status,info.id,-1,":/Resources/main/header-default.png","好友申请通知",QString("😄向用户 %1 的请求已发出😄").arg(info.id));
 }
 
 

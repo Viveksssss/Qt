@@ -30,7 +30,7 @@ enum class RequestType{
     ID_NOTIFY_OFF_LINE_REQ = 1021, //通知用户下线
     ID_HEART_BEAT_REQ = 1023,      //心跳请求
     ID_HEARTBEAT_RSP = 1024,       //心跳回复
-    ID_NOTIFY_FRIENDS = 1025, // 通知用户建立好友关系
+    ID_NOTIFY = 1025, // 通知用户建立好友关系
 };
 
 enum class Modules{
@@ -62,6 +62,7 @@ enum class RegisterVarify{
 enum class NotificationCodes {
     ID_NOTIFY_MAKE_FRIENDS = 1001,
     ID_NOTIFY_NOT_FRIENDs = 1002,
+    ID_NOTIFY_FRIEND_ONLINE = 1003,
 };
 
 struct ServerInfo{

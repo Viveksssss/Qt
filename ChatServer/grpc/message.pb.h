@@ -93,6 +93,14 @@ class LoginResponse;
 struct LoginResponseDefaultTypeInternal;
 extern LoginResponseDefaultTypeInternal _LoginResponse_default_instance_;
 extern const ::google::protobuf::internal::ClassDataFull LoginResponse_class_data_;
+class NotifyFriendOnlineRequest;
+struct NotifyFriendOnlineRequestDefaultTypeInternal;
+extern NotifyFriendOnlineRequestDefaultTypeInternal _NotifyFriendOnlineRequest_default_instance_;
+extern const ::google::protobuf::internal::ClassDataFull NotifyFriendOnlineRequest_class_data_;
+class NotifyFriendOnlineResponse;
+struct NotifyFriendOnlineResponseDefaultTypeInternal;
+extern NotifyFriendOnlineResponseDefaultTypeInternal _NotifyFriendOnlineResponse_default_instance_;
+extern const ::google::protobuf::internal::ClassDataFull NotifyFriendOnlineResponse_class_data_;
 class NotifyMakeFriendsRequest;
 struct NotifyMakeFriendsRequestDefaultTypeInternal;
 extern NotifyMakeFriendsRequestDefaultTypeInternal _NotifyMakeFriendsRequest_default_instance_;
@@ -1716,6 +1724,461 @@ class NotifyMakeFriendsRequest final : public ::google::protobuf::Message
 };
 
 extern const ::google::protobuf::internal::ClassDataFull NotifyMakeFriendsRequest_class_data_;
+// -------------------------------------------------------------------
+
+class NotifyFriendOnlineResponse final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:message.NotifyFriendOnlineResponse) */ {
+ public:
+  inline NotifyFriendOnlineResponse() : NotifyFriendOnlineResponse(nullptr) {}
+  ~NotifyFriendOnlineResponse() PROTOBUF_FINAL;
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+  void operator delete(NotifyFriendOnlineResponse* PROTOBUF_NONNULL msg, ::std::destroying_delete_t) {
+    SharedDtor(*msg);
+    ::google::protobuf::internal::SizedDelete(msg, sizeof(NotifyFriendOnlineResponse));
+  }
+#endif
+
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR NotifyFriendOnlineResponse(::google::protobuf::internal::ConstantInitialized);
+
+  inline NotifyFriendOnlineResponse(const NotifyFriendOnlineResponse& from) : NotifyFriendOnlineResponse(nullptr, from) {}
+  inline NotifyFriendOnlineResponse(NotifyFriendOnlineResponse&& from) noexcept
+      : NotifyFriendOnlineResponse(nullptr, ::std::move(from)) {}
+  inline NotifyFriendOnlineResponse& operator=(const NotifyFriendOnlineResponse& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline NotifyFriendOnlineResponse& operator=(NotifyFriendOnlineResponse&& from) noexcept {
+    if (this == &from) return *this;
+    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* PROTOBUF_NONNULL mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* PROTOBUF_NONNULL GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const NotifyFriendOnlineResponse& default_instance() {
+    return *reinterpret_cast<const NotifyFriendOnlineResponse*>(
+        &_NotifyFriendOnlineResponse_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 20;
+  friend void swap(NotifyFriendOnlineResponse& a, NotifyFriendOnlineResponse& b) { a.Swap(&b); }
+  inline void Swap(NotifyFriendOnlineResponse* PROTOBUF_NONNULL other) {
+    if (other == this) return;
+    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(NotifyFriendOnlineResponse* PROTOBUF_NONNULL other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  NotifyFriendOnlineResponse* PROTOBUF_NONNULL New(::google::protobuf::Arena* PROTOBUF_NULLABLE arena = nullptr) const {
+    return ::google::protobuf::Message::DefaultConstruct<NotifyFriendOnlineResponse>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const NotifyFriendOnlineResponse& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const NotifyFriendOnlineResponse& from) { NotifyFriendOnlineResponse::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(::google::protobuf::MessageLite& to_msg,
+                        const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      const ::google::protobuf::MessageLite& msg, ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  static void SharedDtor(MessageLite& self);
+  void InternalSwap(NotifyFriendOnlineResponse* PROTOBUF_NONNULL other);
+ private:
+  template <typename T>
+  friend ::absl::string_view(::google::protobuf::internal::GetAnyMessageName)();
+  static ::absl::string_view FullMessageName() { return "message.NotifyFriendOnlineResponse"; }
+
+  explicit NotifyFriendOnlineResponse(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  NotifyFriendOnlineResponse(::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const NotifyFriendOnlineResponse& from);
+  NotifyFriendOnlineResponse(
+      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, NotifyFriendOnlineResponse&& from) noexcept
+      : NotifyFriendOnlineResponse(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::internal::ClassData* PROTOBUF_NONNULL GetClassData() const PROTOBUF_FINAL;
+  static void* PROTOBUF_NONNULL PlacementNew_(
+      const void* PROTOBUF_NONNULL, void* PROTOBUF_NONNULL mem,
+      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  static constexpr auto InternalNewImpl_();
+
+ public:
+  static constexpr auto InternalGenerateClassData_();
+
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kErrorFieldNumber = 1,
+  };
+  // int32 error = 1;
+  void clear_error() ;
+  ::int32_t error() const;
+  void set_error(::int32_t value);
+
+  private:
+  ::int32_t _internal_error() const;
+  void _internal_set_error(::int32_t value);
+
+  public:
+  // @@protoc_insertion_point(class_scope:message.NotifyFriendOnlineResponse)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<0, 1,
+                                   0, 0,
+                                   2>
+      _table_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(
+        ::google::protobuf::internal::InternalVisibility visibility,
+        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+    inline explicit Impl_(
+        ::google::protobuf::internal::InternalVisibility visibility,
+        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const Impl_& from,
+        const NotifyFriendOnlineResponse& from_msg);
+    ::google::protobuf::internal::HasBits<1> _has_bits_;
+    ::google::protobuf::internal::CachedSize _cached_size_;
+    ::int32_t error_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_message_2eproto;
+};
+
+extern const ::google::protobuf::internal::ClassDataFull NotifyFriendOnlineResponse_class_data_;
+// -------------------------------------------------------------------
+
+class NotifyFriendOnlineRequest final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:message.NotifyFriendOnlineRequest) */ {
+ public:
+  inline NotifyFriendOnlineRequest() : NotifyFriendOnlineRequest(nullptr) {}
+  ~NotifyFriendOnlineRequest() PROTOBUF_FINAL;
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+  void operator delete(NotifyFriendOnlineRequest* PROTOBUF_NONNULL msg, ::std::destroying_delete_t) {
+    SharedDtor(*msg);
+    ::google::protobuf::internal::SizedDelete(msg, sizeof(NotifyFriendOnlineRequest));
+  }
+#endif
+
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR NotifyFriendOnlineRequest(::google::protobuf::internal::ConstantInitialized);
+
+  inline NotifyFriendOnlineRequest(const NotifyFriendOnlineRequest& from) : NotifyFriendOnlineRequest(nullptr, from) {}
+  inline NotifyFriendOnlineRequest(NotifyFriendOnlineRequest&& from) noexcept
+      : NotifyFriendOnlineRequest(nullptr, ::std::move(from)) {}
+  inline NotifyFriendOnlineRequest& operator=(const NotifyFriendOnlineRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline NotifyFriendOnlineRequest& operator=(NotifyFriendOnlineRequest&& from) noexcept {
+    if (this == &from) return *this;
+    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* PROTOBUF_NONNULL mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* PROTOBUF_NONNULL GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const NotifyFriendOnlineRequest& default_instance() {
+    return *reinterpret_cast<const NotifyFriendOnlineRequest*>(
+        &_NotifyFriendOnlineRequest_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 19;
+  friend void swap(NotifyFriendOnlineRequest& a, NotifyFriendOnlineRequest& b) { a.Swap(&b); }
+  inline void Swap(NotifyFriendOnlineRequest* PROTOBUF_NONNULL other) {
+    if (other == this) return;
+    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(NotifyFriendOnlineRequest* PROTOBUF_NONNULL other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  NotifyFriendOnlineRequest* PROTOBUF_NONNULL New(::google::protobuf::Arena* PROTOBUF_NULLABLE arena = nullptr) const {
+    return ::google::protobuf::Message::DefaultConstruct<NotifyFriendOnlineRequest>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const NotifyFriendOnlineRequest& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const NotifyFriendOnlineRequest& from) { NotifyFriendOnlineRequest::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(::google::protobuf::MessageLite& to_msg,
+                        const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      const ::google::protobuf::MessageLite& msg, ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  static void SharedDtor(MessageLite& self);
+  void InternalSwap(NotifyFriendOnlineRequest* PROTOBUF_NONNULL other);
+ private:
+  template <typename T>
+  friend ::absl::string_view(::google::protobuf::internal::GetAnyMessageName)();
+  static ::absl::string_view FullMessageName() { return "message.NotifyFriendOnlineRequest"; }
+
+  explicit NotifyFriendOnlineRequest(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  NotifyFriendOnlineRequest(::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const NotifyFriendOnlineRequest& from);
+  NotifyFriendOnlineRequest(
+      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, NotifyFriendOnlineRequest&& from) noexcept
+      : NotifyFriendOnlineRequest(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::internal::ClassData* PROTOBUF_NONNULL GetClassData() const PROTOBUF_FINAL;
+  static void* PROTOBUF_NONNULL PlacementNew_(
+      const void* PROTOBUF_NONNULL, void* PROTOBUF_NONNULL mem,
+      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  static constexpr auto InternalNewImpl_();
+
+ public:
+  static constexpr auto InternalGenerateClassData_();
+
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kNameFieldNumber = 4,
+    kMessageFieldNumber = 5,
+    kIconFieldNumber = 6,
+    kFromUidFieldNumber = 1,
+    kToUidFieldNumber = 2,
+    kTypeFieldNumber = 3,
+  };
+  // string name = 4;
+  void clear_name() ;
+  const ::std::string& name() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_name(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_name();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_name();
+  void set_allocated_name(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_name() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_name(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_name();
+
+  public:
+  // string message = 5;
+  void clear_message() ;
+  const ::std::string& message() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_message(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_message();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_message();
+  void set_allocated_message(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_message() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_message(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_message();
+
+  public:
+  // string icon = 6;
+  void clear_icon() ;
+  const ::std::string& icon() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_icon(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_icon();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_icon();
+  void set_allocated_icon(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_icon() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_icon(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_icon();
+
+  public:
+  // int32 fromUid = 1;
+  void clear_fromuid() ;
+  ::int32_t fromuid() const;
+  void set_fromuid(::int32_t value);
+
+  private:
+  ::int32_t _internal_fromuid() const;
+  void _internal_set_fromuid(::int32_t value);
+
+  public:
+  // int32 toUid = 2;
+  void clear_touid() ;
+  ::int32_t touid() const;
+  void set_touid(::int32_t value);
+
+  private:
+  ::int32_t _internal_touid() const;
+  void _internal_set_touid(::int32_t value);
+
+  public:
+  // int32 type = 3;
+  void clear_type() ;
+  ::int32_t type() const;
+  void set_type(::int32_t value);
+
+  private:
+  ::int32_t _internal_type() const;
+  void _internal_set_type(::int32_t value);
+
+  public:
+  // @@protoc_insertion_point(class_scope:message.NotifyFriendOnlineRequest)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<3, 6,
+                                   0, 57,
+                                   2>
+      _table_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(
+        ::google::protobuf::internal::InternalVisibility visibility,
+        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+    inline explicit Impl_(
+        ::google::protobuf::internal::InternalVisibility visibility,
+        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const Impl_& from,
+        const NotifyFriendOnlineRequest& from_msg);
+    ::google::protobuf::internal::HasBits<1> _has_bits_;
+    ::google::protobuf::internal::CachedSize _cached_size_;
+    ::google::protobuf::internal::ArenaStringPtr name_;
+    ::google::protobuf::internal::ArenaStringPtr message_;
+    ::google::protobuf::internal::ArenaStringPtr icon_;
+    ::int32_t fromuid_;
+    ::int32_t touid_;
+    ::int32_t type_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_message_2eproto;
+};
+
+extern const ::google::protobuf::internal::ClassDataFull NotifyFriendOnlineRequest_class_data_;
 // -------------------------------------------------------------------
 
 class LoginResponse final : public ::google::protobuf::Message
@@ -6670,6 +7133,309 @@ inline ::int32_t NotifyMakeFriendsResponse::_internal_touid() const {
 inline void NotifyMakeFriendsResponse::_internal_set_touid(::int32_t value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.touid_ = value;
+}
+
+// -------------------------------------------------------------------
+
+// NotifyFriendOnlineRequest
+
+// int32 fromUid = 1;
+inline void NotifyFriendOnlineRequest::clear_fromuid() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.fromuid_ = 0;
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000008U);
+}
+inline ::int32_t NotifyFriendOnlineRequest::fromuid() const {
+  // @@protoc_insertion_point(field_get:message.NotifyFriendOnlineRequest.fromUid)
+  return _internal_fromuid();
+}
+inline void NotifyFriendOnlineRequest::set_fromuid(::int32_t value) {
+  _internal_set_fromuid(value);
+  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
+  // @@protoc_insertion_point(field_set:message.NotifyFriendOnlineRequest.fromUid)
+}
+inline ::int32_t NotifyFriendOnlineRequest::_internal_fromuid() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.fromuid_;
+}
+inline void NotifyFriendOnlineRequest::_internal_set_fromuid(::int32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.fromuid_ = value;
+}
+
+// int32 toUid = 2;
+inline void NotifyFriendOnlineRequest::clear_touid() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.touid_ = 0;
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000010U);
+}
+inline ::int32_t NotifyFriendOnlineRequest::touid() const {
+  // @@protoc_insertion_point(field_get:message.NotifyFriendOnlineRequest.toUid)
+  return _internal_touid();
+}
+inline void NotifyFriendOnlineRequest::set_touid(::int32_t value) {
+  _internal_set_touid(value);
+  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
+  // @@protoc_insertion_point(field_set:message.NotifyFriendOnlineRequest.toUid)
+}
+inline ::int32_t NotifyFriendOnlineRequest::_internal_touid() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.touid_;
+}
+inline void NotifyFriendOnlineRequest::_internal_set_touid(::int32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.touid_ = value;
+}
+
+// int32 type = 3;
+inline void NotifyFriendOnlineRequest::clear_type() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.type_ = 0;
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000020U);
+}
+inline ::int32_t NotifyFriendOnlineRequest::type() const {
+  // @@protoc_insertion_point(field_get:message.NotifyFriendOnlineRequest.type)
+  return _internal_type();
+}
+inline void NotifyFriendOnlineRequest::set_type(::int32_t value) {
+  _internal_set_type(value);
+  SetHasBit(_impl_._has_bits_[0], 0x00000020U);
+  // @@protoc_insertion_point(field_set:message.NotifyFriendOnlineRequest.type)
+}
+inline ::int32_t NotifyFriendOnlineRequest::_internal_type() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.type_;
+}
+inline void NotifyFriendOnlineRequest::_internal_set_type(::int32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.type_ = value;
+}
+
+// string name = 4;
+inline void NotifyFriendOnlineRequest::clear_name() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.name_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000001U);
+}
+inline const ::std::string& NotifyFriendOnlineRequest::name() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:message.NotifyFriendOnlineRequest.name)
+  return _internal_name();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void NotifyFriendOnlineRequest::set_name(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  _impl_.name_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:message.NotifyFriendOnlineRequest.name)
+}
+inline ::std::string* PROTOBUF_NONNULL NotifyFriendOnlineRequest::mutable_name()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  ::std::string* _s = _internal_mutable_name();
+  // @@protoc_insertion_point(field_mutable:message.NotifyFriendOnlineRequest.name)
+  return _s;
+}
+inline const ::std::string& NotifyFriendOnlineRequest::_internal_name() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.name_.Get();
+}
+inline void NotifyFriendOnlineRequest::_internal_set_name(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.name_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL NotifyFriendOnlineRequest::_internal_mutable_name() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.name_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE NotifyFriendOnlineRequest::release_name() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:message.NotifyFriendOnlineRequest.name)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000001U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000001U);
+  auto* released = _impl_.name_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.name_.Set("", GetArena());
+  }
+  return released;
+}
+inline void NotifyFriendOnlineRequest::set_allocated_name(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000001U);
+  }
+  _impl_.name_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.name_.IsDefault()) {
+    _impl_.name_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:message.NotifyFriendOnlineRequest.name)
+}
+
+// string message = 5;
+inline void NotifyFriendOnlineRequest::clear_message() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.message_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000002U);
+}
+inline const ::std::string& NotifyFriendOnlineRequest::message() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:message.NotifyFriendOnlineRequest.message)
+  return _internal_message();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void NotifyFriendOnlineRequest::set_message(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  _impl_.message_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:message.NotifyFriendOnlineRequest.message)
+}
+inline ::std::string* PROTOBUF_NONNULL NotifyFriendOnlineRequest::mutable_message()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  ::std::string* _s = _internal_mutable_message();
+  // @@protoc_insertion_point(field_mutable:message.NotifyFriendOnlineRequest.message)
+  return _s;
+}
+inline const ::std::string& NotifyFriendOnlineRequest::_internal_message() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.message_.Get();
+}
+inline void NotifyFriendOnlineRequest::_internal_set_message(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.message_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL NotifyFriendOnlineRequest::_internal_mutable_message() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.message_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE NotifyFriendOnlineRequest::release_message() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:message.NotifyFriendOnlineRequest.message)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000002U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  auto* released = _impl_.message_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.message_.Set("", GetArena());
+  }
+  return released;
+}
+inline void NotifyFriendOnlineRequest::set_allocated_message(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  }
+  _impl_.message_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.message_.IsDefault()) {
+    _impl_.message_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:message.NotifyFriendOnlineRequest.message)
+}
+
+// string icon = 6;
+inline void NotifyFriendOnlineRequest::clear_icon() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.icon_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000004U);
+}
+inline const ::std::string& NotifyFriendOnlineRequest::icon() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:message.NotifyFriendOnlineRequest.icon)
+  return _internal_icon();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void NotifyFriendOnlineRequest::set_icon(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  _impl_.icon_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:message.NotifyFriendOnlineRequest.icon)
+}
+inline ::std::string* PROTOBUF_NONNULL NotifyFriendOnlineRequest::mutable_icon()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  ::std::string* _s = _internal_mutable_icon();
+  // @@protoc_insertion_point(field_mutable:message.NotifyFriendOnlineRequest.icon)
+  return _s;
+}
+inline const ::std::string& NotifyFriendOnlineRequest::_internal_icon() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.icon_.Get();
+}
+inline void NotifyFriendOnlineRequest::_internal_set_icon(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.icon_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL NotifyFriendOnlineRequest::_internal_mutable_icon() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.icon_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE NotifyFriendOnlineRequest::release_icon() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:message.NotifyFriendOnlineRequest.icon)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000004U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
+  auto* released = _impl_.icon_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.icon_.Set("", GetArena());
+  }
+  return released;
+}
+inline void NotifyFriendOnlineRequest::set_allocated_icon(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
+  }
+  _impl_.icon_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.icon_.IsDefault()) {
+    _impl_.icon_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:message.NotifyFriendOnlineRequest.icon)
+}
+
+// -------------------------------------------------------------------
+
+// NotifyFriendOnlineResponse
+
+// int32 error = 1;
+inline void NotifyFriendOnlineResponse::clear_error() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.error_ = 0;
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000001U);
+}
+inline ::int32_t NotifyFriendOnlineResponse::error() const {
+  // @@protoc_insertion_point(field_get:message.NotifyFriendOnlineResponse.error)
+  return _internal_error();
+}
+inline void NotifyFriendOnlineResponse::set_error(::int32_t value) {
+  _internal_set_error(value);
+  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  // @@protoc_insertion_point(field_set:message.NotifyFriendOnlineResponse.error)
+}
+inline ::int32_t NotifyFriendOnlineResponse::_internal_error() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.error_;
+}
+inline void NotifyFriendOnlineResponse::_internal_set_error(::int32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.error_ = value;
 }
 
 #ifdef __GNUC__

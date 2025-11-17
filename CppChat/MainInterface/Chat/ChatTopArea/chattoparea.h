@@ -70,7 +70,9 @@ public:
     explicit StatusLabel(QWidget *parent = nullptr);
 
     void setStatus(const QString &status);
-    QString getStatus();
+    void setStatus(int status);
+    int getStatus();
+    QString getStatusStr();
     void setDotColor(const QColor &color);
     void setEnabled(bool enabled = true);
     void setShowBorder(bool show)noexcept;
@@ -78,7 +80,8 @@ protected:
     void paintEvent(QPaintEvent *event) override;
 
 private:
-    QString status;
+    QString statusStr;
+    int status;
     QColor dotColor;
 
     bool isHovered = false;

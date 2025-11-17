@@ -805,6 +805,7 @@ void InputArea::do_capture_clicked()
 void InputArea::do_message_sent(const MessageItem &item)
 {
     m_model->addMessage(item);
+    // TODO:发送请求
 }
 
 QString InputArea::getText() const

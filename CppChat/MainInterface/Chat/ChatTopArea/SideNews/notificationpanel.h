@@ -10,6 +10,7 @@ class QPropertyAnimation;
 class QListWidget;
 class FriendsNewsItem;
 class SystemNewsItem;
+enum class NotificationCodes;
 struct UserInfo;
 class NotificationPanel:public QWidget
 {
@@ -17,7 +18,7 @@ class NotificationPanel:public QWidget
 public:
     explicit NotificationPanel(QWidget*parent = nullptr);
     ~NotificationPanel() = default;
-    void addFriendNews(bool isReply,int uid,int sex,const QString &iconPath, const QString &name, const QString &content);
+    void addFriendNews(bool isReply,int code,int uid,int sex,const QString &iconPath, const QString &name, const QString &content);
     void addSystemNews(bool isReply,int uid,const QString &iconPath, const QString &name, const QString &content);
     void showPanel();
     void hidePanel();

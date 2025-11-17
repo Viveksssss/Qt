@@ -87,13 +87,30 @@ void TcpManager::initHandlers()
                 user_info->status = obj["type"].toInt();
                 user_info->desc = obj["message"].toString();
                 user_info->back = obj["time"].toString();
+                user_info->avatar = obj["icon"].toString();
                 notification_list.push_back(user_info);
             }
-            qDebug() <<  notification_list.size();
             emit on_message_to_list(notification_list);
         }
 
         //TODO: 好友列表
+        if (jsonObj.contains("friends")){
+            QJsonArray friend_array = jsonObj["friends"].toArray();
+            std::vector<std::shared_ptr<UserInfo>>friends_list;
+            for(const QJsonValue&value:friend_array){
+                QJsonObject obj = value.toObject();
+                auto user_info = std::make_shared<UserInfo>();
+                user_info->id = obj["uid"].toInt();
+                user_info->sex = obj["sex"].toInt();
+                user_info->status = obj["status"].toInt();
+                user_info->name = obj["name"].toString();
+                user_info->email = obj["email"].toString();
+                user_info->avatar = obj["icon"].toString();
+
+                friends_list.push_back(user_info);
+            }
+            emit on_add_friends_to_list(friends_list);
+        }
 
         //TODO: 消息列表
 
@@ -288,7 +305,37 @@ void TcpManager::initHandlers()
         }else{
             emit on_notify_friend2(info,false);
         }
+    };
 
+    /**
+     * @brief 通知
+    */
+    _handlers[RequestType::ID_NOTIFY] = [this](RequestType requestType,int len,QByteArray data){
+        QJsonDocument jsonDoc = QJsonDocument::fromJson(data);
+        if (jsonDoc.isNull()){
+            return;
+        }
+        QJsonObject jsonObj = jsonDoc.object();
+        if (!jsonObj.contains("error")){
+            int err = static_cast<int>(ErrorCodes::ERROR_JSON);
+            return;
+        }
+
+        int err = jsonObj["error"].toInt();
+        if (err != static_cast<int>(ErrorCodes::SUCCESS)){
+            return;
+        }
+
+        auto user_info = std::make_shared<UserInfo>();
+        user_info->id = jsonDoc["uid"].toInt();
+        user_info->status = jsonDoc["type"].toInt();
+        user_info->desc = jsonDoc["message"].toString();
+        user_info->back = jsonDoc["time"].toString();
+        user_info->avatar = jsonDoc["icon"].toString();
+        std::vector<std::shared_ptr<UserInfo>>vec;
+        vec.push_back(user_info);
+        emit on_message_to_list(vec);
+        emit on_change_friend_status(user_info->id,1);
     };
 }
 
@@ -319,6 +366,12 @@ void TcpManager::connections()
             _recv_pending = false;
             QByteArray msgBody = _buffer.mid(4,_msg_len);
             _buffer.remove(0,4+_msg_len);
+            // 在TLV解析的最开始添加
+            qDebug() << "=== 收到TLV消息 ===";
+            qDebug() << "Type:" << static_cast<int>(_msg_id);
+            qDebug() << "Length:" << _msg_len;
+            qDebug() << "Data:" << msgBody;
+            qDebug() << "===================";
             handleMessage(RequestType(_msg_id),_msg_len,msgBody);
         }
     });

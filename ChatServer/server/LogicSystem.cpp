@@ -72,9 +72,6 @@ void LogicSystem::RegisterCallBacks()
         std::string key = USER_STATUS_PREFIX + uid_str;
         RedisManager::GetInstance()->Set(key, "1");
 
-        // 登陆成功，通知所有在线好友
-        // TODO:
-
         jj["uid"] = uid;
         jj["name"] = user_info->name;
         jj["email"] = user_info->email;
@@ -122,6 +119,83 @@ void LogicSystem::RegisterCallBacks()
         // 获取消息列表
 
         // 获取好友列表
+        std::vector<std::shared_ptr<UserInfo>> friend_list;
+        std::vector<int> online_friends;
+
+        bool b_friend = MysqlManager::GetInstance()->GetFriendList(uid_str, friend_list);
+        online_friends.resize(friend_list.size());
+        if (b_friend && friend_list.size() > 0) {
+            json friends;
+            for (std::size_t i = 0; i < friend_list.size(); i++) {
+                auto& friend_user = friend_list[i];
+                json friend_item;
+                // 查询状态
+                std::string status_key = USER_STATUS_PREFIX + std::to_string(friend_user->uid);
+                std::string status_value;
+                bool b_status = RedisManager::GetInstance()->Get(status_key, status_value);
+                if (b_status) {
+                    friend_item["status"] = std::stoi(status_value);
+                    online_friends[i] = friend_item["status"];
+                } else {
+                    friend_item["status"] = 0;
+                    online_friends[i] = 0;
+                }
+                friend_item["uid"] = friend_user->uid;
+                friend_item["name"] = friend_user->name;
+                friend_item["email"] = friend_user->email;
+                friend_item["icon"] = friend_user->icon;
+                friend_item["sex"] = friend_user->sex;
+                friend_item["desc"] = friend_user->desc;
+                friends.push_back(friend_item);
+            }
+            jj["friends"] = friends;
+        }
+
+        // 登陆成功，通知所有在线好友
+        // 上面得到了好友列表，这里通知所有在线好友
+        for (std::size_t i = 0; i < friend_list.size(); i++) {
+            auto& friend_uid = friend_list[i]->uid;
+            std::string ip_key = USERIP_PREFIX + std::to_string(friend_uid);
+            std::string ip_value;
+            bool b_ip = RedisManager::GetInstance()->Get(ip_key, ip_value);
+            if (b_ip) {
+                if (online_friends[i] == 1) {
+                    auto& cfg = ConfigManager::GetInstance();
+                    auto self_name = cfg["SelfServer"]["name"];
+                    if (ip_value == self_name) {
+                        auto session2 = UserManager::GetInstance()->GetSession(friend_uid);
+                        if (session2) {
+                            SPDLOG_INFO("FROM UID:{},to:{}", uid, friend_uid);
+                            json j;
+                            j["error"] = ErrorCodes::SUCCESS;
+                            j["uid"] = uid;
+                            j["message"] = "😁好友" + self_name + "上线了😄";
+                            j["type"] = static_cast<int>(NotificationCodes::ID_NOTIFY_FRIEND_ONLINE);
+
+                            // 当前时间
+                            auto now = std::chrono::system_clock::now();
+                            auto time_t = std::chrono::system_clock::to_time_t(now);
+
+                            std::stringstream ss;
+                            ss << std::put_time(std::localtime(&time_t), "%Y-%m-%d %H:%M:%S");
+                            j["time"] = ss.str();
+                            j["icon"] = user_info->icon;
+                            session2->Send(j.dump(), static_cast<int>(MsgId::ID_NOTIFY));
+                        }
+                    } else {
+                        NotifyFriendOnlineRequest request;
+                        request.set_fromuid(uid);
+                        request.set_touid(friend_uid);
+                        request.set_name(user_info->name);
+                        request.set_type(static_cast<int>(NotificationCodes::ID_NOTIFY_FRIEND_ONLINE));
+                        request.set_message("😁好友" + self_name + "上线了😄");
+                        request.set_icon(user_info->icon);
+
+                        ChatGrpcClient::GetInstance()->NotifyFriendOnline(ip_value, request);
+                    }
+                }
+            }
+        }
 
         // 更新登陆数量
         auto server_name = ConfigManager::GetInstance()["SelfServer"]["name"];

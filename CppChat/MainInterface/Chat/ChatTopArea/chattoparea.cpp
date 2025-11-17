@@ -185,18 +185,51 @@ StatusLabel::StatusLabel(QWidget *parent)
 
 void StatusLabel::setStatus(const QString &status)
 {
-    this->status = status;
+    this->statusStr = status;
     // 根据状态设置圆点颜色
-    if (this->status == "在线") dotColor = QColor(0x58f376);
-    else if (this->status == "忙碌") dotColor = QColor(0xe90739);
-    else if (this->status == "离线") dotColor = Qt::gray;
-
+    if (this->statusStr == "在线"){
+        dotColor = QColor(0x58f376);
+        this->status = 1;
+    }
+    else if (this->statusStr == "忙碌"){
+        dotColor = QColor(0xe90739);
+        this->status = 2;
+    }
+    else if (this->statusStr == "离线"){
+        dotColor = Qt::gray;
+        this->status = 0;
+    }
+    UserManager::GetInstance()->SetStatus(this->status);
     update(); // 触发重绘
 }
 
-QString StatusLabel::getStatus()
+void StatusLabel::setStatus(int status)
+{
+    this->status = status;
+    if (this->status == 1){
+        dotColor = QColor(0x58f376);
+        this->statusStr = "在线";
+    }
+    else if (this->status == 2){
+        dotColor = QColor(0xe90739);
+        this->statusStr = "忙碌";
+    }
+    else if (this->status == 0){
+        dotColor = Qt::gray;
+        this->statusStr = "离线";
+    }
+    UserManager::GetInstance()->SetStatus(status);
+    update(); // 触发重绘
+}
+
+int StatusLabel::getStatus()
 {
     return status;
+}
+
+QString StatusLabel::getStatusStr()
+{
+    return statusStr;
 }
 
 void StatusLabel::setDotColor(const QColor &color)
@@ -257,7 +290,7 @@ void StatusLabel::paintEvent(QPaintEvent *event)
 
     QRect textRect(dotRect.right() + 6, 0,
                    rect.width() - dotRect.right() - 12, rect.height());
-    painter.drawText(textRect, Qt::AlignCenter, status);
+    painter.drawText(textRect, Qt::AlignCenter, statusStr);
 }
 
 void StatusLabel::mousePressEvent(QMouseEvent *event)
