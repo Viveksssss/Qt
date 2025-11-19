@@ -24,10 +24,10 @@ Status ChatGrpcServer::NotifyAddFriend(grpc::ServerContext* context, const AddFr
     json j;
     j["error"] = ErrorCodes::SUCCESS;
     j["from_uid"] = request->fromuid();
-    j["name"] = request->name();
-    j["icon"] = request->icon();
-    j["sex"] = request->sex();
-    j["desc"] = request->desc();
+    j["from_name"] = request->name();
+    j["from_icon"] = request->icon();
+    j["from_sex"] = request->sex();
+    j["from_desc"] = request->desc();
 
     session->Send(j.dump(), static_cast<int>(MsgId::ID_NOTIFY_ADD_FRIEND_REQ));
 
@@ -71,7 +71,7 @@ Status ChatGrpcServer::NotifyMakeFriends(grpc::ServerContext* context, const Not
     j["from_name"] = request->fromname();
     j["from_sex"] = request->fromsex();
     j["from_icon"] = request->fromicon();
-    j["from_status"] = request->fromstatus();
+    j["from_status"] = 1;
     j["type"] = request->type();
     j["message"] = request->message();
 
@@ -94,6 +94,7 @@ Status ChatGrpcServer::NotifyFriendOnline(grpc::ServerContext* context, const No
     }
     // 在内存中z直接发送通知
     json j;
+    j["error"] = ErrorCodes::SUCCESS;
     j["uid"] = request->fromuid();
     j["name"] = request->name();
     j["type"] = request->type();

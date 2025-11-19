@@ -23,7 +23,6 @@ public:
     void clear();
     void insertText(const QString&text);
     void insertEmoji(const QString &emoji);
-    void insertImage(const QString &imagePath);
     void setModel(MessageModel*model);
 
 signals:
@@ -54,7 +53,7 @@ private:
     void sendAudioMessage(const QByteArray &audioData, int duration);
     QByteArray createWavFile(const QByteArray &pcmData, int duration) const;
 
-    MessageItem parseMessageContent();
+    std::optional<MessageItem> parseMessageContent();
 
     QPixmap createRoundedPixmap(const QString &imagePath, int size, int radius);
 

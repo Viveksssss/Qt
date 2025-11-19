@@ -2,6 +2,7 @@
 #define SIGNALROUTER_H
 
 #include <QObject>
+#include "../MainInterface/FriendsList/frienditem.h"
 
 class SignalRouter : public QObject
 {
@@ -11,7 +12,7 @@ public:
     static SignalRouter& GetInstance();
 signals:
     void on_change_friend_status(int,int);  // from FriendsNewsItem::do_accept_clicked
-
+    void on_change_friend_selection(FriendItem);    // from FriendsListPart::QListView::clicked
 public slots:
 
 };

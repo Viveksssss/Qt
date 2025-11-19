@@ -19,17 +19,17 @@ QVariant MessageModel::data(const QModelIndex &index, int role) const
     const MessageItem&message = messages.at(index.row());
     switch(role){
     case TypeRole:
-        return static_cast<int>(message.type);
+        return static_cast<int>(message.content.type);
     case IdRole:
         return message.id;
     case RecvIdRole:
-        return message.recvId;
+        return message.to_id;
     case SenderRole:
-        return message.senderId;
+        return message.from_id;
     case TimestampRole:
         return message.timestamp;
     case ContentsRole:
-        return QVariant::fromValue(message.contents);
+        return QVariant::fromValue(message.content);
     case SourceRole:
         return static_cast<int>(message.from);
     case SelectedRole:
@@ -64,7 +64,7 @@ bool MessageModel::setData(const QModelIndex &index, const QVariant &value, int 
         break;
 
     case TypeRole:
-        message.type = static_cast<MessageType>(value.toInt());
+        message.content.type = static_cast<MessageType>(value.toInt());
         changed = true;
         break;
 
@@ -74,12 +74,12 @@ bool MessageModel::setData(const QModelIndex &index, const QVariant &value, int 
         break;
 
     case RecvIdRole:
-        message.recvId = value.toString();
+        message.to_id = value.toInt();
         changed = true;
         break;
 
     case SenderRole:
-        message.senderId = value.toString();
+        message.from_id = value.toInt();
         changed = true;
         break;
 
@@ -89,8 +89,8 @@ bool MessageModel::setData(const QModelIndex &index, const QVariant &value, int 
         break;
 
     case ContentsRole:
-        if (value.canConvert<QList<MessageContent>>()) {
-            message.contents = value.value<QList<MessageContent>>();
+        if (value.canConvert<MessageContent>()) {
+            message.content = value.value<MessageContent>();
             changed = true;
         }
         break;

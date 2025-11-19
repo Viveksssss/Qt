@@ -30,7 +30,7 @@ void MessageArea::setupUI()
     list->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     list->setContextMenuPolicy(Qt::CustomContextMenu);
     list->setAlternatingRowColors(false);
-    list->setSpacing(5);
+    // list->setSpacing(5);
     list->verticalScrollBar()->setSingleStep(20);
     list->setUniformItemSizes(false);   // 必须 false，才允许每行高不同
     list->setWordWrap(true);            // 内部也会触发 QTextLayout 折行

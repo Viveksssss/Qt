@@ -238,6 +238,7 @@ void NotificationPanel::do_message_to_list(const std::vector<std::shared_ptr<Use
 {
     qDebug() << "yes...";
     for(auto&item:list){
+        qDebug() << item->desc;
         addFriendNews(true,item->status,item->id,-1,item->avatar,"时间"+item->back,item->desc);
     }
 }

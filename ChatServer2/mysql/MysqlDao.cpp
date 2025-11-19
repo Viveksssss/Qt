@@ -659,7 +659,7 @@ bool MysqlDao::MakeFriends(const std::string& fromUid, const std::string& toUid)
         mysqlpp::Transaction trans(*conn);
         // 添加好友应该是双向的，所以需要插入两条记录
         mysqlpp::Query query1 = conn->query();
-        query1 << "INSERT INTO friends (self_id,friend_id) VALUES(%0q,%1q),"
+        query1 << "INSERT IGNORE INTO friends (self_id,friend_id) VALUES(%0q,%1q),"
                << "(%1q,%0q)";
         query1.parse();
         mysqlpp::SimpleResult res1 = query1.execute(std::stoi(fromUid), std::stoi(toUid));

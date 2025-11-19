@@ -67,7 +67,7 @@ bool MysqlManager::MakeFriends(const std::string& fromUid, const std::string& to
     return _dao.MakeFriends(fromUid, toUid);
 }
 
-bool MysqlManager::CheckIsFriend(const std::string& fromUid, const std::string& toUid)
+bool MysqlManager::CheckIsFriend(int fromUid, int toUid)
 {
     return _dao.CheckIsFriend(fromUid, toUid);
 }

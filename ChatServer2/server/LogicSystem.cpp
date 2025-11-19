@@ -329,8 +329,8 @@ void LogicSystem::RegisterCallBacks()
                 SPDLOG_INFO("FROM SESSION:{},to:{}", session->GetSessionId(), session2->GetSessionId());
                 json jj;
                 jj["error"] = ErrorCodes::SUCCESS;
-                jj["fromUid"] = fromUid;
-                jj["fromName"] = fromName;
+                jj["from_uid"] = fromUid;
+                jj["from_name"] = fromName;
                 session2->Send(jj.dump(), static_cast<int>(MsgId::ID_NOTIFY_ADD_FRIEND_REQ));
             }
             return;
@@ -419,7 +419,11 @@ void LogicSystem::RegisterCallBacks()
         bool b_ip = RedisManager::GetInstance()->Get(to_key, to_ip_value);
         if (!b_ip) {
             // 不存在我们就需要加入mysqk持续等待下次用户登录处理
-            bool ok = MysqlManager::GetInstance()->AddNotification(std::to_string(toUid), static_cast<int>(NotificationCodes::ID_NOTIFY_MAKE_FRIENDS), "😄" + fromName + "已经和您成为好友😄");
+            if (accept) {
+                bool ok = MysqlManager::GetInstance()->AddNotification(std::to_string(toUid), static_cast<int>(NotificationCodes::ID_NOTIFY_MAKE_FRIENDS), "😄" + fromName + "已经和您成为好友😄");
+            } else {
+                bool ok = MysqlManager::GetInstance()->AddNotification(std::to_string(toUid), static_cast<int>(NotificationCodes::ID_NOTIFY_NOT_FRIENDS), "😭" + fromName + "拒绝了您的好友请求😭");
+            }
             return;
         }
         auto& cfg = ConfigManager::GetInstance();
@@ -429,6 +433,7 @@ void LogicSystem::RegisterCallBacks()
             if (session2) {
                 SPDLOG_INFO("FROM UID:{},to:{}", fromUid, toUid);
                 SPDLOG_INFO("FROM SESSION:{},to:{}", session->GetSessionId(), session2->GetSessionId());
+                j["from_status"] = 1;
                 session2->Send(j.dump(), static_cast<int>(MsgId::ID_NOTIFY_AUTH_FRIEND_REQ));
             }
         } else {

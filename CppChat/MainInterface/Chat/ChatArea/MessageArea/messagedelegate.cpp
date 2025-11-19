@@ -50,37 +50,37 @@ void MessageDelegate::paint(QPainter *painter, const QStyleOptionViewItem &optio
     bool isMe = index.data(MessageModel::SourceRole).toInt() == static_cast<int>(MessageSource::Me);
     QColor bubbleColor = index.data(MessageModel::BubbleColorRole).value<QColor>();
     bool isSelected = index.data(MessageModel::SelectedRole).toBool();
-    auto contents = index.data(MessageModel::ContentsRole).value<QList<MessageContent>>();
+    auto content = index.data(MessageModel::ContentsRole).value<MessageContent>();
     QString timeText = index.data(MessageModel::DisplayTimeRole).toString();
 
     paintSelectionIndicator(painter,option.rect, isSelected);
 
-    MessageType type = parseType(contents);
+    MessageType type = parseType(content);
     switch(type){
     case MessageType::ImageMessage:
-        paintPureImageMessage(painter, option, index, contents, isMe, timeText);
+        paintPureImageMessage(painter, option, index, content, isMe, timeText);
         break;
     case MessageType::AudioMessage:
-        paintPureAudioMessage(painter, option, index, contents, isMe, timeText);
+        paintPureAudioMessage(painter, option, index, content, isMe, timeText);
         break;
     case MessageType::VideoMessage:
-        paintPureVideoMessage(painter, option, index, contents, isMe, timeText);
+        paintPureVideoMessage(painter, option, index, content, isMe, timeText);
         break;
     case MessageType::OtherFileMessage:
-        paintPureOtherFileMessage(painter, option, index, contents, isMe, timeText);
+        paintPureOtherFileMessage(painter, option, index, content, isMe, timeText);
         break;
     default:
-        paintBubbleMessage(painter, option, index, contents, isMe, bubbleColor,timeText);
+        paintBubbleMessage(painter, option, index, content, isMe, bubbleColor,timeText);
     }
 }
 
 QSize MessageDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
-    auto contents = index.data(MessageModel::ContentsRole).value<QList<MessageContent>>();
+    auto content = index.data(MessageModel::ContentsRole).value<MessageContent>();
     bool showAvatar = true;
     bool showUserName = true;
 
-    QSize messageSize = calculateMessageSize(contents,option);
+    QSize messageSize = calculateMessageSize(content,option);
 
     // 基础高度 = 内容高度 + 气泡内边距
     int height = messageSize.height() + BUBBLE_PADDING*2;
@@ -224,68 +224,11 @@ void MessageDelegate::paintSelectionIndicator(QPainter *painter, const QRect &re
     painter->restore();
 }
 
-QSize MessageDelegate::calculateMessageSize(const QList<MessageContent> &contents,const QStyleOptionViewItem &option) const
+QSize MessageDelegate::calculateMessageSize(const MessageContent&content,const QStyleOptionViewItem &option) const
 {
     int totalHeight = 0;
     int maxWidth = 0;
     int w = textAvailWidth(option, true);
-    for (const auto &content : contents) {
-        switch (content.type) {
-        case MessageType::TextMessage:
-        {
-            QString text = content.data.toString();
-            QFont font;
-            font.setPointSize(12);
-            QFontMetrics fm(font);
-            w = qMin(w,700);
-            QTextDocument doc;
-            doc.setDefaultFont(font);
-            doc.setTextWidth(w); // 设置文本宽度限制
-            doc.setPlainText(text);
-
-            QSize textSize(doc.idealWidth(), doc.size().height());
-            maxWidth = qMin(qMax(textSize.width(),maxWidth),700);
-
-            totalHeight+=textSize.height();
-            break;
-        }
-        break;
-        case MessageType::ImageMessage:
-        {
-            totalHeight+=180;
-            maxWidth = qMax(maxWidth,320);
-            break;
-        }
-        case MessageType::VideoMessage:
-            totalHeight += 100;
-            maxWidth = qMin(qMax(200,maxWidth),700);
-            break;
-        case MessageType::AudioMessage:
-            totalHeight += 40;
-            maxWidth = qMin(qMax(100,maxWidth),700);
-            break;
-        case MessageType::OtherFileMessage:
-            totalHeight += 80;
-            maxWidth = qMin(qMax(100,maxWidth),700);
-            break;
-        default:
-            totalHeight += 50;
-            maxWidth = qMax(maxWidth, 150);
-            break;
-        }
-    }
-
-    if (contents.size() > 1) {
-        totalHeight += (contents.size() - 1) * MESSAGE_SPACING;
-    }
-
-    return QSize(maxWidth, totalHeight);
-}
-
-QSize MessageDelegate::calculateMessageSize(const MessageContent &content,const QStyleOptionViewItem &option) const
-{
-    int totalHeight = 0;
-    int maxWidth = 0;
     switch (content.type) {
     case MessageType::TextMessage:
     {
@@ -293,42 +236,43 @@ QSize MessageDelegate::calculateMessageSize(const MessageContent &content,const 
         QFont font;
         font.setPointSize(12);
         QFontMetrics fm(font);
-        int w = textAvailWidth(option, true);          // ← 先拿到可用宽
+        w = qMin(w,700);
         QTextDocument doc;
         doc.setDefaultFont(font);
         doc.setTextWidth(w); // 设置文本宽度限制
         doc.setPlainText(text);
 
         QSize textSize(doc.idealWidth(), doc.size().height());
+        maxWidth = qMin(qMax(textSize.width(),maxWidth),700);
 
         totalHeight+=textSize.height();
-        maxWidth = qMin(qMax(w,maxWidth),700);
         break;
     }
-    break;
     case MessageType::ImageMessage:
     {
-        totalHeight += 180;
-        maxWidth = qMax(maxWidth, 320);
+        totalHeight+=180;
+        maxWidth = qMax(maxWidth,320);
         break;
     }
     case MessageType::VideoMessage:
         totalHeight += 100;
-        maxWidth = qMax(maxWidth, 200);
+        maxWidth = qMin(qMax(200,maxWidth),700);
         break;
     case MessageType::AudioMessage:
         totalHeight += 40;
-        maxWidth = qMax(maxWidth, 150);
+        maxWidth = qMin(qMax(100,maxWidth),700);
         break;
     case MessageType::OtherFileMessage:
         totalHeight += 80;
-        maxWidth = qMax(maxWidth,100);
+        maxWidth = qMin(qMax(100,maxWidth),700);
         break;
     default:
         totalHeight += 50;
         maxWidth = qMax(maxWidth, 150);
         break;
     }
+
+
     return QSize(maxWidth, totalHeight);
 }
 
@@ -458,19 +402,16 @@ int MessageDelegate::textAvailWidth(const QStyleOptionViewItem &option, bool sho
 }
 
 void MessageDelegate::paintBubbleMessage(QPainter *painter, const QStyleOptionViewItem &option,
-                                         const QModelIndex &index, const QList<MessageContent> &contents,
+                                         const QModelIndex &index, const MessageContent&content,
                                          bool isMe, const QColor &bubbleColor, const QString &timeText) const
 {
     bool showUserName = true;
     bool showAvatar = true;
 
-    QSize size = calculateMessageSize(contents, option);
+    QSize size = calculateMessageSize(content, option);
 
-    QVector<QPair<MessageContent, QSize>> contentSizes;
-    for (const auto& content : contents) {
-        QSize contentSize = calculateMessageSize(content, option);
-        contentSizes.append(qMakePair(content, contentSize));
-    }
+    QSize contentSize = calculateMessageSize(content, option);
+
 
     QRect avatarRect;
     QRect bubbleRect;
@@ -519,38 +460,8 @@ void MessageDelegate::paintBubbleMessage(QPainter *painter, const QStyleOptionVi
     paintButtleBackground(painter, bubbleRect, bubbleColor);
     QRect contentRect = bubbleRect.adjusted(BUBBLE_PADDING, BUBBLE_PADDING, -BUBBLE_PADDING, -BUBBLE_PADDING);
 
-    int currentY = contentRect.top();
-    for (const auto& [content, size] : contentSizes){
-        QRect elementRect(contentRect.left()  ,
-                          currentY ,
-                          contentRect.width(), size.height());
-        switch (content.type) {
-        case MessageType::TextMessage:
-            paintTextMessage(painter, elementRect, content, option);
-            break;
-        case MessageType::ImageMessage:
-            paintImageMessage(painter, elementRect, content, option);
-            break;
-        case MessageType::VideoMessage:
-            elementRect.setHeight(120);
-            painter->setBrush(QColor(240, 240, 240));
-            painter->drawRoundedRect(elementRect, 4, 4);
-            painter->drawText(elementRect, Qt::AlignCenter, "▶ 视频消息");
-            break;
-        case MessageType::AudioMessage:
-            elementRect.setHeight(40);
-            painter->setBrush(QColor(240, 240, 240));
-            painter->drawRoundedRect(elementRect, 20, 20);
-            painter->drawText(elementRect, Qt::AlignCenter, "🔊 音频消息");
-            break;
-        default:
-            elementRect.setHeight(30);
-            painter->drawText(elementRect, Qt::AlignCenter, "未知消息类型");
-            break;
-        }
 
-        currentY += elementRect.height() + MESSAGE_SPACING;
-    }
+    paintTextMessage(painter, contentRect, content, option);
 
     QFont timeFont = option.font;
     timeFont.setPointSize(9);
@@ -805,22 +716,19 @@ void MessageDelegate::paintVideoIcon(QPainter *painter, const QRect &rect) const
 
 
 
-MessageType MessageDelegate::parseType(const QList<MessageContent> &contents) const
+MessageType MessageDelegate::parseType(const MessageContent &content) const
 {
-    if (contents.size() != 1) {
-        return MessageType::MixedMessage;
-    }
-    return contents.first().type;
+    return content.type;
 }
 
 void MessageDelegate::paintPureOtherFileMessage(QPainter *painter, const QStyleOptionViewItem &option,
-                                                const QModelIndex &index, const QList<MessageContent> &contents,
+                                                const QModelIndex &index, const MessageContent&content,
                                                 bool isMe, const QString &timeText) const
 {
     bool showUserName = true;
     bool showAvatar = true;
 
-    const MessageContent &fileContent = contents.first();
+    const MessageContent &fileContent = content;
     QString filePath = fileContent.data.toString();
     QFileInfo fileInfo(filePath);
 
@@ -882,13 +790,13 @@ void MessageDelegate::paintPureOtherFileMessage(QPainter *painter, const QStyleO
 }
 
 void MessageDelegate::paintPureImageMessage(QPainter *painter, const QStyleOptionViewItem &option,
-                                            const QModelIndex &index, const QList<MessageContent> &contents,
+                                            const QModelIndex &index, const MessageContent &content,
                                             bool isMe, const QString &timeText) const
 {
     bool showUserName = true;
     bool showAvatar = true;
 
-    const MessageContent &imageContent = contents.first();
+    const MessageContent &imageContent = content;
 
     // 计算图片尺寸
     // QSize imageSize = calculateImageSize(imageContent.data.toString());
@@ -949,12 +857,12 @@ void MessageDelegate::paintPureImageMessage(QPainter *painter, const QStyleOptio
     painter->drawText(timeRect, Qt::AlignCenter, timeText);
 }
 
-void MessageDelegate::paintPureVideoMessage(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index, const QList<MessageContent> &contents, bool isMe, const QString &timeText) const
+void MessageDelegate::paintPureVideoMessage(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index, const MessageContent&content, bool isMe, const QString &timeText) const
 {
     bool showUserName = true;
     bool showAvatar = true;
 
-    const MessageContent &videoContent = contents.first();
+    const MessageContent &videoContent = content;
 
     // 计算图片尺寸
     // QSize imageSize = calculateImageSize(imageContent.data.toString());
@@ -1015,12 +923,12 @@ void MessageDelegate::paintPureVideoMessage(QPainter *painter, const QStyleOptio
     painter->drawText(timeRect, Qt::AlignCenter, timeText);
 }
 
-void MessageDelegate::paintPureAudioMessage(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index, const QList<MessageContent> &contents, bool isMe, const QString &timeText) const
+void MessageDelegate::paintPureAudioMessage(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index, const MessageContent&content, bool isMe, const QString &timeText) const
 {
     bool showUserName = true;
     bool showAvatar = true;
 
-    const MessageContent &audioContent = contents.first();
+    const MessageContent &audioContent = content;
 
     // 音频消息尺寸
     QSize audioSize = {250, 60}; // 音频消息比视频窄一些，但高度适合控制按钮

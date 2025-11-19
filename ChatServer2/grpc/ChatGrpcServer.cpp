@@ -94,6 +94,7 @@ Status ChatGrpcServer::NotifyFriendOnline(grpc::ServerContext* context, const No
     }
     // 在内存中z直接发送通知
     json j;
+    j["error"] = ErrorCodes::SUCCESS;
     j["uid"] = request->fromuid();
     j["name"] = request->name();
     j["type"] = request->type();

@@ -525,7 +525,7 @@ bool MysqlDao::ChangeApplyStatus(const std::string& fromUid, const std::string& 
     }
 }
 
-bool MysqlDao::CheckIsFriend(const std::string& fromUid, const std::string& toUid)
+bool MysqlDao::CheckIsFriend(int fromUid, int toUid)
 {
     if (fromUid == toUid) {
         return true;
@@ -543,7 +543,7 @@ bool MysqlDao::CheckIsFriend(const std::string& fromUid, const std::string& toUi
         query << "SELECT COUNT(*) as cnt from friends where (self_id = %0q and friend_id = %1q)"
               << "OR (self_id = %1q and friend_id = %0q)";
         query.parse();
-        mysqlpp::StoreQueryResult res = query.store(std::stoi(fromUid), std::stoi(toUid));
+        mysqlpp::StoreQueryResult res = query.store(fromUid, toUid);
         if (res && !res.empty()) {
             int count = res[0]["cnt"];
             return count == 2;
@@ -659,7 +659,7 @@ bool MysqlDao::MakeFriends(const std::string& fromUid, const std::string& toUid)
         mysqlpp::Transaction trans(*conn);
         // 添加好友应该是双向的，所以需要插入两条记录
         mysqlpp::Query query1 = conn->query();
-        query1 << "INSERT INTO friends (self_id,friend_id) VALUES(%0q,%1q),"
+        query1 << "INSERT IGNORE INTO friends (self_id,friend_id) VALUES(%0q,%1q),"
                << "(%1q,%0q)";
         query1.parse();
         mysqlpp::SimpleResult res1 = query1.execute(std::stoi(fromUid), std::stoi(toUid));

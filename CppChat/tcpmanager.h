@@ -50,7 +50,7 @@ signals:
     void on_send_data(RequestType requestType,QByteArray data); // to TcpManager::do_send_data
     void on_switch_interface(); // to MainWindow::[](){}
     void on_login_failed(int);  // to LoginScreen::do_login_failed
-    void on_users_searched(QList<std::shared_ptr<UserInfo>>list);   // to AnimatedSearchBox::do_users_searched
+    void on_users_searched(QList<std::shared_ptr<FriendInfo>>list);   // to AnimatedSearchBox::do_users_searched
     void on_add_friend(const UserInfo&info); // to NotifycationPanel::do_add_friend
     void on_auth_friend(std::shared_ptr<UserInfo>info); // to NotificationPanel::do_auth_friend ; TopChatArea::do_show_red_dot
     void on_get_apply_list(const std::vector<std::shared_ptr<UserInfo>>&list); // to NotificationPanel::do_get_apply_list;

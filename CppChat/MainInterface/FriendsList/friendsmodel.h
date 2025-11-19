@@ -28,9 +28,10 @@ public:
     void addPreFriend(const FriendItem&friendItem);
     FriendItem getFriend(int index);
 
-
     // 在 FriendsModel 类中添加方法
     QModelIndex indexFromUid(int uid) const;
+
+    QVector<FriendItem>getList();
 
 private:
     QVector<FriendItem>_friends;

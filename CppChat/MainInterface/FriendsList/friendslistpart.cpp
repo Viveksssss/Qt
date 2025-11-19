@@ -7,6 +7,7 @@
 #include "../../../../tcpmanager.h"
 
 
+
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QListView>
@@ -120,7 +121,18 @@ void FriendsListPart::setupConnections()
     connect(TcpManager::GetInstance().get(),&TcpManager::on_add_friend_to_list,this,&FriendsListPart::do_add_friend_to_list);
     // 添加好友列表
     connect(TcpManager::GetInstance().get(),&TcpManager::on_add_friends_to_list,this,&FriendsListPart::do_add_friends_to_list);
+    // 点击列表项
+    connect(friendsList,&QListView::clicked,this,[this](const auto&index){
+        if (!index.isValid()){
+            return;
+        }
+        FriendItem item = friendsModel->getFriend(index.row());
+        if (item.id>=0){
+            emit SignalRouter::GetInstance().on_change_friend_selection(item);
+        }
+    });
 }
+
 
 bool FriendsListPart::eventFilter(QObject *obj, QEvent *event)
 {

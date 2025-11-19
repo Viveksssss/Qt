@@ -52,7 +52,7 @@ private:
     QPushButton *foldBtn;
 
     FriendAddDialog *friendAddDialog;
-    QList<std::shared_ptr<UserInfo>>userLists;
+    QList<std::shared_ptr<FriendInfo>>userLists;
 
     NotificationPanel *newsPanel;
 
@@ -106,7 +106,7 @@ class FriendsItem :public QWidget
 {
     Q_OBJECT
 public:
-    explicit FriendsItem(int uid,const QString&avatar_path = "",const QString&name = "",int sex = 1,int status = 0,QWidget*parent=nullptr);
+    explicit FriendsItem(int uid,const QString&avatar_path = "",const QString&name = "",int sex = 1,int status = 0,bool isFriend = false,QWidget*parent=nullptr);
     void setupUI();
     void setupConnections();
     void setShowBorder(bool show)noexcept;
@@ -121,6 +121,7 @@ private:
     QLabel * _avatar;
     int _sex;
     int _status;
+    bool _isFriend;
 
 };
 
@@ -143,7 +144,7 @@ public slots:
     // 根据输入内容决定是否发送请求
     void do_text_changed(const QString &text);
     // 获取tcp回包，设置usersList
-    void do_users_searched(QList<std::shared_ptr<UserInfo>>)noexcept;
+    void do_users_searched(QList<std::shared_ptr<FriendInfo>>)noexcept;
 
 private:
     // 发送tcp请求，查询用户
@@ -167,7 +168,7 @@ private:
     QAction *clearAction;
     QGraphicsOpacityEffect *opacityEffect;
     QListWidget *resultList;
-    QList<std::shared_ptr<UserInfo>>usersList;
+    QList<std::shared_ptr<FriendInfo>>usersList;
 
     int textWidth;
     bool isExpanded;

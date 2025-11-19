@@ -122,7 +122,7 @@ public:
      * @return true
      * @return false
      */
-    bool CheckIsFriend(const std::string& fromUid, const std::string& toUid);
+    bool CheckIsFriend(int fromUid, int toUid);
     /**
      * @brief 添加通知
      *

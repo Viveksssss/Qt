@@ -74,6 +74,25 @@ struct ServerInfo{
     int uid;
 };
 
+//user->id,user->avatar,user->name,user->sex,user->status,user->isFriend
+struct FriendInfo
+{
+    int id;
+    int status;
+    int sex;
+    bool isFriend;
+    QString name;
+    QString avatar;
+    FriendInfo(int id,const QString&avatar,const QString&name,int sex,int status,bool isFriend)
+        : id (id)
+        , avatar(avatar)
+        , name(name)
+        , sex(sex)
+        , status(status)
+        , isFriend(isFriend)
+    {}
+};
+
 struct UserInfo{
     int id;
     int sex;

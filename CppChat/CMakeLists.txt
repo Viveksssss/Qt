@@ -3,14 +3,35 @@ project(CppChat LANGUAGES CXX)
 
 find_package(PkgConfig REQUIRED)
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets Network)
-find_package(Qt6 REQUIRED COMPONENTS Core)
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets Multimedia)
 find_package(Qt6 REQUIRED COMPONENTS MultimediaWidgets)
-find_package(Qt6 REQUIRED COMPONENTS Core)
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
-find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets )
+find_package(Protobuf REQUIRED)
+find_package(absl REQUIRED CONFIG)
+
+set(PROTO_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/proto)
+set(PROTO_OUT_DIR ${PROTO_SRC_DIR})          # 生成文件也放这里
+
+# 编译proto
+add_custom_command(
+    OUTPUT
+        ${PROTO_OUT_DIR}/im.pb.cc
+        ${PROTO_OUT_DIR}/im.pb.h
+
+    COMMAND
+        protobuf::protoc
+
+    ARGS
+        --cpp_out=${PROTO_OUT_DIR}
+        -I${PROTO_SRC_DIR}
+        ${PROTO_SRC_DIR}/im.proto
+
+    DEPENDS
+        ${PROTO_SRC_DIR}/im.proto
+    COMMENT
+        "Running protoc on im.proto"
+    VERBATIM
+)
 
 
 qt_standard_project_setup()
@@ -21,6 +42,7 @@ qt_add_resources(QT_RESOURCES "res.qrc")
 qt_add_executable(CppChat
     WIN32 MACOSX_BUNDLE
     main.cpp
+    ${PROTO_OUT_DIR}/im.pb.cc
     ${QT_RESOURCES}
     mainwindow.h mainwindow.cpp
     stylemanager.h stylemanager.cpp
@@ -48,12 +70,14 @@ qt_add_executable(CppChat
     MainInterface/Chat/ChatArea/MessageArea/messagetypes.h
     MainInterface/Chat/ChatArea/MessageArea/messagemodel.h MainInterface/Chat/ChatArea/MessageArea/messagemodel.cpp
     MainInterface/Chat/ChatArea/MessageArea/messagedelegate.h MainInterface/Chat/ChatArea/MessageArea/messagedelegate.cpp
-
-
     MainInterface/Chat/ChatTopArea/SideNews/friendsnewsitem.h MainInterface/Chat/ChatTopArea/SideNews/friendsnewsitem.cpp
     MainInterface/Chat/ChatTopArea/SideNews/systemnewsitem.h MainInterface/Chat/ChatTopArea/SideNews/systemnewsitem.cpp
     MainInterface/Chat/ChatTopArea/SideNews/notificationpanel.h MainInterface/Chat/ChatTopArea/SideNews/notificationpanel.cpp
     Properties/signalrouter.h Properties/signalrouter.cpp
+    proto/im.proto
+    proto/im.pb.cc
+    proto/im.pb.h
+    proto/im.pb.cc proto/im.pb.h
 )
 
 
@@ -87,22 +111,18 @@ target_link_libraries(CppChat
         Qt6::Core
         Qt6::Widgets
         Qt6::Network
+        Qt6::Multimedia
+        Qt6::MultimediaWidgets
+        protobuf::libprotobuf
+        absl::log_internal_check_op
+        absl::strings
+        absl::base
+        absl::synchronization
+        absl::time
 )
-target_link_libraries(CppChat PRIVATE Qt6::Core)
-target_link_libraries(CppChat PRIVATE Qt6::Core Qt6::Widgets)
-target_link_libraries(CppChat PRIVATE Qt6::Core)
-target_link_libraries(CppChat PRIVATE Qt6::Widgets)
-target_link_libraries(CppChat PRIVATE Qt6::Multimedia)
-target_link_libraries(CppChat PRIVATE Qt6::MultimediaWidgets)
-target_link_libraries(CppChat PRIVATE Qt6::Core)
-target_link_libraries(CppChat PRIVATE Qt6::Core Qt6::Widgets)
-target_link_libraries(CppChat PRIVATE Qt6::Core Qt6::Widgets)
-target_link_libraries(CppChat PRIVATE Qt6::Core Qt6::Widgets)
-target_link_libraries(CppChat PRIVATE Qt6::Core)
 
 target_include_directories(CppChat PRIVATE ${ASIO_INCLUDE_DIR})
-
-
+target_include_directories(CppChat PRIVATE ${PROTO_OUT_DIR})
 include(GNUInstallDirs)
 
 install(TARGETS CppChat

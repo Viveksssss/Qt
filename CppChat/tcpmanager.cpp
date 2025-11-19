@@ -5,6 +5,7 @@
 #include <QJsonObject>
 #include <QDir>
 #include <QJsonArray>
+#include <QMessageBox>
 
 TcpManager::~TcpManager() = default;
 
@@ -51,6 +52,7 @@ void TcpManager::initHandlers()
         UserManager::GetInstance()->SetToken(jsonObj["token"].toString());
         UserManager::GetInstance()->SetIcon(jsonObj["icon"].toString());
         UserManager::GetInstance()->SetUid(jsonObj["uid"].toInt());
+        qDebug() << "asdasdasdasdasd \t" << UserManager::GetInstance()->GetUid();
         UserManager::GetInstance()->SetSex(jsonObj["sex"].toInt());
         UserManager::GetInstance()->SetStatus(1);
 
@@ -141,7 +143,7 @@ void TcpManager::initHandlers()
         }
 
         // 解析查询的用户列表
-        QList<std::shared_ptr<UserInfo>> userList;
+        QList<std::shared_ptr<FriendInfo>> userList;
         if (jsonObj.contains("users") && jsonObj["users"].isArray()) {
             QJsonArray usersArray = jsonObj["users"].toArray();
 
@@ -150,7 +152,6 @@ void TcpManager::initHandlers()
                     QJsonObject userObj = userValue.toObject();
 
                     QString avatar;
-                    QString tempFilePath;
                     if (userObj.contains("icon")&&userObj["icon"]!="NULL"&&!userObj["icon"].isNull()) {
                         QString base64Avatar = userObj["icon"].toString();
                         QByteArray avatarData = QByteArray::fromBase64(base64Avatar.toUtf8());
@@ -163,9 +164,10 @@ void TcpManager::initHandlers()
                     int id = userObj["uid"].toInt();
                     int status = userObj["status"].toInt();
                     int sex = userObj["sex"].toInt();
-                    QString email = userObj["email"].toString();
+                    // QString email = userObj["email"].toString();
                     QString name = userObj["name"].toString();
-                    auto user_info = std::make_shared<UserInfo>(id,status,sex,name,avatar,email);
+                    bool isFriend = userObj["isFriend"].toBool();
+                    auto user_info = std::make_shared<FriendInfo>(id,avatar,name,sex,status,isFriend);
 
                     userList.append(user_info);
                 }
@@ -226,7 +228,7 @@ void TcpManager::initHandlers()
         }
 
         int from_uid = jsonObj["from_uid"].toInt();
-        int from_sex = jsonObj["sex"].toInt();
+        int from_sex = jsonObj["from_sex"].toInt();
         QString from_name = jsonObj["from_name"].toString();
         QString from_icon = jsonObj["from_icon"].toString();
         QString from_desc = jsonObj["from_desc"].toString();
@@ -269,7 +271,9 @@ void TcpManager::initHandlers()
             info->avatar = jsonObj["to_icon"].toString();
             info->desc = jsonObj["to_desc"].toString();
             info->back = jsonObj["to_message"].toString();
-            emit on_add_friend_to_list(info);
+            if (jsonObj["accept"].toBool()){
+                emit on_add_friend_to_list(info);
+            }
             emit on_notify_friend(info,jsonObj["accept"].toBool());
         }else{
             //TODO: 暂时忽略
@@ -410,7 +414,53 @@ void TcpManager::do_send_data(RequestType requestType, QByteArray data)
 {
 
     if (!_socket.isOpen()){
-        qDebug() << "No Connection!";
+        QMessageBox msgBox;
+        msgBox.setWindowTitle("Network Issue");
+        msgBox.setText("No Connection to Server");
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.setStandardButtons(QMessageBox::Ok);
+
+        // macOS 风格样式表
+        msgBox.setStyleSheet(R"(
+            QMessageBox {
+                background-color: #f5f5f7;
+                border: 1px solid #d0d0d0;
+                border-radius: 10px;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            }
+            QMessageBox QLabel {
+                color: #1d1d1f;
+                font-size: 14px;
+                font-weight: 400;
+                padding: 15px;
+            }
+            QMessageBox QLabel#qt_msgbox_label {
+                min-width: 300px;
+            }
+            QMessageBox QPushButton {
+                background-color: #007aff;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 8px 24px;
+                font-size: 13px;
+                font-weight: 500;
+                min-width: 80px;
+                margin: 5px;
+            }
+            QMessageBox QPushButton:hover {
+                background-color: #0056d6;
+            }
+            QMessageBox QPushButton:pressed {
+                background-color: #0040a8;
+            }
+            QMessageBox QPushButton:focus {
+                outline: 2px solid #007aff;
+                outline-offset: 2px;
+            }
+        )");
+
+        msgBox.exec();
         return;
     }
     auto id =static_cast<uint16_t>(requestType);

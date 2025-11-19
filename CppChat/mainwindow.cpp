@@ -19,9 +19,9 @@ MainWindow::MainWindow(QWidget *parent)
     stack = new AuthStack(this);
     mainScreen = new MainScreen;
     setCentralWidget(stack);
-    // QTimer::singleShot(50,this,[this](){
-    //     emit TcpManager::GetInstance()->on_switch_interface();
-    // });
+    QTimer::singleShot(50,this,[this](){
+        emit TcpManager::GetInstance()->on_switch_interface();
+    });
 }
 
 void MainWindow::setupUI()

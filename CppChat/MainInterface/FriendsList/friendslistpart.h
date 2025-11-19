@@ -30,7 +30,7 @@ public:
 private:
     void setupUI();
     void setupConnections();
-
+    std::shared_ptr<UserInfo> userFor(const QModelIndex&index);
 signals:
     void on_loading_users(); // to do_loading_users
 
@@ -39,6 +39,7 @@ private slots:
     void do_add_friend_to_list(std::shared_ptr<UserInfo>); // from TcpManager::on_add_frined_to_list;
     void do_add_friends_to_list(const std::vector<std::shared_ptr<UserInfo>>&list); // from TcpManager::on_add_frineds_to_list;
     void do_change_friend_status(int,int);  // from FriendsNewsItem->SignalRouter::on_change_friend_status;
+
 private:
     QLabel *title;
     QPushButton *findButton;

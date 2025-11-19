@@ -451,7 +451,7 @@ void AnimatedSearchBox::do_text_changed(const QString &text)
     }
 }
 
-void AnimatedSearchBox::do_users_searched(QList<std::shared_ptr<UserInfo>>list)noexcept
+void AnimatedSearchBox::do_users_searched(QList<std::shared_ptr<FriendInfo>>list)noexcept
 {
     this->usersList = std::move(list);
     updateResults();
@@ -498,13 +498,10 @@ void AnimatedSearchBox::showResults()
 
 void AnimatedSearchBox::updateResults(){
     resultList->clear();
-    for (const std::shared_ptr<UserInfo> &user : this->usersList) {
+    for (const std::shared_ptr<FriendInfo> &user : this->usersList) {
         QListWidgetItem *item = new QListWidgetItem;
         item->setSizeHint(QSize(350,40));
-        // 提取用户ID - 实际项目中从数据结构获取
-        qDebug() <<
-                 "-----------------------------"<< user->avatar;
-        FriendsItem *friendItem = new FriendsItem(user->id,user->avatar,user->name,user->sex,user->status);
+        FriendsItem *friendItem = new FriendsItem(user->id,user->avatar,user->name,user->sex,user->status,user->isFriend);
         resultList->addItem(item);
         resultList->setItemWidget(item,friendItem);
     }
@@ -748,13 +745,14 @@ void FriendAddDialog::do_add_friend(int uid)
 }
 
 
-FriendsItem::FriendsItem(int uid, const QString &avatar, const QString &name,int sex,int status,QWidget*parent)
+FriendsItem::FriendsItem(int uid, const QString &avatar, const QString &name,int sex,int status,bool isFriend,QWidget*parent)
     : QWidget(parent)
     , _uid(uid)
     , _icon(avatar)
     , _name(name)
     , _status(status)
     , _sex(sex)
+    , _isFriend(isFriend)
 {
     setupUI();
     setupConnections();
@@ -827,7 +825,7 @@ void FriendsItem::setupUI()
     _statusLabel->setShowBorder(false);
 
     _applyFriend = new QPushButton;
-    if (_uid == UserManager::GetInstance()->GetUid()){
+    if (_uid == UserManager::GetInstance()->GetUid() || _isFriend){
         _applyFriend->setText("已添加");
         _applyFriend->setEnabled(false);    // 不允许自己添加自己。
     }else{

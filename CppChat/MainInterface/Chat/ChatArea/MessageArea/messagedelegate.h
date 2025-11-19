@@ -23,14 +23,13 @@ private:
     void paintAvatar(QPainter *painter, const QRect &rect, const QPixmap &avatar) const;
     void paintUserName(QPainter*painter,const QRect&rect,const QString&name,bool isMe)const;
     void paintButtleBackground(QPainter *painter, const QRect &rect,const QColor &color)const;
-    QSize calculateMessageSize(const QList<MessageContent> &contents,const QStyleOptionViewItem &option)const;
-    QSize calculateMessageSize(const MessageContent &content,const QStyleOptionViewItem &option)const;
+    QSize calculateMessageSize(const MessageContent&contents,const QStyleOptionViewItem &option)const;
     void showContextMenu(const QPoint &globalPos, const QModelIndex &index);
     int textAvailWidth(const QStyleOptionViewItem &option,bool showAvatar) const;
 
 
     // 渲染气泡框
-    void paintBubbleMessage(QPainter *painter, const QStyleOptionViewItem &option,const QModelIndex &index, const QList<MessageContent> &contents,bool isMe, const QColor &bubbleColor, const QString &timeText) const;
+    void paintBubbleMessage(QPainter *painter, const QStyleOptionViewItem &option,const QModelIndex &index, const MessageContent&content,bool isMe, const QColor &bubbleColor, const QString &timeText) const;
 
     // 渲染图片
     void paintRoundedImage(QPainter *painter, const QRect &rect, const QString &imagePath) const;
@@ -55,11 +54,11 @@ private:
     QString getAudioDuration(const QString &audioPath) const;
     QString formatTime(qint64 milliseconds) const;
 
-    MessageType parseType(const QList<MessageContent> &contents) const;
-    void paintPureOtherFileMessage(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index, const QList<MessageContent> &contents,bool isMe, const QString &timeText) const;
-    void paintPureImageMessage(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index, const QList<MessageContent> &contents,bool isMe, const QString &timeText) const;
-    void paintPureVideoMessage(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index, const QList<MessageContent> &contents,bool isMe, const QString &timeText) const;
-    void paintPureAudioMessage(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index, const QList<MessageContent> &contents,bool isMe, const QString &timeText) const;
+    MessageType parseType(const MessageContent &content) const;
+    void paintPureOtherFileMessage(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index, const MessageContent &contents,bool isMe, const QString &timeText) const;
+    void paintPureImageMessage(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index, const MessageContent&contents,bool isMe, const QString &timeText) const;
+    void paintPureVideoMessage(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index, const MessageContent&contents,bool isMe, const QString &timeText) const;
+    void paintPureAudioMessage(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index, const MessageContent&contents,bool isMe, const QString &timeText) const;
 
 
     QString cleanFilePath(const QString &filePath) const;

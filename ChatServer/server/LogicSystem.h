@@ -10,7 +10,6 @@
 #include <thread>
 #include <unordered_map>
 
-
 typedef std::function<void(std::shared_ptr<Session>, uint16_t msg_id, const std::string& msg)> FuncBack;
 
 struct UserInfo;
@@ -24,12 +23,12 @@ public:
     void RegisterCallBacks();
     // 线程处理逻辑
     void DealMsg();
-    //—————————————————————————————————————辅助函数—————————————————————————————————————————
-    // 获取基本信息
+    // —————————————————————————————————————辅助函数—————————————————————————————————————————
+    //  获取基本信息
     bool GetBaseInfo(std::string base_key, int uid, std::shared_ptr<UserInfo>& userinfo);
     // 搜索用户
     bool IsPureDigit(const std::string& str);
-    void GetSearchedUsers(const std::string& uid, json& j, bool only_digit);
+    void GetSearchedUsers(const std::string& toUid, int fromUid, json& j, bool only_digit);
     // 添加好友请求
 
 public:

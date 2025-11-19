@@ -157,6 +157,7 @@ void FriendsNewsItem::do_accept_clicked()
         jsonObj["from_icon"] =UserManager::GetInstance()->GetIcon();
         jsonObj["accept"] = true;
         QJsonDocument doc(jsonObj);
+        qDebug() << "MyName:" << UserManager::GetInstance()->GetName();
         TcpManager::GetInstance()->do_send_data(RequestType::ID_AUTH_FRIEND_REQ,doc.toJson(QJsonDocument::Compact));
     }
 }
@@ -170,6 +171,7 @@ void FriendsNewsItem::do_reject_clcked()
     jsonObj["to_uid"] = _uid;
     jsonObj["from_name"] = UserManager::GetInstance()->GetName();
     jsonObj["from_sex"] = UserManager::GetInstance()->GetSex();
+    jsonObj["from_icon"] =UserManager::GetInstance()->GetIcon();
     jsonObj["accept"] = false;
     QJsonDocument doc(jsonObj);
     TcpManager::GetInstance()->do_send_data(RequestType::ID_AUTH_FRIEND_REQ,doc.toJson(QJsonDocument::Compact));

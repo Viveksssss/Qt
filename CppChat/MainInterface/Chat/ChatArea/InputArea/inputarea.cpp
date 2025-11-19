@@ -2,6 +2,7 @@
 #include "../MessageArea/messagemodel.h"
 #include "../../../../usermanager.h"
 #include "../../../../Properties/sourcemanager.h"
+#include "../../../../tcpmanager.h"
 #include "inputarea.h"
 #include <QPushButton>
 #include <QDir>
@@ -526,18 +527,18 @@ void InputArea::sendAudioMessage(const QByteArray &audioData, int duration)
 
     // 创建音频消息
     MessageItem item;
-    item.type = MessageType::AudioMessage;
+    item.content.type = MessageType::AudioMessage;
 
     MessageContent content;
     content.type = MessageType::AudioMessage;
     content.data = tempPath;
     content.mimeType = "audio/pcm";
 
-    item.contents.append(content);
+    item.content = content;
     item.from = MessageSource::Me;
     item.env = MessageEnv::Private;
-    item.senderId = QString::number(UserManager::GetInstance()->GetUid());
-    item.recvId = QString::number(UserManager::GetInstance()->GetPeerUid());
+    item.from_id = UserManager::GetInstance()->GetUid();
+    item.to_id = UserManager::GetInstance()->GetPeerUid();
 
     emit on_message_sent(item);
 
@@ -594,72 +595,86 @@ void InputArea::insertImageFromClipboard(const QImage &image)
     insertImage(tempPath);
 }
 
-MessageItem InputArea::parseMessageContent()
+std::optional<MessageItem> InputArea::parseMessageContent()
 {
     MessageItem item;
-    QList<MessageContent> contents;
 
     QTextDocument*doc = m_textEdit->document();
     QTextBlock currentBlock = doc->begin();
-    int currentPos = 0;
+    MessageContent textContent;
+    int max = 0;
 
-    while(currentBlock.isValid()){
-        QTextBlock::Iterator it;
-        for(it = currentBlock.begin();!(it.atEnd());++it){
-            QTextFragment fragment = it.fragment();
-            if (fragment.isValid()){
-                QTextCharFormat format = fragment.charFormat();
-                if (format.isImageFormat()){
-                    QTextImageFormat imageFormat = format.toImageFormat();
-                    QString imagePath = imageFormat.name();
-                    QMimeDatabase db;
-                    QMimeType mime = db.mimeTypeForFile(imagePath);
 
-                    MessageContent imageContent;
-                    imageContent.type = MessageType::ImageMessage;
-                    imageContent.data = imagePath;
-                    imageContent.mimeType = mime.name();
-                    imageContent.pos = currentPos;
-                    contents.append(imageContent);
+    QString text =m_textEdit->toPlainText();
+    if (!text.trimmed().isEmpty()){ // 重要！过滤看不见的图片的文本信息
+        textContent.type = MessageType::TextMessage;
+        textContent.data = text;
+        textContent.mimeType = "text/plain";
+        max+=text.length();
+        if (max > 2048){
+            QMessageBox msgBox;
+            msgBox.setWindowTitle("Too Long Text！");
+            msgBox.setText("Too Long Text!");
+            msgBox.setIcon(QMessageBox::Warning);
+            msgBox.setStandardButtons(QMessageBox::Ok);
 
-                    currentPos++;//图片占用一个位置
-                }else{
-                    QString text =fragment.text();
-                    if (!text.trimmed().isEmpty()){ // 重要！过滤看不见的图片的文本信息
-                        MessageContent textContent;
-                        textContent.type = MessageType::TextMessage;
-                        textContent.data = text;
-                        textContent.mimeType = "text/plain";
-                        textContent.pos = currentPos;
-                        contents.append(textContent);
-                        currentPos+=text.length();
-                    }
+            // macOS 风格样式表
+            msgBox.setStyleSheet(R"(
+                QMessageBox {
+                    background-color: #f5f5f7;
+                    border: 1px solid #d0d0d0;
+                    border-radius: 10px;
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                 }
-            }
-        }
-        currentBlock = currentBlock.next();
-    }
-    if (contents.isEmpty()){
-        return item;
-    }else if(contents.size() == 1){
-        item.type = contents.first().type;
-    }else{
-        item.type = MessageType::MixedMessage;
-    }
+                QMessageBox QLabel {
+                    color: #1d1d1f;
+                    font-size: 14px;
+                    font-weight: 400;
+                    padding: 15px;
+                }
+                QMessageBox QLabel#qt_msgbox_label {
+                    min-width: 300px;
+                }
+                QMessageBox QPushButton {
+                    background-color: #007aff;
+                    color: white;
+                    border: none;
+                    border-radius: 6px;
+                    padding: 8px 24px;
+                    font-size: 13px;
+                    font-weight: 500;
+                    min-width: 80px;
+                    margin: 5px;
+                }
+                QMessageBox QPushButton:hover {
+                    background-color: #0056d6;
+                }
+                QMessageBox QPushButton:pressed {
+                    background-color: #0040a8;
+                }
+                QMessageBox QPushButton:focus {
+                    outline: 2px solid #007aff;
+                    outline-offset: 2px;
+                }
+            )");
 
-    item.contents = contents;
+            msgBox.exec();
+            return std::nullopt;
+        }
+    }
+    item.content = textContent;
     item.from = MessageSource::Me;
     item.env = MessageEnv::Private;
-    item.senderId = QString::number(UserManager::GetInstance()->GetUid());
-    item.recvId = QString::number(UserManager::GetInstance()->GetPeerUid());
+    item.from_id = UserManager::GetInstance()->GetUid();
+    item.to_id = UserManager::GetInstance()->GetPeerUid();
     return item;
 }
 
 void InputArea::do_send_clicked()
 {
-    MessageItem item = parseMessageContent();
-    if (!item.contents.isEmpty()) {
-        emit on_message_sent(item);
+    std::optional<MessageItem> item = parseMessageContent();
+    if ( item.has_value()) {
+        emit on_message_sent(item.value());
         clear();
     }
 }
@@ -679,7 +694,7 @@ void InputArea::do_image_clicked()
         );
 
     if (!imagePath.isEmpty()) {
-        insertImage(imagePath);
+        //TODO:图片
     }
 }
 
@@ -698,15 +713,15 @@ void InputArea::do_video_clicked()
     if (!filePath.isEmpty()) {
         // 创建消息项并发送
         MessageItem item;
-        item.type = MessageType::VideoMessage;
-        item.recvId = QString::number(UserManager::GetInstance()->GetPeerUid());
+        item.content.type = MessageType::VideoMessage;
+        item.to_id = UserManager::GetInstance()->GetPeerUid();
 
         MessageContent content;
         content.type = MessageType::VideoMessage;
         content.data = filePath;
         content.mimeType = "video/*";
 
-        item.contents.append(content);
+        item.content = content;
 
         emit on_message_sent(item);
     }
@@ -774,15 +789,14 @@ void InputArea::do_file_clicked()
         if (!filePath.isEmpty()) {
             // 创建消息项并发送
             MessageItem item;
-            item.type = MessageType::OtherFileMessage;
-            item.recvId = QString::number(UserManager::GetInstance()->GetPeerUid());
+            item.content.type = MessageType::OtherFileMessage;
+            item.to_id = UserManager::GetInstance()->GetPeerUid();
 
-            MessageContent content;
-            content.type = MessageType::OtherFileMessage;
-            content.data = filePath;
-            content.mimeType = getMimeTypeForFile(filePath);
+            item.content.type = MessageType::OtherFileMessage;
+            item.content.data = filePath;
+            item.content.mimeType = getMimeTypeForFile(filePath);
+            item.content.fid = QUuid::createUuid().toString();
 
-            item.contents.append(content);
             emit on_message_sent(item);
         }
     }
@@ -806,6 +820,9 @@ void InputArea::do_message_sent(const MessageItem &item)
 {
     m_model->addMessage(item);
     // TODO:发送请求
+    auto pb = toPb(item);
+    std::string pb_str = pb.SerializeAsString();
+    // TcpManager::do_send_data(RequestType::)
 }
 
 QString InputArea::getText() const
@@ -830,30 +847,6 @@ void InputArea::insertText(const QString&text){
     m_textEdit->setFocus();
 }
 
-void InputArea::insertImage(const QString &imagePath)
-{
-    QPixmap roundedPixmap = SourceManager::GetInstance()->getPixmap(imagePath+"_rounded");
-    qDebug() << imagePath;
-    if (roundedPixmap.isNull()) {
-        QMessageBox::warning(this,"异常","图片不存在或者文件损坏",QMessageBox::Ok);
-        return;
-    }
-
-    QTextCursor cursor = m_textEdit->textCursor();
-
-    // 创建图片格式
-    QTextImageFormat imageFormat;
-    imageFormat.setName(imagePath);
-    imageFormat.setWidth(100);
-    imageFormat.setHeight(100);
-
-    // 插入图片
-    cursor.insertImage(imageFormat);
-    cursor.insertText(" ");
-
-    m_textEdit->setFocus();
-
-}
 
 void InputArea::setModel(MessageModel *model)
 {
@@ -915,10 +908,6 @@ bool InputArea::eventFilter(QObject *obj, QEvent *event)
             // ② 如果不是图片，走默认粘贴（文本）
             return false;
         }
-
-
-
-
 
         // 处理回车键
         if (keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter) {

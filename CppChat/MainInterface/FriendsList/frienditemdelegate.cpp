@@ -59,10 +59,16 @@ void FriendItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
     QRect avatarRect(rect.left() + 10, rect.top() + 10, 40, 40);
     QPixmap avatar;
     if(!avatarPath.isEmpty() && QFile::exists(avatarPath)){
-        avatar = QPixmap(avatarPath).scaled(40, 40, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+        if (avatarPath.startsWith(":/")){
+            avatar = QPixmap(avatarPath).scaled(40, 40, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+        }else{
+            // base64
+            QByteArray imageData = QByteArray::fromBase64(avatarPath.toUtf8());
+            avatar.loadFromData(imageData);
+        }
     }else{
-        avatar = QPixmap(40, 40);
-        avatar.fill(QColor(200,200,200));
+        avatar = QPixmap(":/Resources/main/header-default.png").scaled(40,40);
+        // avatar.fill(QColor(200,200,200));
     }
 
     painter->save();
