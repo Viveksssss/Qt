@@ -6,6 +6,7 @@
 #include <QPixmap>
 #include "Properties/singleton.h"
 
+enum class MessageEnv;
 class UserManager
     : public QObject
     , public Singleton<UserManager>
@@ -28,6 +29,7 @@ public:
     void SetEmail(const QString&)noexcept;
     void SetAvatar(const QPixmap&)noexcept;
     void SetDesc(const QString&)noexcept;
+    void SetEnv(const MessageEnv&)noexcept;
 
     template <typename T>
     void SetIcon(T &&icon) noexcept
@@ -46,6 +48,7 @@ public:
     QPixmap GetAvatar()noexcept;
     QString GetDesc()noexcept;
     QString GetIcon()noexcept;
+    MessageEnv GetEnv()noexcept;
 
     // peer
     void SetPeerUid(int)noexcept;
@@ -75,6 +78,15 @@ public:
     QString GetPeerDesc()noexcept;
     QString GetPeerIcon()noexcept;
 
+
+    std::vector<std::shared_ptr<UserInfo>>&GetFriends();
+    std::vector<std::shared_ptr<UserInfo>>&GetMessages();
+
+    std::span<std::shared_ptr<UserInfo>>GetFriendsPerPage(int size = 20);
+    std::span<std::shared_ptr<UserInfo>>GetMessagesPerPage(int size = 20);
+
+    bool IsLoadFriendsFinished();
+    bool IsLoadMessagesFinished();
 private:
     UserManager();
 
@@ -88,6 +100,7 @@ private:
     int _uid;
     int _sex;
     int _status;
+    MessageEnv _env;
 
     QString _peer_token;
     QString _peer_name;
@@ -98,6 +111,12 @@ private:
     int _peer_uid;
     int _peer_sex;
     int _peer_status;
+
+    int _messages_loaded;
+    int _friends_loaded;
+
+    std::vector<std::shared_ptr<UserInfo>>_friends;
+    std::vector<std::shared_ptr<UserInfo>>_messages;
 };
 
 #endif // USERMANAGER_H

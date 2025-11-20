@@ -45,6 +45,7 @@ private:
     void setupEmojiMenu();
     void insertRichText(const QString &html);
     void insertImageFromClipboard(const QImage &image);
+    void insertImage(const QString &imagePath);
     QString getMimeTypeForFile(const QString &filePath);
     // 弹出窗口用于录音
     void showAudioDialog();
@@ -53,7 +54,7 @@ private:
     void sendAudioMessage(const QByteArray &audioData, int duration);
     QByteArray createWavFile(const QByteArray &pcmData, int duration) const;
 
-    std::optional<MessageItem> parseMessageContent();
+    std::optional<QList<MessageItem>> parseMessageContent();
 
     QPixmap createRoundedPixmap(const QString &imagePath, int size, int radius);
 

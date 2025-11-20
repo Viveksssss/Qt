@@ -22,6 +22,12 @@ MainWindow::MainWindow(QWidget *parent)
     QTimer::singleShot(50,this,[this](){
         emit TcpManager::GetInstance()->on_switch_interface();
     });
+
+    auto&p = UserManager::GetInstance()->GetFriends();
+    auto&p2 = UserManager::GetInstance()->GetMessages();
+    p.push_back(std::make_shared<UserInfo>(1,1,1,"asdasdasd","asdasd","asdasdas"));
+    p2.push_back(std::make_shared<UserInfo>(1,1,1,"asdasdasd","asdasd","asdasdas"));
+
 }
 
 void MainWindow::setupUI()

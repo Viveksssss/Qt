@@ -347,6 +347,17 @@ QToolTip {
   border:1px;
 }
 
+#messagesList{
+  background-color:white;
+  border:none;
+  outline:one;
+  border-radius:8px;
+}
+#messagesList::item{
+  border:1px;
+}
+
+
 #findButton{
   background:transparent;
   border:0px;

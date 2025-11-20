@@ -171,7 +171,7 @@ void NotificationPanel::setupConnections()
     connect(TcpManager::GetInstance().get(),&TcpManager::on_add_friend,this,&NotificationPanel::do_add_friend);
     connect(TcpManager::GetInstance().get(),&TcpManager::on_notify_friend,this,&NotificationPanel::do_notify_friend);
     connect(TcpManager::GetInstance().get(),&TcpManager::on_notify_friend2,this,&NotificationPanel::do_notify_friend2);
-    connect(TcpManager::GetInstance().get(),&TcpManager::on_message_to_list,this,&NotificationPanel::do_message_to_list);
+    connect(TcpManager::GetInstance().get(),&TcpManager::on_notifications_to_list,this,&NotificationPanel::do_notifications_to_list);
 }
 
 void NotificationPanel::checkIsEmpty()
@@ -234,7 +234,7 @@ void NotificationPanel::do_auth_friend(std::shared_ptr<UserInfo> info)
     addFriendNews(false,info->status,info->id,info->sex,info->avatar,info->name,"😄向您发来好友申请😄");
 }
 
-void NotificationPanel::do_message_to_list(const std::vector<std::shared_ptr<UserInfo>> &list)
+void NotificationPanel::do_notifications_to_list(const std::vector<std::shared_ptr<UserInfo>> &list)
 {
     qDebug() << "yes...";
     for(auto&item:list){

@@ -5,7 +5,7 @@
 #include <QWidget>
 
 class ChatPart;
-class FriendsListPart;
+class ListPart;
 class SideBarPart;
 class TopTitlePart;
 class MainScreen : public QWidget
@@ -25,7 +25,7 @@ private:
     // 聊天区域
     ChatPart *chatPart;
     // 好友列表
-    FriendsListPart *friendsListPart;
+    ListPart *listPart;
     // 左侧边栏
     SideBarPart *sideBarPart;
     // 顶部边栏

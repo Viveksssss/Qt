@@ -78,7 +78,7 @@ void TcpManager::initHandlers()
             emit on_get_apply_list(apply_list);
         }
 
-        //TODO: 通知列表
+        // 通知列表
         if(jsonObj.contains("notifications")){
             QJsonArray notification_array = jsonObj["notifications"].toArray();
             std::vector<std::shared_ptr<UserInfo>>notification_list;
@@ -92,13 +92,12 @@ void TcpManager::initHandlers()
                 user_info->avatar = obj["icon"].toString();
                 notification_list.push_back(user_info);
             }
-            emit on_message_to_list(notification_list);
+            emit on_notifications_to_list(notification_list);
         }
 
         //TODO: 好友列表
         if (jsonObj.contains("friends")){
             QJsonArray friend_array = jsonObj["friends"].toArray();
-            std::vector<std::shared_ptr<UserInfo>>friends_list;
             for(const QJsonValue&value:friend_array){
                 QJsonObject obj = value.toObject();
                 auto user_info = std::make_shared<UserInfo>();
@@ -108,12 +107,12 @@ void TcpManager::initHandlers()
                 user_info->name = obj["name"].toString();
                 user_info->email = obj["email"].toString();
                 user_info->avatar = obj["icon"].toString();
+                user_info->desc = obj["desc"].toString();
 
-                friends_list.push_back(user_info);
+                UserManager::GetInstance()->GetFriends().push_back(user_info);
             }
-            emit on_add_friends_to_list(friends_list);
+            emit on_add_friends_to_list(UserManager::GetInstance()->GetFriendsPerPage());
         }
-
         //TODO: 消息列表
 
         // 发出信号跳转到主页面
@@ -276,7 +275,7 @@ void TcpManager::initHandlers()
             }
             emit on_notify_friend(info,jsonObj["accept"].toBool());
         }else{
-            //TODO: 暂时忽略
+            // 暂时忽略
         }
     };
 
@@ -338,7 +337,7 @@ void TcpManager::initHandlers()
         user_info->avatar = jsonDoc["icon"].toString();
         std::vector<std::shared_ptr<UserInfo>>vec;
         vec.push_back(user_info);
-        emit on_message_to_list(vec);
+        emit on_notifications_to_list(vec);
         emit on_change_friend_status(user_info->id,1);
     };
 }

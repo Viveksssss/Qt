@@ -1,6 +1,7 @@
 #include "usermanager.h"
-
+#include "MainInterface/Chat/ChatArea/MessageArea/messagetypes.h"
 #include <QBuffer>
+#include <span>
 
 
 void UserManager::SetName(const QString &name)noexcept
@@ -41,6 +42,11 @@ void UserManager::SetSex(int sex) noexcept
 void UserManager::SetDesc(const QString &desc) noexcept
 {
     this->_desc = desc;
+}
+
+void UserManager::SetEnv(const MessageEnv &env) noexcept
+{
+    this->_env = env;
 }
 
 
@@ -87,6 +93,11 @@ QString UserManager::GetDesc() noexcept
 QString UserManager::GetIcon() noexcept
 {
     return this->_icon.isEmpty()?":/Resources/main/header-default.png":this->_icon;
+}
+
+MessageEnv UserManager::GetEnv() noexcept
+{
+    return this->_env;
 }
 
 void UserManager::SetPeerName(const QString &name) noexcept
@@ -174,10 +185,61 @@ QString UserManager::GetPeerIcon() noexcept
     return this->_peer_icon;
 }
 
+
+std::vector<std::shared_ptr<UserInfo> > &UserManager::GetFriends()
+{
+    return this->_friends;
+}
+
+std::vector<std::shared_ptr<UserInfo> > &UserManager::GetMessages()
+{
+    return this->_messages;
+}
+
+std::span<std::shared_ptr<UserInfo> > UserManager::GetFriendsPerPage(int size)
+{
+    if (size <= 0 || _friends_loaded >= _friends.size()) {
+        return {};
+    }
+    int begin = _friends_loaded;
+    int available =  _friends.size() - begin;
+    int count  = std::min(size,available);
+    _friends_loaded+=count;
+
+    return std::span<std::shared_ptr<UserInfo>>(_friends).subspan(begin,count);
+}
+
+std::span<std::shared_ptr<UserInfo>>  UserManager::GetMessagesPerPage(int size)
+{
+    if (size <= 0 || _friends_loaded >= _friends.size()) {
+        return {};
+    }
+
+    int begin = _messages_loaded;
+    int available =  _messages.size() - begin;
+    int count  = std::min(size,available);
+    _messages_loaded+=count;
+
+    return std::span<std::shared_ptr<UserInfo>>(_messages).subspan(begin,count);
+}
+
+bool UserManager::IsLoadFriendsFinished()
+{
+    return _friends_loaded>=_friends.size() ? true:false;
+}
+
+bool UserManager::IsLoadMessagesFinished()
+{
+    return _messages_loaded>=_messages.size()?true:false;
+}
+
+
 UserManager::UserManager()
     : _name("")
     , _token("")
     , _uid(0)
+    , _messages_loaded(0)
+    , _friends_loaded(0)
 {}
 
 

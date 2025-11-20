@@ -584,6 +584,32 @@ QByteArray InputArea::createWavFile(const QByteArray &pcmData, int duration) con
     return wavData;
 }
 
+void InputArea::insertImage(const QString &imagePath)
+{
+    QPixmap roundedPixmap = SourceManager::GetInstance()->getPixmap(imagePath+"_rounded");
+    qDebug() << imagePath;
+    if (roundedPixmap.isNull()) {
+        QMessageBox::warning(this,"异常","图片不存在或者文件损坏",QMessageBox::Ok);
+        return;
+    }
+
+    QTextCursor cursor = m_textEdit->textCursor();
+
+    // 创建图片格式
+    QTextImageFormat imageFormat;
+    imageFormat.setName(imagePath);
+    imageFormat.setWidth(100);
+    imageFormat.setHeight(100);
+
+    // 插入图片
+    cursor.insertImage(imageFormat);
+    cursor.insertText(" ");
+
+    m_textEdit->setFocus();
+
+}
+
+
 void InputArea::insertImageFromClipboard(const QImage &image)
 {
     // 保存为临时文件
@@ -595,87 +621,145 @@ void InputArea::insertImageFromClipboard(const QImage &image)
     insertImage(tempPath);
 }
 
-std::optional<MessageItem> InputArea::parseMessageContent()
+std::optional<QList<MessageItem>> InputArea::parseMessageContent()
 {
-    MessageItem item;
-
-    QTextDocument*doc = m_textEdit->document();
+    QTextDocument* doc = m_textEdit->document();
     QTextBlock currentBlock = doc->begin();
-    MessageContent textContent;
-    int max = 0;
+    QList<MessageItem> item_list;
 
+    // 用于累积文本内容
+    QString accumulatedText;
 
-    QString text =m_textEdit->toPlainText();
-    if (!text.trimmed().isEmpty()){ // 重要！过滤看不见的图片的文本信息
-        textContent.type = MessageType::TextMessage;
-        textContent.data = text;
-        textContent.mimeType = "text/plain";
-        max+=text.length();
-        if (max > 2048){
-            QMessageBox msgBox;
-            msgBox.setWindowTitle("Too Long Text！");
-            msgBox.setText("Too Long Text!");
-            msgBox.setIcon(QMessageBox::Warning);
-            msgBox.setStandardButtons(QMessageBox::Ok);
+    while (currentBlock.isValid()) {
+        QTextBlock::Iterator it;
+        for (it = currentBlock.begin(); !(it.atEnd()); ++it) {
+            QTextFragment fragment = it.fragment();
+            if (fragment.isValid()) {
+                QTextCharFormat format = fragment.charFormat();
+                if (format.isImageFormat()) {
+                    // 如果遇到图片，先处理累积的文本（如果有的话）
+                    if (!accumulatedText.trimmed().isEmpty()) {
+                        MessageItem textItem;
+                        textItem.from = MessageSource::Me;
+                        textItem.env = UserManager::GetInstance()->GetEnv();
+                        textItem.from_id = UserManager::GetInstance()->GetUid();
+                        textItem.to_id = UserManager::GetInstance()->GetPeerUid();
+                        textItem.content.mimeType = "text/plain";
+                        textItem.content.type = MessageType::TextMessage;
+                        textItem.content.data = accumulatedText;
+                        item_list.append(textItem);
+                        accumulatedText.clear(); // 清空累积的文本
+                    }
 
-            // macOS 风格样式表
-            msgBox.setStyleSheet(R"(
-                QMessageBox {
-                    background-color: #f5f5f7;
-                    border: 1px solid #d0d0d0;
-                    border-radius: 10px;
-                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-                }
-                QMessageBox QLabel {
-                    color: #1d1d1f;
-                    font-size: 14px;
-                    font-weight: 400;
-                    padding: 15px;
-                }
-                QMessageBox QLabel#qt_msgbox_label {
-                    min-width: 300px;
-                }
-                QMessageBox QPushButton {
-                    background-color: #007aff;
-                    color: white;
-                    border: none;
-                    border-radius: 6px;
-                    padding: 8px 24px;
-                    font-size: 13px;
-                    font-weight: 500;
-                    min-width: 80px;
-                    margin: 5px;
-                }
-                QMessageBox QPushButton:hover {
-                    background-color: #0056d6;
-                }
-                QMessageBox QPushButton:pressed {
-                    background-color: #0040a8;
-                }
-                QMessageBox QPushButton:focus {
-                    outline: 2px solid #007aff;
-                    outline-offset: 2px;
-                }
-            )");
+                    // 处理图片
+                    QTextImageFormat imageFormat = format.toImageFormat();
+                    QString imagePath = imageFormat.name();
+                    QMimeDatabase db;
+                    QMimeType mime = db.mimeTypeForFile(imagePath);
 
-            msgBox.exec();
-            return std::nullopt;
+                    MessageItem imageItem;
+                    imageItem.from = MessageSource::Me;
+                    imageItem.env = UserManager::GetInstance()->GetEnv();
+                    imageItem.from_id = UserManager::GetInstance()->GetUid();
+                    imageItem.to_id = UserManager::GetInstance()->GetPeerUid();
+                    imageItem.content.mimeType = mime.name();
+                    imageItem.content.type = MessageType::ImageMessage;
+                    imageItem.content.data = imagePath;
+
+                    item_list.append(imageItem);
+                } else {
+                    // 累积文本内容
+                    QString text = fragment.text();
+                    accumulatedText += text;
+                }
+            }
         }
+        // 块结束时添加换行符（如果需要保持段落结构）
+        if (currentBlock.next().isValid()) {
+            accumulatedText += "\n";
+        }
+        currentBlock = currentBlock.next();
     }
-    item.content = textContent;
-    item.from = MessageSource::Me;
-    item.env = MessageEnv::Private;
-    item.from_id = UserManager::GetInstance()->GetUid();
-    item.to_id = UserManager::GetInstance()->GetPeerUid();
-    return item;
+
+    // 处理最后累积的文本（如果有的话）
+    if (!accumulatedText.trimmed().isEmpty()) {
+        MessageItem textItem;
+        textItem.from = MessageSource::Me;
+        textItem.env = UserManager::GetInstance()->GetEnv();
+        textItem.from_id = UserManager::GetInstance()->GetUid();
+        textItem.to_id = UserManager::GetInstance()->GetPeerUid();
+        textItem.content.mimeType = "text/plain";
+        textItem.content.type = MessageType::TextMessage;
+        textItem.content.data = accumulatedText;
+        item_list.append(textItem);
+    }
+
+    return item_list.isEmpty() ? std::nullopt : std::make_optional(item_list);
 }
 
 void InputArea::do_send_clicked()
 {
-    std::optional<MessageItem> item = parseMessageContent();
-    if ( item.has_value()) {
-        emit on_message_sent(item.value());
-        clear();
+    std::optional<QList<MessageItem>> list = parseMessageContent();
+    if ( list.has_value()) {
+        for(const auto&item:list.value()){
+            if (item.content.type == MessageType::TextMessage){
+                if (item.content.data.toString().size() > 2048){
+                    QMessageBox msgBox;
+                    msgBox.setWindowTitle("Too Long Text！");
+                    msgBox.setText("Too Long Text!");
+                    msgBox.setIcon(QMessageBox::Warning);
+                    msgBox.setStandardButtons(QMessageBox::Ok);
+
+                    // macOS 风格样式表
+                    msgBox.setStyleSheet(R"(
+                        QMessageBox {
+                            background-color: #f5f5f7;
+                            border: 1px solid #d0d0d0;
+                            border-radius: 10px;
+                            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                        }
+                        QMessageBox QLabel {
+                            color: #1d1d1f;
+                            font-size: 14px;
+                            font-weight: 400;
+                            padding: 15px;
+                        }
+                        QMessageBox QLabel#qt_msgbox_label {
+                            min-width: 300px;
+                        }
+                        QMessageBox QPushButton {
+                            background-color: #007aff;
+                            color: white;
+                            border: none;
+                            border-radius: 6px;
+                            padding: 8px 24px;
+                            font-size: 13px;
+                            font-weight: 500;
+                            min-width: 80px;
+                            margin: 5px;
+                        }
+                        QMessageBox QPushButton:hover {
+                            background-color: #0056d6;
+                        }
+                        QMessageBox QPushButton:pressed {
+                            background-color: #0040a8;
+                        }
+                        QMessageBox QPushButton:focus {
+                            outline: 2px solid #007aff;
+                            outline-offset: 2px;
+                        }
+                    )");
+
+                    msgBox.exec();
+                }else{
+                    emit on_message_sent(item);
+                    clear();
+                }
+            }else{
+                emit on_message_sent(item);
+                clear();
+            }
+        }
     }
 }
 
@@ -694,7 +778,14 @@ void InputArea::do_image_clicked()
         );
 
     if (!imagePath.isEmpty()) {
-        //TODO:图片
+        // 创建消息项并发送
+        MessageItem item;
+        item.content.type = MessageType::ImageMessage;
+        item.to_id = UserManager::GetInstance()->GetPeerUid();
+        item.content.mimeType = "image/*";
+        item.content.data = imagePath;
+
+        emit on_message_sent(item);
     }
 }
 
@@ -813,16 +904,17 @@ QString InputArea::getMimeTypeForFile(const QString &filePath)
 
 void InputArea::do_capture_clicked()
 {
-
+    // TODO:截图
 }
 
 void InputArea::do_message_sent(const MessageItem &item)
 {
     m_model->addMessage(item);
-    // TODO:发送请求
     auto pb = toPb(item);
     std::string pb_str = pb.SerializeAsString();
-    // TcpManager::do_send_data(RequestType::)
+    qDebug() << pb_str;
+    QByteArray ba(pb_str.data(),pb_str.size());
+    TcpManager::GetInstance()->do_send_data(RequestType::ID_TEXT_CHAT_MSG_REQ,ba);
 }
 
 QString InputArea::getText() const

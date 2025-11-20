@@ -149,7 +149,16 @@ public:
      * @return true
      * @return false
      */
-    bool GetFriendList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>&);
+    bool GetFriendList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>&, [[deprecated("暂时没有分段获取")]] int size = 20);
+    /**
+     * @brief 返回消息列表
+     *
+     * @param uid
+     * @param size
+     * @return true
+     * @return false
+     */
+    bool GetMessageList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>&, [[deprecated("暂时没有分段获取")]] int size = 20);
 
 private:
     MysqlManager();

@@ -3,7 +3,7 @@
 #include <QHBoxLayout>
 #include <QPushButton>
 #include <QFrame>
-#include "FriendsList/friendslistpart.h"
+#include "List/listpart.h"
 #include "sidebarpart.h"
 #include "toptitlepart.h"
 #include "Chat/chatpart.h"
@@ -43,9 +43,9 @@ void MainScreen::setupUI()
     // SideBarPart
     sideBarPart = new SideBarPart(this);
     // FriendsListPart
-    friendsListPart = new FriendsListPart(this);
+    listPart = new ListPart(this);
     bar_friends_hlay->addWidget(sideBarPart,0);
-    bar_friends_hlay->addWidget(friendsListPart,0);
+    bar_friends_hlay->addWidget(listPart,0);
 
     // ChatPart
     chatPart = new ChatPart(this);

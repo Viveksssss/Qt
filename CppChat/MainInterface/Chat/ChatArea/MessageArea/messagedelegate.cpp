@@ -297,22 +297,21 @@ bool MessageDelegate::editorEvent(QEvent *event, QAbstractItemModel *model, cons
     }else if (event->type() == QEvent::MouseButtonDblClick) {
         QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
 
-        auto contents = index.data(MessageModel::ContentsRole).value<QList<MessageContent>>();
+        auto contents = index.data(MessageModel::ContentsRole).value<MessageContent>();
 
-        // 检查是否为纯媒体消息
-        if (contents.size() == 1) {
-            MessageType type = contents.first().type;
-            QString filePath = contents.first().data.toString();
 
-            if (type == MessageType::ImageMessage || type == MessageType::VideoMessage || type == MessageType::AudioMessage) {
-                // QDesktopServices::openUrl(QUrl(filePath));
-                openFile(filePath);
-                return true;
-            }else if (type == MessageType::OtherFileMessage){
-                QDesktopServices::openUrl(QUrl(filePath));
-                return true;
-            }
+        MessageType type = contents.type;
+        QString filePath = contents.data.toString();
+
+        if (type == MessageType::ImageMessage || type == MessageType::VideoMessage || type == MessageType::AudioMessage) {
+            // QDesktopServices::openUrl(QUrl(filePath));
+            openFile(filePath);
+            return true;
+        }else if (type == MessageType::OtherFileMessage){
+            QDesktopServices::openUrl(QUrl(filePath));
+            return true;
         }
+
     }
 
     return QStyledItemDelegate::editorEvent(event, model, option, index);
@@ -329,11 +328,11 @@ void MessageDelegate::showContextMenu(const QPoint &globalPos, const QModelIndex
     if (selectedAction == copyAction) {
 
         int type = index.data(MessageModel::TypeRole).toInt();
-        const auto&contents = index.data(MessageModel::ContentsRole).value<QList<MessageContent>>();
+        const auto&content = index.data(MessageModel::ContentsRole).value<MessageContent>();
         switch(type){
         case static_cast<int>(MessageType::TextMessage):
         {
-            QString messageText = contents.first().data.toString();
+            QString messageText = content.data.toString();
             if (messageText.isEmpty()) {
                 return;
             }
@@ -344,7 +343,7 @@ void MessageDelegate::showContextMenu(const QPoint &globalPos, const QModelIndex
         }
         case static_cast<int>(MessageType::ImageMessage):
         {
-            QString imagePath = contents.first().data.value<QString>();
+            QString imagePath = content.data.value<QString>();
 
             // 在新线程中加载图片
             QtConcurrent::run([imagePath]() {
@@ -360,7 +359,7 @@ void MessageDelegate::showContextMenu(const QPoint &globalPos, const QModelIndex
         }
         case static_cast<int>(MessageType::AudioMessage):
         case static_cast<int>(MessageType::VideoMessage):
-            QString str = contents.first().data.toString();
+            QString str = content.data.toString();
             QApplication::clipboard()->setText(str);
             break;
         dafault:
@@ -492,6 +491,11 @@ void MessageDelegate::paintRoundedImage(QPainter *painter, const QRect &rect, co
 
     // 绘制圆角效果
     painter->save();
+
+    painter->setRenderHint(QPainter::Antialiasing, true);
+    painter->setRenderHint(QPainter::SmoothPixmapTransform, true);
+    painter->setRenderHint(QPainter::TextAntialiasing, true);
+    qDebug() << imagePath;
 
     QPainterPath path;
     path.addRoundedRect(rect, 12, 12);  // 12px圆角
@@ -1175,7 +1179,8 @@ void MessageDelegate::openFile(const QString &filePath) const
     }
 }
 
-void MessageDelegate::openImage(const QString&filePath)const {
+
+void MessageDelegate::openImage(const QString& filePath) const {
     QDialog *dlg = new QDialog;
     dlg->setStyleSheet("background:black;");
     dlg->setContentsMargins(0, 0, 0, 0);
@@ -1185,9 +1190,52 @@ void MessageDelegate::openImage(const QString&filePath)const {
     lay->setContentsMargins(0, 0, 0, 0);
     lay->setAlignment(Qt::AlignCenter);
 
-    QPixmap pix = SourceManager::GetInstance()->getPixmap(filePath);
-    QLabel *label = new QLabel();
-    label->setPixmap(pix.scaledToHeight(dlg->height()));
+    QPixmap originalPixmap = SourceManager::GetInstance()->getPixmap(filePath);
+
+    // 创建自定义的图片显示标签
+    class ZoomableLabel : public QLabel {
+    public:
+        ZoomableLabel(const QPixmap& pixmap, QWidget* parent = nullptr)
+            : QLabel(parent), m_originalPixmap(pixmap), m_scaleFactor(1.0) {
+            setAlignment(Qt::AlignCenter);
+            updatePixmap();
+        }
+
+    protected:
+        void wheelEvent(QWheelEvent* event) override {
+            if (event->angleDelta().y() > 0) {
+                // 滚轮向上，放大
+                m_scaleFactor *= 1.1;
+            } else {
+                // 滚轮向下，缩小
+                m_scaleFactor *= 0.9;
+            }
+
+            // 限制缩放范围
+            m_scaleFactor = qBound(0.1, m_scaleFactor, 10.0);
+
+            updatePixmap();
+            event->accept();
+        }
+
+    private:
+        void updatePixmap() {
+            if (m_originalPixmap.isNull()) return;
+
+            int newWidth = m_originalPixmap.width() * m_scaleFactor;
+            int newHeight = m_originalPixmap.height() * m_scaleFactor;
+
+            QPixmap scaledPixmap = m_originalPixmap.scaled(
+                newWidth, newHeight, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+            setPixmap(scaledPixmap);
+        }
+
+        QPixmap m_originalPixmap;
+        double m_scaleFactor;
+    };
+
+    ZoomableLabel *label = new ZoomableLabel(originalPixmap);
 
     // 限制最大尺寸，避免图片太大超出屏幕
     dlg->setMaximumSize(1200, 800);
@@ -1195,6 +1243,27 @@ void MessageDelegate::openImage(const QString&filePath)const {
     lay->addWidget(label);
     dlg->exec();  // 使用exec()确保对话框关闭前不会销毁
 }
+
+// void MessageDelegate::openImage(const QString&filePath)const {
+//     QDialog *dlg = new QDialog;
+//     dlg->setStyleSheet("background:black;");
+//     dlg->setContentsMargins(0, 0, 0, 0);
+//     dlg->setWindowTitle("图片");
+
+//     QVBoxLayout *lay = new QVBoxLayout(dlg);
+//     lay->setContentsMargins(0, 0, 0, 0);
+//     lay->setAlignment(Qt::AlignCenter);
+
+//     QPixmap pix = SourceManager::GetInstance()->getPixmap(filePath);
+//     QLabel *label = new QLabel();
+//     label->setPixmap(pix.scaledToHeight(dlg->height()));
+
+//     // 限制最大尺寸，避免图片太大超出屏幕
+//     dlg->setMaximumSize(1200, 800);
+
+//     lay->addWidget(label);
+//     dlg->exec();  // 使用exec()确保对话框关闭前不会销毁
+// }
 
 void MessageDelegate::openAudio(const QString &filePath) const
 {
@@ -1349,13 +1418,13 @@ void MessageDelegate::openAudio(const QString &filePath) const
     });
 
     // 总时长更新
-    connect(player, &QMediaPlayer::durationChanged, [=](qint64 duration) {
+    connect(player, &QMediaPlayer::durationChanged, [=,this](qint64 duration) {
         progressSlider->setRange(0, 100);
         totalTimeLabel->setText(formatTime(duration));
     });
 
     // 进度条跳转
-    connect(progressSlider, &QSlider::sliderMoved, [=](int value) {
+    connect(progressSlider, &QSlider::sliderMoved, [=,this](int value) {
         if (player->duration() > 0) {
             player->setPosition((value * player->duration()) / 100);
         }

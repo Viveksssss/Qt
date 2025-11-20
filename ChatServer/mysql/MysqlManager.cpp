@@ -82,7 +82,12 @@ bool MysqlManager::GetNotificationList(const std::string& uid, std::vector<std::
     return _dao.GetNotificationList(uid, notificationList);
 }
 
-bool MysqlManager::GetFriendList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& friendList)
+bool MysqlManager::GetFriendList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& friendList, int size)
 {
-    return _dao.GetFriendList(uid, friendList);
+    return _dao.GetFriendList(uid, friendList, size);
+}
+
+bool MysqlManager::GetMessageList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& messageList, int size)
+{
+    return _dao.GetMessageList(uid, messageList, size);
 }

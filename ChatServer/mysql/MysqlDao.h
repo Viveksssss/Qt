@@ -75,7 +75,8 @@ public:
     bool CheckIsFriend(int fromUid, int toUid);
     bool AddNotification(const std::string& uid, int type, const std::string& message);
     bool GetNotificationList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& notificationList);
-    bool GetFriendList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& friendList);
+    bool GetFriendList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& friendList, int size = 20);
+    bool GetMessageList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>&, int size = 20);
 
     std::string ValueOrEmpty(std::string value);
 

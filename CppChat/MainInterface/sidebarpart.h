@@ -44,6 +44,8 @@ private:
     QVector<SideBarItem>items;
     QButtonGroup*buttonGroup;
 
+    int nextId = 0;
+
     // QObject interface
 public:
     bool eventFilter(QObject *watched, QEvent *event)override;

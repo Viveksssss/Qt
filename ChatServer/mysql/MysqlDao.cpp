@@ -688,7 +688,7 @@ bool MysqlDao::MakeFriends(const std::string& fromUid, const std::string& toUid)
     }
 }
 
-bool MysqlDao::GetFriendList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& friendList)
+bool MysqlDao::GetFriendList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& friendList, int size)
 {
     auto conn = _pool->GetConnection();
     if (!conn) {
@@ -701,13 +701,13 @@ bool MysqlDao::GetFriendList(const std::string& uid, std::vector<std::shared_ptr
     try {
         mysqlpp::Query query = conn->query();
         // 使用显式JOIN，更清晰
-        query << "SELECT u.uid, u.name, u.icon, u.email, u.sex, u.desc"
+        query << " SELECT u.uid, u.name, u.icon, u.email, u.sex, u.desc"
               << " FROM user u"
               << " INNER JOIN friends f ON u.uid = f.friend_id"
               << " WHERE f.self_id = %0q"
               << " ORDER BY f.friend_id DESC";
         query.parse();
-        mysqlpp::StoreQueryResult res = query.store(std::stoi(uid));
+        mysqlpp::StoreQueryResult res = query.store(std::stoi(uid), size);
         int count = res.num_rows();
         if (res && res.num_rows() > 0) {
             friendList.reserve(res.num_rows()); // 预分配内存
@@ -732,6 +732,40 @@ bool MysqlDao::GetFriendList(const std::string& uid, std::vector<std::shared_ptr
         return false;
     }
 }
+
+bool MysqlDao::GetMessageList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>&, int size)
+{
+    auto conn = _pool->GetConnection();
+    if (!conn) {
+        SPDLOG_ERROR("Failed to get connection from pool");
+        return false;
+    }
+    Defer defer([this, &conn]() {
+        _pool->ReturnConnection(std::move(conn));
+    });
+
+    try {
+        mysqlpp::Query query = conn->query();
+        query << "SELECT u.uid,u.name,u.icon,u.sex,m.message,m.time,m.type FROM"
+              << " user u, messages m"
+              << " WHERE u.uid = m.from_uid AND u.uid = %0q"
+              << " ORDER BY m.time DESC";
+        query.parse();
+        mysqlpp::StoreQueryResult res = query.store(std::stoi(uid), size);
+        int count = res.num_rows();
+        if (res && res.num_rows() > 0) {
+            return true;
+        }
+        return false;
+    } catch (const mysqlpp::Exception& e) {
+        SPDLOG_ERROR("MySQL++ exception: {}", e.what());
+        return false;
+    } catch (const std::exception& e) {
+        SPDLOG_ERROR("Exception: {}", e.what());
+        return false;
+    }
+}
+
 std::string MysqlDao::ValueOrEmpty(std::string value)
 {
     if (value == "null" || value == "NULL" || value == "EMPTY") {

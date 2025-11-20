@@ -1,5 +1,6 @@
 #include "sidebarpart.h"
 #include "../stylemanager.h"
+#include "../Properties/signalrouter.h"
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QAbstractButton>
@@ -37,7 +38,9 @@ void SideBarPart::setupUI()
 
 void SideBarPart::setupConnections()
 {
-
+    connect(buttonGroup, &QButtonGroup::idClicked, this, [this](int id) {
+        emit SignalRouter::GetInstance().on_change_list(id);
+    });
 }
 
 
@@ -94,15 +97,11 @@ void SideBarPart::createButton(const SideBarItem &item,bool showText)
     btn->setProperty("itemId", item.id); // 存储标识
 
     // 添加到布局和按钮组
-    layout->insertWidget(layout->count() - 1, btn); // 插入到弹簧之前
-    buttonGroup->addButton(btn);
+    layout->insertWidget(layout->count() , btn); // 插入到弹簧之前
+    buttonGroup->addButton(btn,nextId++);
 
     buttons[item.id] = btn;
 
-    // 连接信号
-    connect(btn, &QPushButton::clicked, this, [this,btn, id = item.id]() {
-        emit on_sidebar_btn_clicked(id);
-    });
 }
 
 bool SideBarPart::eventFilter(QObject *watched, QEvent *event)
