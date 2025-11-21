@@ -1,5 +1,6 @@
 #include "LogicSystem.h"
 #include "../data/UserInfo.h"
+#include "../data/im.pb.h"
 #include "../global/ConfigManager.h"
 #include "../global/UserManager.h"
 #include "../global/const.h"
@@ -236,7 +237,7 @@ void LogicSystem::RegisterCallBacks()
 
         bool only_digit = IsPureDigit(uid_str);
 
-        GetSearchedUsers(uid_str /*to_uid*/, j["fromUid"].get<int>() /*from_uid*/, j, only_digit);
+        GetSearchedUsers(uid_str, j, only_digit);
     };
     /*
      * * @brief 好友申请请求
@@ -251,7 +252,6 @@ void LogicSystem::RegisterCallBacks()
         auto toUid = j["toUid"].get<int>();
         auto fromUid = j["fromUid"].get<int>();
         auto fromName = j["fromName"].get<std::string>();
-        SPDLOG_INFO("fromName:{}", fromName);
         auto fromSex = j["fromSex"].get<int>();
         auto fromDesc = j["fromDesc"].get<std::string>();
         // auto fromIcon = j["fromIcon"].get<std::string>();
@@ -332,9 +332,6 @@ void LogicSystem::RegisterCallBacks()
                 jj["error"] = ErrorCodes::SUCCESS;
                 jj["from_uid"] = fromUid;
                 jj["from_name"] = fromName;
-                jj["from_sex"] = fromSex;
-                jj["from_icon"] = fromIcon;
-                jj["from_desc"] = fromDesc;
                 session2->Send(jj.dump(), static_cast<int>(MsgId::ID_NOTIFY_ADD_FRIEND_REQ));
             }
             return;
@@ -379,7 +376,6 @@ void LogicSystem::RegisterCallBacks()
         int fromStatus = 1;
 
         bool accept = j["accept"].get<bool>();
-        SPDLOG_INFO("accept:{}", accept);
         // 不需要解析其他的信息，只需要按需发给对方即可
         // fromUid接受或者拒绝，服务器回复给toUid
         std::string base_key = USER_BASE_INFO_PREFIX + std::to_string(toUid);
@@ -424,7 +420,11 @@ void LogicSystem::RegisterCallBacks()
         bool b_ip = RedisManager::GetInstance()->Get(to_key, to_ip_value);
         if (!b_ip) {
             // 不存在我们就需要加入mysqk持续等待下次用户登录处理
-            bool ok = MysqlManager::GetInstance()->AddNotification(std::to_string(toUid), static_cast<int>(NotificationCodes::ID_NOTIFY_MAKE_FRIENDS), "😄" + fromName + "已经和您成为好友😄");
+            if (accept) {
+                bool ok = MysqlManager::GetInstance()->AddNotification(std::to_string(toUid), static_cast<int>(NotificationCodes::ID_NOTIFY_MAKE_FRIENDS), "😄" + fromName + "已经和您成为好友😄");
+            } else {
+                bool ok = MysqlManager::GetInstance()->AddNotification(std::to_string(toUid), static_cast<int>(NotificationCodes::ID_NOTIFY_NOT_FRIENDS), "😭" + fromName + "拒绝了您的好友请求😭");
+            }
             return;
         }
         auto& cfg = ConfigManager::GetInstance();
@@ -453,6 +453,50 @@ void LogicSystem::RegisterCallBacks()
                 req.set_message(fromName + "同意了您的好友申请");
             }
             ChatGrpcClient::GetInstance()->NotifyMakeFriends(to_ip_value, req);
+        }
+    };
+    /**
+     * @brief 发送信息请求
+     *
+     */
+    _function_callbacks[MsgId::ID_TEXT_CHAT_MSG_REQ] = [this](std::shared_ptr<Session> session, uint16_t msg_id, const std::string& msg) {
+        json j;
+        j["error"] = ErrorCodes::SUCCESS;
+        Defer defer([this, &j, session]() {
+            session->Send(j.dump(), static_cast<int>(MsgId::ID_TEXT_CHAT_MSG_RSP));
+        });
+        im::MessageItem pb;
+        pb.ParseFromString(msg);
+
+        auto& cfg = ConfigManager::GetInstance();
+        auto self_name = cfg["SelfServer"]["name"];
+        auto to_uid = pb.to_id();
+        std::string to_key = USERIP_PREFIX + std::to_string(to_uid);
+        std::string to_ip_value;
+        bool b_ip = RedisManager::GetInstance()->Get(to_key, to_ip_value);
+
+        Defer defer_send([this, &pb, to_ip_value] {
+            // 最后一定要留存信息入库
+            bool ok = MysqlManager::GetInstance()->AddMessage(pb.from_id(), pb.to_id(), pb.timestamp(), pb.env(), pb.content().type(), pb.content().data(), pb.content().mime_type(), pb.content().fid());
+        });
+        if (!b_ip) {
+            // 当前不在线
+            return;
+        } else {
+            if (to_ip_value == self_name) {
+                auto session2 = UserManager::GetInstance()->GetSession(to_uid);
+                if (session2) {
+                    SPDLOG_INFO("FROM UID:{},to:{}", pb.from_id(), to_uid);
+                    SPDLOG_INFO("FROM SESSION:{},to:{}", session->GetSessionId(), session2->GetSessionId());
+                    session2->Send(msg, static_cast<int>(MsgId::ID_TEXT_CHAT_MSG_REQ));
+                }
+            } else {
+                TextChatMessageRequest req;
+                req.set_fromuid(pb.from_id());
+                req.set_touid(pb.to_id());
+                req.set_data(msg);
+                ChatGrpcClient::GetInstance()->NotifyTextChatMessage(to_ip_value, req);
+            }
         }
     };
 }
@@ -548,11 +592,11 @@ bool LogicSystem::IsPureDigit(const std::string& str)
     return std::all_of(str.begin(), str.end(), [](char c) { return std::isdigit(c); });
 }
 
-void LogicSystem::GetSearchedUsers(const std::string& toUid, int fromUid, json& j, bool only_digit)
+void LogicSystem::GetSearchedUsers(const std::string& uid, json& j, bool only_digit)
 {
     // 根据only决定使用uid还是name搜索
     j["error"] = ErrorCodes::SUCCESS;
-    std::string base_key = USER_BASE_INFO_PREFIX + toUid;
+    std::string base_key = USER_BASE_INFO_PREFIX + uid;
     std::string info_str = "";
     json users = json::array();
 
@@ -561,17 +605,15 @@ void LogicSystem::GetSearchedUsers(const std::string& toUid, int fromUid, json& 
     });
 
     if (only_digit) {
-
         bool b_base = RedisManager::GetInstance()->Get(base_key, info_str);
         if (b_base) {
             json jj = json::parse(info_str);
-            jj["isFriend"] = MysqlManager::GetInstance()->CheckIsFriend(fromUid, std::stoi(toUid));
             jj["status"] = 1;
             users.push_back(jj);
             return;
         } else {
             std::shared_ptr<UserInfo> user_info = nullptr;
-            user_info = MysqlManager::GetInstance()->GetUser(std::stoi(toUid));
+            user_info = MysqlManager::GetInstance()->GetUser(std::stoi(uid));
             if (user_info == nullptr) {
                 j["error"] = ErrorCodes::ERROR_UID_INVALID;
                 return;
@@ -585,25 +627,23 @@ void LogicSystem::GetSearchedUsers(const std::string& toUid, int fromUid, json& 
             jj["status"] = 0;
             jj["desc"] = user_info->desc;
             jj["icon"] = user_info->icon;
-            jj["isFriend"] = MysqlManager::GetInstance()->CheckIsFriend(fromUid, std::stoi(toUid));
             RedisManager::GetInstance()->Set(base_key, jj.dump());
             users.push_back(jj);
             return;
         }
     } else {
         // 通过name查询
-        std::string name_key = USER_BASE_INFOS_PREFIX + toUid;
+        std::string name_key = USER_BASE_INFOS_PREFIX + uid;
         std::string name_str = "";
         bool b_base = RedisManager::GetInstance()->Get(name_key, name_str);
         if (b_base) {
             users = json::parse(name_str);
             for (auto& user : users) {
                 user["status"] = 1;
-                user["isFriend"] = MysqlManager::GetInstance()->CheckIsFriend(fromUid, std::stoi(toUid));
             }
             return;
         } else {
-            std::vector<std::shared_ptr<UserInfo>> user_infos = MysqlManager::GetInstance()->GetUser(toUid);
+            std::vector<std::shared_ptr<UserInfo>> user_infos = MysqlManager::GetInstance()->GetUser(uid);
             if (user_infos.empty()) {
                 j["error"] = ErrorCodes::ERROR_UID_INVALID;
                 return;
@@ -618,7 +658,6 @@ void LogicSystem::GetSearchedUsers(const std::string& toUid, int fromUid, json& 
                     jj["desc"] = user_info->desc;
                     jj["icon"] = user_info->icon;
                     jj["status"] = 0;
-                    jj["isFriend"] = MysqlManager::GetInstance()->CheckIsFriend(fromUid, std::stoi(toUid));
                     users.push_back(jj);
                 }
                 RedisManager::GetInstance()->Set(name_key, users.dump());

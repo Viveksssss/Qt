@@ -1,18 +1,19 @@
 #ifndef MESSAGESMODEL_H
 #define MESSAGESMODEL_H
 
-#include "../FriendsList/frienditem.h"
+#include "../../Chat/ChatArea/MessageArea/messagetypes.h"
 
 #include <QAbstractListModel>
 #include <QObject>
 
-
+struct ConversationItem;
 class MessagesModel : public QAbstractListModel
 {
     Q_OBJECT
 public:
     enum MessageRole{
         IdRole = Qt::UserRole + 1,  // id
+        ToUidRole,
         NameRole,                   // 昵称
         AvatarRole,                 // 头像
         StatusRole,                 // 状态
@@ -25,17 +26,21 @@ public:
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QHash<int,QByteArray>roleNames()const override;
 
-    void addMessage(const FriendItem&messageItem);
-    void addPreMessage(const FriendItem&messageItem);
-    FriendItem getMessage(int index);
+    void addMessage(const ConversationItem&messageItem);
+    void addPreMessage(const ConversationItem&messageItem);
+    ConversationItem getMessage(int index);
 
     // 在 MessagesModel 类中添加方法
     QModelIndex indexFromUid(int uid) const;
 
-    QVector<FriendItem>getList();
+    QVector<ConversationItem>&getList();
+
+    // 根据uid查找消息
+    bool existMessage(int uid);
+
 
 private:
-    QVector<FriendItem>_messages;
+    QVector<ConversationItem>_messages;
 
     // QAbstractItemModel interface
 public:

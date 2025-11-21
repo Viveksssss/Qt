@@ -7,13 +7,7 @@ find_package(PkgConfig REQUIRED)
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets Network)
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets Multimedia)
 find_package(Qt6 REQUIRED COMPONENTS MultimediaWidgets)
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets )
-find_package(Qt6 REQUIRED COMPONENTS Widgets)
-find_package(Qt6 REQUIRED COMPONENTS Widgets)
-find_package(Qt6 REQUIRED COMPONENTS Widgets)
-find_package(Qt6 REQUIRED COMPONENTS Widgets)
-find_package(Qt6 REQUIRED COMPONENTS Widgets)
-find_package(Qt6 REQUIRED COMPONENTS Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets Sql)
 find_package(Protobuf REQUIRED)
 find_package(absl REQUIRED CONFIG)
 
@@ -85,6 +79,7 @@ qt_add_executable(CppChat
     MainInterface/List/FriendsList/friendsmodel.h MainInterface/List/FriendsList/friendsmodel.cpp MainInterface/List/FriendsList/friendslistpart.h MainInterface/List/FriendsList/friendslistpart.cpp MainInterface/List/FriendsList/frienditemdelegate.h MainInterface/List/FriendsList/frienditemdelegate.cpp MainInterface/List/FriendsList/frienditem.h
     MainInterface/List/MessagesList/messageitemdelegate.cpp MainInterface/List/MessagesList/messageitemdelegate.h MainInterface/List/MessagesList/messageslistpart.cpp MainInterface/List/MessagesList/messageslistpart.h MainInterface/List/MessagesList/messagesmodel.cpp MainInterface/List/MessagesList/messagesmodel.h
     MainInterface/List/listpart.h MainInterface/List/listpart.cpp
+    database.h database.cpp
 )
 
 
@@ -127,12 +122,7 @@ target_link_libraries(CppChat
         absl::synchronization
         absl::time
 )
-target_link_libraries(CppChat PRIVATE Qt6::Widgets)
-target_link_libraries(CppChat PRIVATE Qt6::Widgets)
-target_link_libraries(CppChat PRIVATE Qt6::Widgets)
-target_link_libraries(CppChat PRIVATE Qt6::Widgets)
-target_link_libraries(CppChat PRIVATE Qt6::Widgets)
-target_link_libraries(CppChat PRIVATE Qt6::Widgets)
+target_link_libraries(CppChat PRIVATE Qt6::Widgets Qt6::Sql)
 
 target_include_directories(CppChat PRIVATE ${ASIO_INCLUDE_DIR})
 target_include_directories(CppChat PRIVATE ${PROTO_OUT_DIR})

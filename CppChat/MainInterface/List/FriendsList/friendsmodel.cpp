@@ -30,8 +30,8 @@ QVariant FriendsModel::data(const QModelIndex &index, int role) const
         return friendItem.avatar;
     case StatusRole:
         return friendItem.status;
-    case MessageRole:
-        return friendItem.message;
+    case DescRole:
+        return friendItem.desc;
     default:
         return QVariant();
     }
@@ -44,7 +44,7 @@ QHash<int, QByteArray> FriendsModel::roleNames() const
     roles[NameRole] = "friendName";
     roles[AvatarRole] = "avatar";
     roles[StatusRole] = "status";
-    roles[MessageRole] = "message";
+    roles[DescRole] = "desc";
     return roles;
 }
 
@@ -80,6 +80,11 @@ QModelIndex FriendsModel::indexFromUid(int uid) const
         }
     }
     return QModelIndex();
+}
+
+QVector<FriendItem> &FriendsModel::getList()
+{
+    return this->_friends;
 }
 
 bool FriendsModel::removeRows(int row, int count, const QModelIndex &parent)
@@ -139,13 +144,9 @@ bool FriendsModel::setData(const QModelIndex &index, const QVariant &value, int 
     case StatusRole:
         friendItem.status = value.toInt();
         break;
-    case MessageRole:
-        friendItem.message = value.toString();
-        break;
     default:
         return false;
     }
-
     emit dataChanged(index, index, {role});
     return true;
 }

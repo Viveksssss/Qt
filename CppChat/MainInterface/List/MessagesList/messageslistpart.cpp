@@ -125,8 +125,8 @@ void MessagesListPart::setupConnections()
         if (!index.isValid()){
             return;
         }
-        FriendItem item = messagesModel->getMessage(index.row());
-        if (item.id>=0){
+        ConversationItem item = messagesModel->getMessage(index.row());
+        if (item.to_uid>=0){
             emit SignalRouter::GetInstance().on_change_message_selection(item);
         }
     });
@@ -168,7 +168,7 @@ void MessagesListPart::do_loading_messages()
 
     // 动态获取信息
     for(auto&info:UserManager::GetInstance()->GetMessagesPerPage()){
-        messagesModel->addMessage(FriendItem(info->id, info->status,info->sex,info->name,info->avatar,info->back ));
+        messagesModel->addMessage(*info);
     }
 
     QTimer::singleShot(1000,this,[this](){
@@ -176,15 +176,15 @@ void MessagesListPart::do_loading_messages()
     });
 }
 
-void MessagesListPart::do_add_message_to_list(FriendItem info)
+void MessagesListPart::do_add_message_to_list(const ConversationItem &info)
 {
     messagesModel->addMessage(info);
 }
 
-void MessagesListPart::do_add_messages_to_list(const std::span<std::shared_ptr<UserInfo> > &list)
+void MessagesListPart::do_add_messages_to_list(const std::span<std::shared_ptr<ConversationItem> > &list)
 {
     for (auto&item:list){
-        messagesModel->addMessage(FriendItem(item->id, item->status,item->sex,item->name,item->avatar,item->back ));
+        messagesModel->addMessage(*item);
     }
 }
 

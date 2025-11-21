@@ -39,5 +39,8 @@
         <file>Resources/main/volume.png</file>
         <file>Resources/main/no-volume.png</file>
         <file>Resources/main/header-default.png</file>
+        <file>Resources/main/audio_chat.png</file>
+        <file>Resources/main/text_chat.png</file>
+        <file>Resources/main/video_chat.png</file>
     </qresource>
 </RCC>

@@ -17,6 +17,7 @@ public:
 
 public slots:
     void do_area_to_bottom(); // from InputArea::on_message_sent
+    void do_change_peer(int);    // from SignalRoute::on_change_peer;
 public:
 
     QListView *list;

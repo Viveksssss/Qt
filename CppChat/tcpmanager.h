@@ -7,6 +7,8 @@
 #include <QTcpSocket>
 #include <QHash>
 #include <functional>
+
+struct ConversationItem;
 class TcpManager
     : public QObject
     , public Singleton<TcpManager>
@@ -56,7 +58,7 @@ signals:
     void on_get_apply_list(const std::vector<std::shared_ptr<UserInfo>>&list); // to NotificationPanel::do_get_apply_list;
     void on_add_friend_to_list(std::shared_ptr<UserInfo>); // to FriendListPart::do_add_friend_to_list
     void on_add_friends_to_list(const std::span<std::shared_ptr<UserInfo>>&list); // to FriendListPart::do_add_friends_to_list
-    void on_add_messages_to_list(const std::span<std::shared_ptr<UserInfo>>&list); // to FriendListPart::do_add_messages_to_list
+    void on_add_messages_to_list(const std::span<std::shared_ptr<ConversationItem>>&list); // to MessageListPart::do_add_messages_to_list
     void on_notifications_to_list(const std::vector<std::shared_ptr<UserInfo>>&list);// to NotificationPanel::do_notifications_to_list
     void on_notify_friend(std::shared_ptr<UserInfo>info,bool accept);   // to NotificationPanel::do_notify_friend
     void on_notify_friend2(std::shared_ptr<UserInfo>info,bool accept);   // to NotificationPanel::do_notify_friend2

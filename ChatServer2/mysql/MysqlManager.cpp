@@ -1,5 +1,6 @@
 #include "MysqlManager.h"
 #include "MysqlDao.h"
+#include <cstdint>
 MysqlManager::~MysqlManager()
 {
 }
@@ -85,4 +86,19 @@ bool MysqlManager::GetNotificationList(const std::string& uid, std::vector<std::
 bool MysqlManager::GetFriendList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& friendList)
 {
     return _dao.GetFriendList(uid, friendList);
+}
+
+bool MysqlManager::AddMessage(int from_uid, int to_uid, const std::string& timestamp, int env, int content_type, const std::string& content_data, const std::string& content_mime_type, const std::string& fid)
+{
+    return _dao.AddMessage(from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, fid);
+}
+
+bool MysqlManager::AddConversation(const std::string& uid, int from_uid, int to_uid, const std::string& create_time, const std::string& update_time, const std::string& name, const std::string& icon, int staus, int deleted, int pined)
+{
+    return _dao.AddConversation(uid, from_uid, to_uid, create_time, update_time, name, icon, staus, deleted, pined);
+}
+
+bool MysqlManager::GetSeessionList(const std::string& uid, std::vector<std::shared_ptr<SessionInfo>>& sessionList)
+{
+    return _dao.GetSeessionList(uid, sessionList);
 }

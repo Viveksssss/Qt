@@ -140,6 +140,11 @@ void UserManager::SetPeerDesc(const QString &desc) noexcept
     this->_peer_desc = desc;
 }
 
+void UserManager::SetPeerIcon(const QString &icon) noexcept
+{
+    this->_peer_icon = icon;
+}
+
 int UserManager::GetPeerUid() noexcept
 {
     return this->_peer_uid;
@@ -191,7 +196,7 @@ std::vector<std::shared_ptr<UserInfo> > &UserManager::GetFriends()
     return this->_friends;
 }
 
-std::vector<std::shared_ptr<UserInfo> > &UserManager::GetMessages()
+std::vector<std::shared_ptr<ConversationItem> > &UserManager::GetMessages()
 {
     return this->_messages;
 }
@@ -209,7 +214,7 @@ std::span<std::shared_ptr<UserInfo> > UserManager::GetFriendsPerPage(int size)
     return std::span<std::shared_ptr<UserInfo>>(_friends).subspan(begin,count);
 }
 
-std::span<std::shared_ptr<UserInfo>>  UserManager::GetMessagesPerPage(int size)
+std::span<std::shared_ptr<ConversationItem>>  UserManager::GetMessagesPerPage(int size)
 {
     if (size <= 0 || _friends_loaded >= _friends.size()) {
         return {};
@@ -220,7 +225,7 @@ std::span<std::shared_ptr<UserInfo>>  UserManager::GetMessagesPerPage(int size)
     int count  = std::min(size,available);
     _messages_loaded+=count;
 
-    return std::span<std::shared_ptr<UserInfo>>(_messages).subspan(begin,count);
+    return std::span<std::shared_ptr<ConversationItem>>(_messages).subspan(begin,count);
 }
 
 bool UserManager::IsLoadFriendsFinished()

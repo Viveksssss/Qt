@@ -327,7 +327,7 @@ void InputArea::showAudioDialog()
     QTimer *waveformTimer = new QTimer;
 
     // 开始/停止录音
-    connect(recordButton, &QPushButton::clicked, [=, &audioInput, &audioBuffer, &recordSeconds]() mutable {
+    connect(recordButton, &QPushButton::clicked, [=,this, &audioInput, &audioBuffer, &recordSeconds]() mutable {
         if (recordButton->property("state").toString() == "stopped") {
             // 开始录音
             QAudioDevice device = QMediaDevices::defaultAudioInput();
@@ -392,18 +392,18 @@ void InputArea::showAudioDialog()
     });
 
     // 更新波形显示
-    connect(waveformTimer, &QTimer::timeout, [=]() mutable{
+    connect(waveformTimer, &QTimer::timeout, [=,this]() mutable{
         updateWaveform(waveformLabel, audioLevels);
     });
 
     // 播放录音
-    connect(playButton, &QPushButton::clicked, [=]() {
+    connect(playButton, &QPushButton::clicked, [=,this]() {
         if (audioBuffer && audioBuffer->size() > 0) {
             playAudio(audioBuffer->data());
         }
     });
 
-    connect(sendButton, &QPushButton::clicked, [=]() {
+    connect(sendButton, &QPushButton::clicked, [=,this]() {
         if (audioBuffer && audioBuffer->size() > 0) {
             sendAudioMessage(audioBuffer->data(), recordSeconds);
             recordDialog->accept();

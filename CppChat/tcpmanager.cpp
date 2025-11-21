@@ -1,11 +1,15 @@
 #include "tcpmanager.h"
+#include "MainInterface/Chat/ChatArea/MessageArea/messagetypes.h"
 #include "usermanager.h"
+#include "database.h"
+#include "../proto/im.pb.h"
 #include <QAbstractSocket>
 #include <QDataStream>
 #include <QJsonObject>
 #include <QDir>
 #include <QJsonArray>
 #include <QMessageBox>
+#include <future>
 
 TcpManager::~TcpManager() = default;
 
@@ -46,22 +50,24 @@ void TcpManager::initHandlers()
             return;
         }
 
+        // 先是本地加载
+        UserManager::GetInstance()->GetFriends() = DataBase::GetInstance().getFriendsPtr();
+        UserManager::GetInstance()->GetMessages() = DataBase::GetInstance().getConversationListPtr();
+
         // 基本信息
         UserManager::GetInstance()->SetName(jsonObj["name"].toString());
         UserManager::GetInstance()->SetEmail(jsonObj["email"].toString());
         UserManager::GetInstance()->SetToken(jsonObj["token"].toString());
         UserManager::GetInstance()->SetIcon(jsonObj["icon"].toString());
         UserManager::GetInstance()->SetUid(jsonObj["uid"].toInt());
-        qDebug() << "asdasdasdasdasd \t" << UserManager::GetInstance()->GetUid();
         UserManager::GetInstance()->SetSex(jsonObj["sex"].toInt());
         UserManager::GetInstance()->SetStatus(1);
 
-        qDebug() << "reday to apply_list";
 
 
         // 申请列表
         if (jsonObj.contains("apply_friends")){
-            QJsonArray apply_friends = jsonObj["apply_friends"].toArray();
+            const QJsonArray &apply_friends = jsonObj["apply_friends"].toArray();
             std::vector<std::shared_ptr<UserInfo>>apply_list;
             for(const QJsonValue&value:apply_friends){
                 QJsonObject obj = value.toObject();
@@ -80,7 +86,7 @@ void TcpManager::initHandlers()
 
         // 通知列表
         if(jsonObj.contains("notifications")){
-            QJsonArray notification_array = jsonObj["notifications"].toArray();
+            const QJsonArray &notification_array = jsonObj["notifications"].toArray();
             std::vector<std::shared_ptr<UserInfo>>notification_list;
             for(const QJsonValue&value:notification_array){
                 QJsonObject obj = value.toObject();
@@ -95,9 +101,10 @@ void TcpManager::initHandlers()
             emit on_notifications_to_list(notification_list);
         }
 
-        //TODO: 好友列表
+        // 好友列表
         if (jsonObj.contains("friends")){
-            QJsonArray friend_array = jsonObj["friends"].toArray();
+            const QJsonArray &friend_array = jsonObj["friends"].toArray();
+            std::vector<std::shared_ptr<UserInfo>>lists;
             for(const QJsonValue&value:friend_array){
                 QJsonObject obj = value.toObject();
                 auto user_info = std::make_shared<UserInfo>();
@@ -108,17 +115,48 @@ void TcpManager::initHandlers()
                 user_info->email = obj["email"].toString();
                 user_info->avatar = obj["icon"].toString();
                 user_info->desc = obj["desc"].toString();
-
-                UserManager::GetInstance()->GetFriends().push_back(user_info);
+                lists.push_back(user_info);
+                // UserManager::GetInstance()->GetFriends().push_back(user_info);
             }
-            emit on_add_friends_to_list(UserManager::GetInstance()->GetFriendsPerPage());
+            if (lists.size()!=UserManager::GetInstance()->GetFriends().size()){
+                (void)std::async(std::launch::async,[this](){
+                    DataBase::GetInstance().storeFriends(UserManager::GetInstance()->GetFriends());
+                    emit on_add_friends_to_list(UserManager::GetInstance()->GetFriendsPerPage());
+                });
+            }
         }
-        //TODO: 消息列表
+        //TODO: 会话列表
+        if (jsonObj.contains("conversations")){
+            const QJsonArray &conversations = jsonObj["conversations"].toArray();
+            std::vector<std::shared_ptr<ConversationItem>>lists;
+            for(const QJsonValue&value:conversations){
+                QJsonObject obj = value.toObject();
+                auto conversation = std::make_shared<ConversationItem>();
+                // 解析字段，仿照好友列表的写法
+                conversation->id = obj["uid"].toString();
+                conversation->to_uid = obj["to_uid"].toInt();
+                conversation->from_uid = obj["from_uid"].toInt();
+                conversation->create_time = obj["create_time"].toVariant().toDateTime();
+                conversation->update_time = obj["update_time"].toVariant().toDateTime();
+                conversation->name = obj["name"].toString();
+                conversation->icon = obj["icon"].toString();
+                conversation->status = obj["status"].toInt();
+                conversation->deleted = obj["deleted"].toInt();
+                conversation->pined = obj["pined"].toInt();
+                // UserManager::GetInstance()->GetMessages().push_back(conversation);
+                lists.push_back(conversation);
+            }
 
+            if (UserManager::GetInstance()->GetMessages().size()!=lists.size()){
+                (void)std::async(std::launch::async,[this](){
+                    DataBase::GetInstance().createOrUpdateConversations(UserManager::GetInstance()->GetMessages());
+                    emit on_add_messages_to_list(UserManager::GetInstance()->GetMessagesPerPage());
+                });
+            }
+        }
         // 发出信号跳转到主页面
         emit on_switch_interface();
     };
-
     /**
      * @brief 用户搜索回包处理
      */
@@ -144,7 +182,7 @@ void TcpManager::initHandlers()
         // 解析查询的用户列表
         QList<std::shared_ptr<FriendInfo>> userList;
         if (jsonObj.contains("users") && jsonObj["users"].isArray()) {
-            QJsonArray usersArray = jsonObj["users"].toArray();
+            const QJsonArray &usersArray = jsonObj["users"].toArray();
 
             for (const QJsonValue &userValue : usersArray) {
                 if (userValue.isObject()) {
@@ -340,6 +378,39 @@ void TcpManager::initHandlers()
         emit on_notifications_to_list(vec);
         emit on_change_friend_status(user_info->id,1);
     };
+
+    /**
+     * @brief 收到消息
+    */
+    _handlers[RequestType::ID_NOTIFY_TEXT_CHAT_MSG_REQ] = [this](RequestType requestType,int len,QByteArray data){
+        im::MessageContent pb;
+        pb.ParseFromString(data);
+        // TODO:
+        // emit on_get_message
+    };
+
+    /**
+     * @brief 获取与某人的消息记录回报
+    */
+    _handlers[RequestType::ID_GET_MESSAGES_OF_FRIEND_RSP] = [this](RequestType requestType,int len,QByteArray data){
+        QJsonDocument jsonDoc = QJsonDocument::fromJson(data);
+        if (jsonDoc.isNull()){
+            return;
+        }
+        QJsonObject jsonObj = jsonDoc.object();
+        if (!jsonObj.contains("error")){
+            int err = static_cast<int>(ErrorCodes::ERROR_JSON);
+            return;
+        }
+
+        int err = jsonObj["error"].toInt();
+        if (err != static_cast<int>(ErrorCodes::SUCCESS)){
+            return;
+        }
+
+        // TODO:
+    };
+
 }
 
 void TcpManager::connections()
@@ -382,6 +453,13 @@ void TcpManager::connections()
     connect(&_socket,&QTcpSocket::errorOccurred,[&](QTcpSocket::SocketError socketError){
         qDebug() << "Socket Error["<<socketError<< "]:" << _socket.errorString();
         emit on_login_failed(static_cast<int>(ErrorCodes::ERROR_NETWORK));
+
+        // 连接网络失败直接使用本地数据库展示。
+        UserManager::GetInstance()->GetFriends() = DataBase::GetInstance().getFriendsPtr();
+        UserManager::GetInstance()->GetMessages() = DataBase::GetInstance().getConversationListPtr();
+
+        emit on_add_friends_to_list(UserManager::GetInstance()->GetFriendsPerPage());
+        emit on_add_messages_to_list(UserManager::GetInstance()->GetMessagesPerPage());
     });
     // 断开连接
     connect(&_socket,&QTcpSocket::disconnected,[&](){

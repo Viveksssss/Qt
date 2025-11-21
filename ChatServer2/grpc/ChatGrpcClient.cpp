@@ -46,14 +46,32 @@ AuthFriendResponse ChatGrpcClient::NotifyAuthFriend(std::string server_ip, const
     return rsp;
 }
 
-TextChatMessageResponse ChatGrpcClient::NotifyTextChatMessage(std::string server_ip, const TextChatMessageRequest& req, const json&)
+TextChatMessageResponse ChatGrpcClient::NotifyTextChatMessage(std::string server_ip, const TextChatMessageRequest& req)
 {
     TextChatMessageResponse rsp;
+    Defer defer([&rsp, &req]() {
+        rsp.set_error(static_cast<int>(ErrorCodes::SUCCESS));
+    });
+
+    auto it = _pool.find(server_ip);
+    if (it == _pool.end()) {
+        return rsp;
+    }
+
+    auto& pool = it->second;
+    grpc::ClientContext context;
+    auto stub = pool->GetConnection();
+    Defer defer2([&pool, &stub]() {
+        pool->ReturnConnection(std::move(stub));
+    });
+
+    Status status = stub->NotifyTextChatMessage(&context, req, &rsp);
+    if (!status.ok()) {
+        rsp.set_error(static_cast<int>(ErrorCodes::RPCFAILED));
+        return rsp;
+    }
+
     return rsp;
-}
-bool ChatGrpcClient::GetBaseInfo(std::string base_key, int uid, std::shared_ptr<UserInfo>& userinfo)
-{
-    return true;
 }
 
 ChatGrpcClient::ChatGrpcClient()

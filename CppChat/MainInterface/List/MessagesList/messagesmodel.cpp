@@ -18,7 +18,7 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
         return QVariant();
     }
 
-    const FriendItem&messageItem = _messages.at(index.row());
+    const ConversationItem&messageItem = _messages.at(index.row());
 
     switch(role){
     case Qt::DisplayRole:
@@ -27,8 +27,10 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
         return messageItem.name;
     case IdRole:
         return messageItem.id;
+    case ToUidRole:
+        return messageItem.to_uid;
     case AvatarRole:
-        return messageItem.avatar;
+        return messageItem.icon;
     case StatusRole:
         return messageItem.status;
     case MessageRole:
@@ -42,6 +44,7 @@ QHash<int, QByteArray> MessagesModel::roleNames() const
 {
     QHash<int ,QByteArray>roles;
     roles[IdRole] = "messageId";
+    roles[ToUidRole] = "toUid";
     roles[NameRole] = "messageName";
     roles[AvatarRole] = "avatar";
     roles[StatusRole] = "status";
@@ -49,26 +52,26 @@ QHash<int, QByteArray> MessagesModel::roleNames() const
     return roles;
 }
 
-void MessagesModel::addMessage(const FriendItem &messageItem)
+void MessagesModel::addMessage(const ConversationItem &messageItem)
 {
     beginInsertRows(QModelIndex(),_messages.size(),_messages.size());
     _messages.append(messageItem);
     endInsertRows();
 }
 
-void MessagesModel::addPreMessage(const FriendItem &messageItem)
+void MessagesModel::addPreMessage(const ConversationItem &messageItem)
 {
     beginInsertRows(QModelIndex(),0,0);
     _messages.append(messageItem);
     endInsertRows();
 }
 
-FriendItem MessagesModel::getMessage(int index)
+ConversationItem MessagesModel::getMessage(int index)
 {
     if (index >= 0 && index < _messages.size()){
         return _messages.at(index);
     }
-    return FriendItem();
+    return ConversationItem();
 }
 
 QModelIndex MessagesModel::indexFromUid(int uid) const
@@ -81,6 +84,19 @@ QModelIndex MessagesModel::indexFromUid(int uid) const
         }
     }
     return QModelIndex();
+}
+
+QVector<ConversationItem> &MessagesModel::getList()
+{
+    return this->_messages;
+}
+
+bool MessagesModel::existMessage(int uid)
+{
+    auto it = std::find_if(_messages.begin(),_messages.end(),[uid](const ConversationItem&item){
+        return item.to_uid == uid;
+    });
+    return it == _messages.end() ? false : true;
 }
 
 bool MessagesModel::removeRows(int row, int count, const QModelIndex &parent)
@@ -123,7 +139,7 @@ bool MessagesModel::setData(const QModelIndex &index, const QVariant &value, int
         return false;
     }
 
-    FriendItem& messageItem = _messages[index.row()];
+    ConversationItem& messageItem = _messages[index.row()];
 
     switch(role){
     case Qt::DisplayRole:
@@ -131,11 +147,14 @@ bool MessagesModel::setData(const QModelIndex &index, const QVariant &value, int
     case NameRole:
         messageItem.name = value.toString();
         break;
+    case ToUidRole:
+        messageItem.to_uid = value.toInt();
+        break;
     case IdRole:
-        messageItem.id = value.toInt();
+        // messageItem.id = value.toInt();
         break;
     case AvatarRole:
-        messageItem.avatar = value.toString();
+        messageItem.icon = value.toString();
         break;
     case StatusRole:
         messageItem.status = value.toInt();

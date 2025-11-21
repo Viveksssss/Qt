@@ -1,6 +1,7 @@
 #ifndef MYSQLMANAGER_H
 #define MYSQLMANAGER_H
 
+#include "../data/UserInfo.h"
 #include "../global/Singleton.h"
 #include "MysqlDao.h"
 #include <mysql/mysql.h>
@@ -150,6 +151,39 @@ public:
      * @return false
      */
     bool GetFriendList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>&);
+    /**
+     * @brief 添加消息入库
+     *
+     * @return true
+     * @return false
+     */
+    bool AddMessage(int from_uid, int to_uid, const std::string& timestamp, int env, int content_type, const std::string& content_data, const std::string& content_mime_type, const std::string& fid);
+    /**
+     * @brief 添加会话
+     *
+     * @param uid
+     * @param from_uid
+     * @param to_uid
+     * @param create_time
+     * @param update_time
+     * @param name
+     * @param icon
+     * @param staus
+     * @param deleted
+     * @param pined
+     * @return true
+     * @return false
+     */
+    bool AddConversation(const std::string& uid, int from_uid, int to_uid, const std::string& create_time, const std::string& update_time, const std::string& name, const std::string& icon, int staus, int deleted, int pined);
+    /**
+     * @brief 获取会话列表
+     *
+     * @param uid
+     * @param sessionList
+     * @return true
+     * @return false
+     */
+    bool GetSeessionList(const std::string& uid, std::vector<std::shared_ptr<SessionInfo>>& sessionList);
 
 private:
     MysqlManager();

@@ -1,5 +1,6 @@
 #include "LogicSystem.h"
 #include "../data/UserInfo.h"
+#include "../data/im.pb.h"
 #include "../global/ConfigManager.h"
 #include "../global/UserManager.h"
 #include "../global/const.h"
@@ -116,7 +117,27 @@ void LogicSystem::RegisterCallBacks()
             jj["notifications"] = notifications;
         }
 
-        // 获取消息列表
+        // 获取会话列表
+        std::vector<std::shared_ptr<SessionInfo>> session_list;
+        bool b_session = MysqlManager::GetInstance()->GetSeessionList(uid_str, session_list);
+        if (b_session && session_list.size() > 0) {
+            json conversations;
+            for (auto& session_item : session_list) {
+                json conversation;
+                conversation["uid"] = session_item->uid;
+                conversation["from_uid"] = session_item->from_uid;
+                conversation["to_uid"] = session_item->to_uid;
+                conversation["create_time"] = session_item->create_time;
+                conversation["update_time"] = session_item->update_time;
+                conversation["name"] = session_item->name;
+                conversation["icon"] = session_item->icon;
+                conversation["status"] = session_item->status;
+                conversation["deleted"] = session_item->deleted;
+                conversation["pined"] = session_item->pined;
+                conversations.push_back(conversation);
+            }
+            jj["conversations"] = conversations;
+        }
 
         // 获取好友列表
         std::vector<std::shared_ptr<UserInfo>> friend_list;
@@ -452,6 +473,50 @@ void LogicSystem::RegisterCallBacks()
                 req.set_message(fromName + "同意了您的好友申请");
             }
             ChatGrpcClient::GetInstance()->NotifyMakeFriends(to_ip_value, req);
+        }
+    };
+    /**
+     * @brief 发送信息请求
+     *
+     */
+    _function_callbacks[MsgId::ID_TEXT_CHAT_MSG_REQ] = [this](std::shared_ptr<Session> session, uint16_t msg_id, const std::string& msg) {
+        json j;
+        j["error"] = ErrorCodes::SUCCESS;
+        Defer defer([this, &j, session]() {
+            session->Send(j.dump(), static_cast<int>(MsgId::ID_TEXT_CHAT_MSG_RSP));
+        });
+        im::MessageItem pb;
+        pb.ParseFromString(msg);
+
+        auto& cfg = ConfigManager::GetInstance();
+        auto self_name = cfg["SelfServer"]["name"];
+        auto to_uid = pb.to_id();
+        std::string to_key = USERIP_PREFIX + std::to_string(to_uid);
+        std::string to_ip_value;
+        bool b_ip = RedisManager::GetInstance()->Get(to_key, to_ip_value);
+
+        Defer defer_send([this, &pb, to_ip_value] {
+            // 最后一定要留存信息入库
+            bool ok = MysqlManager::GetInstance()->AddMessage(pb.from_id(), pb.to_id(), pb.timestamp(), pb.env(), pb.content().type(), pb.content().data(), pb.content().mime_type(), pb.content().fid());
+        });
+        if (!b_ip) {
+            // 当前不在线
+            return;
+        } else {
+            if (to_ip_value == self_name) {
+                auto session2 = UserManager::GetInstance()->GetSession(to_uid);
+                if (session2) {
+                    SPDLOG_INFO("FROM UID:{},to:{}", pb.from_id(), to_uid);
+                    SPDLOG_INFO("FROM SESSION:{},to:{}", session->GetSessionId(), session2->GetSessionId());
+                    session2->Send(msg, static_cast<int>(MsgId::ID_TEXT_CHAT_MSG_REQ));
+                }
+            } else {
+                TextChatMessageRequest req;
+                req.set_fromuid(pb.from_id());
+                req.set_touid(pb.to_id());
+                req.set_data(msg);
+                ChatGrpcClient::GetInstance()->NotifyTextChatMessage(to_ip_value, req);
+            }
         }
     };
 }

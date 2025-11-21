@@ -72,11 +72,11 @@ public:
     bool ChangeMessageStatus(const std::string& uid, int status);
     bool ChangeApplyStatus(const std::string& fromUid, const std::string& toUid, int status);
     bool MakeFriends(const std::string& fromUid, const std::string& toUid);
-    bool CheckIsFriend(int fromUid, int toUid);
+    bool CheckIsFriend(const std::string& fromUid, const std::string& toUid);
     bool AddNotification(const std::string& uid, int type, const std::string& message);
     bool GetNotificationList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& notificationList);
-    bool GetFriendList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& friendList, int size = 20);
-    bool GetMessageList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>&, int size = 20);
+    bool GetFriendList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& friendList);
+    bool AddMessage(int from_uid, int to_uid, int64_t timestamp, int env, int content_type, const std::string& content_data, const std::string& content_mime_type, const std::string& fid);
 
     std::string ValueOrEmpty(std::string value);
 

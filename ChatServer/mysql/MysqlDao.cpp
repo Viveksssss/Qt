@@ -525,7 +525,7 @@ bool MysqlDao::ChangeApplyStatus(const std::string& fromUid, const std::string& 
     }
 }
 
-bool MysqlDao::CheckIsFriend(int fromUid, int toUid)
+bool MysqlDao::CheckIsFriend(const std::string& fromUid, const std::string& toUid)
 {
     if (fromUid == toUid) {
         return true;
@@ -543,7 +543,7 @@ bool MysqlDao::CheckIsFriend(int fromUid, int toUid)
         query << "SELECT COUNT(*) as cnt from friends where (self_id = %0q and friend_id = %1q)"
               << "OR (self_id = %1q and friend_id = %0q)";
         query.parse();
-        mysqlpp::StoreQueryResult res = query.store(fromUid, toUid);
+        mysqlpp::StoreQueryResult res = query.store(std::stoi(fromUid), std::stoi(toUid));
         if (res && !res.empty()) {
             int count = res[0]["cnt"];
             return count == 2;
@@ -688,7 +688,7 @@ bool MysqlDao::MakeFriends(const std::string& fromUid, const std::string& toUid)
     }
 }
 
-bool MysqlDao::GetFriendList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& friendList, int size)
+bool MysqlDao::GetFriendList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& friendList)
 {
     auto conn = _pool->GetConnection();
     if (!conn) {
@@ -701,13 +701,13 @@ bool MysqlDao::GetFriendList(const std::string& uid, std::vector<std::shared_ptr
     try {
         mysqlpp::Query query = conn->query();
         // 使用显式JOIN，更清晰
-        query << " SELECT u.uid, u.name, u.icon, u.email, u.sex, u.desc"
+        query << "SELECT u.uid, u.name, u.icon, u.email, u.sex, u.desc"
               << " FROM user u"
               << " INNER JOIN friends f ON u.uid = f.friend_id"
               << " WHERE f.self_id = %0q"
               << " ORDER BY f.friend_id DESC";
         query.parse();
-        mysqlpp::StoreQueryResult res = query.store(std::stoi(uid), size);
+        mysqlpp::StoreQueryResult res = query.store(std::stoi(uid));
         int count = res.num_rows();
         if (res && res.num_rows() > 0) {
             friendList.reserve(res.num_rows()); // 预分配内存
@@ -733,7 +733,7 @@ bool MysqlDao::GetFriendList(const std::string& uid, std::vector<std::shared_ptr
     }
 }
 
-bool MysqlDao::GetMessageList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>&, int size)
+bool MysqlDao::AddMessage(int from_uid, int to_uid, int64_t timestamp, int env, int content_type, const std::string& content_data, const std::string& content_mime_type, const std::string& content_fid)
 {
     auto conn = _pool->GetConnection();
     if (!conn) {
@@ -743,20 +743,24 @@ bool MysqlDao::GetMessageList(const std::string& uid, std::vector<std::shared_pt
     Defer defer([this, &conn]() {
         _pool->ReturnConnection(std::move(conn));
     });
-
     try {
         mysqlpp::Query query = conn->query();
-        query << "SELECT u.uid,u.name,u.icon,u.sex,m.message,m.time,m.type FROM"
-              << " user u, messages m"
-              << " WHERE u.uid = m.from_uid AND u.uid = %0q"
-              << " ORDER BY m.time DESC";
+        query << "INSERT INTO messages (from_uid,to_uid,timestamp,env,content_type,content_data,content_mime_type,content_fid) VALUES(%0q,%1q,%2q,%3q,%4q,%5q,%6q,%7q)";
         query.parse();
-        mysqlpp::StoreQueryResult res = query.store(std::stoi(uid), size);
-        int count = res.num_rows();
-        if (res && res.num_rows() > 0) {
-            return true;
+        mysqlpp::SimpleResult res = query.execute(from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, content_fid);
+        if (res) {
+            int affected_rows = res.rows();
+            if (affected_rows > 0) {
+                SPDLOG_INFO("Message added successfully for from_uid: {}, to_uid: {}, timestamp: {}, env: {}, content_type: {}, content_data: {}, content_mime_type: {}, fid: {}", from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, content_fid);
+                return true;
+            } else {
+                SPDLOG_WARN("Failed to add message for from_uid: {}, to_uid: {}, timestamp: {}, env: {}, content_type: {}, content_data: {}, content_mime_type: {}, fid: {}", from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, content_fid);
+                return false;
+            }
+        } else {
+            SPDLOG_ERROR("Failed to add message: {}", query.error());
+            return false;
         }
-        return false;
     } catch (const mysqlpp::Exception& e) {
         SPDLOG_ERROR("MySQL++ exception: {}", e.what());
         return false;

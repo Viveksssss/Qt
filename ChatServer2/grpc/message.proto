@@ -100,13 +100,10 @@ message TextChatData{
 message TextChatMessageRequest{
     int32 fromUid = 1;
     int32 toUid = 2;
-    repeated TextChatData textMsgs = 3;
+    bytes data = 3;
 }
 message TextChatMessageResponse{
     int32 error = 1;
-    int32 fromUid = 2;
-    int32 toUid = 3;
-    repeated TextChatData textMsgs = 4;
 }
 
 message NotifyMakeFriendsRequest{

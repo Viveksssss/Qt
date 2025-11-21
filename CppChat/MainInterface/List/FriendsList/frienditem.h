@@ -10,7 +10,7 @@ struct FriendItem : public UserInfo {
     QString message;     // 最新的部分消息
 
     explicit FriendItem(int id,int status,int sex,const QString &name = "",
-               const QString &avatar = "",
+               const QString &avatar = "",const QString&desc = "",
                const QString &message = "")
 
         : message(message)  // 如果是消息列表message就是最近的消息，如果是好友列表就是个性签名
@@ -20,6 +20,7 @@ struct FriendItem : public UserInfo {
         this->name = name;
         this->avatar = avatar;
         this->sex = sex;
+        this->desc = desc;
     }
     explicit FriendItem(){}
 };

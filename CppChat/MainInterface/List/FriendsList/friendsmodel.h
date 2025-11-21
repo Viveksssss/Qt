@@ -15,7 +15,7 @@ public:
         NameRole,                   // 昵称
         AvatarRole,                 // 头像
         StatusRole,                 // 状态
-        MessageRole,                // 最近消息
+        DescRole,                   // 个性签名
     };
 
     explicit FriendsModel(QObject *parent = nullptr);
@@ -31,7 +31,7 @@ public:
     // 在 FriendsModel 类中添加方法
     QModelIndex indexFromUid(int uid) const;
 
-    QVector<FriendItem>getList();
+    QVector<FriendItem>&getList();
 
 private:
     QVector<FriendItem>_friends;

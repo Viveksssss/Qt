@@ -9,7 +9,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR})
 cmake_policy(SET CMP0167 NEW)
 find_package(PkgConfig REQUIRED)
 find_package(Boost REQUIRED)
-# 
+#
 # find_packageckage(Boost 1.70 REQUIRED COMPONENTS filesystem system)
 
 # pkg_check_modules(MYSQLPP REQUIRED mysql++)
@@ -23,7 +23,7 @@ pkg_check_modules(PROTOBUF REQUIRED IMPORTED_TARGET protobuf)
 pkg_check_modules(ABSL REQUIRED IMPORTED_TARGET absl_strings)
 
 
-add_executable(ChatServer 
+add_executable(ChatServer
     main.cpp
     grpc/message.grpc.pb.cc
     grpc/message.pb.cc
@@ -38,6 +38,7 @@ add_executable(ChatServer
     server/LogicSystem.cpp
     session/Session.cpp
     session/MsgNode.cpp
+    data/im.pb.cc
     redis/RedisManager.cpp
     mysql/MysqlManager.cpp
     mysql/MysqlDao.cpp

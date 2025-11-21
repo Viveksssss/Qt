@@ -1,5 +1,6 @@
 #include "MysqlManager.h"
 #include "MysqlDao.h"
+#include <cstdint>
 MysqlManager::~MysqlManager()
 {
 }
@@ -67,7 +68,7 @@ bool MysqlManager::MakeFriends(const std::string& fromUid, const std::string& to
     return _dao.MakeFriends(fromUid, toUid);
 }
 
-bool MysqlManager::CheckIsFriend(int fromUid, int toUid)
+bool MysqlManager::CheckIsFriend(const std::string& fromUid, const std::string& toUid)
 {
     return _dao.CheckIsFriend(fromUid, toUid);
 }
@@ -82,12 +83,12 @@ bool MysqlManager::GetNotificationList(const std::string& uid, std::vector<std::
     return _dao.GetNotificationList(uid, notificationList);
 }
 
-bool MysqlManager::GetFriendList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& friendList, int size)
+bool MysqlManager::GetFriendList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& friendList)
 {
-    return _dao.GetFriendList(uid, friendList, size);
+    return _dao.GetFriendList(uid, friendList);
 }
 
-bool MysqlManager::GetMessageList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& messageList, int size)
+bool MysqlManager::AddMessage(int from_uid, int to_uid, int64_t timestamp, int env, int content_type, const std::string& content_data, const std::string& content_mime_type, const std::string& fid)
 {
-    return _dao.GetMessageList(uid, messageList, size);
+    return _dao.AddMessage(from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, fid);
 }

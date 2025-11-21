@@ -39,8 +39,19 @@ Status ChatGrpcServer::NotifyAuthFriend(grpc::ServerContext* context, const Auth
 }
 Status ChatGrpcServer::NotifyTextChatMessage(grpc::ServerContext* context, const TextChatMessageRequest* request, TextChatMessageResponse* response)
 {
+    auto to_uid = request->touid();
+    auto session = UserManager::GetInstance()->GetSession(to_uid);
+    Defer defer([request, response]() {
+        response->set_error(static_cast<int>(ErrorCodes::SUCCESS));
+    });
+    if (session == nullptr) {
+        return Status::OK;
+    }
+
+    session->Send(request->data(), static_cast<int>(MsgId::ID_NOTIFY_TEXT_CHAT_MSG_REQ));
     return Status::OK;
 }
+
 bool ChatGrpcServer::ChatGrpcServer::GetBaseInfo(std::string base_key, int uid, std::shared_ptr<UserInfo>& userinfo)
 {
     return true;

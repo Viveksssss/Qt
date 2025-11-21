@@ -122,7 +122,7 @@ public:
      * @return true
      * @return false
      */
-    bool CheckIsFriend(int fromUid, int toUid);
+    bool CheckIsFriend(const std::string& fromUid, const std::string& toUid);
     /**
      * @brief 添加通知
      *
@@ -149,16 +149,14 @@ public:
      * @return true
      * @return false
      */
-    bool GetFriendList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>&, [[deprecated("暂时没有分段获取")]] int size = 20);
+    bool GetFriendList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>&);
     /**
-     * @brief 返回消息列表
+     * @brief 添加消息入库
      *
-     * @param uid
-     * @param size
      * @return true
      * @return false
      */
-    bool GetMessageList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>&, [[deprecated("暂时没有分段获取")]] int size = 20);
+    bool AddMessage(int from_uid, int to_uid, int64_t timestamp, int env, int content_type, const std::string& content_data, const std::string& content_mime_type, const std::string& fid);
 
 private:
     MysqlManager();

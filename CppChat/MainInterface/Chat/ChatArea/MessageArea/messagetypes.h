@@ -45,6 +45,7 @@ struct MessageItem{
     MessageEnv            env;          // 私聊还是群聊
     MessageContent        content;      // 实际的内容串
     bool                  isSelected;   // 之后可能会有聊天记录的选择，删除
+    int status;
 
     MessageItem()
         :id(QUuid::createUuid().toString())
@@ -52,7 +53,9 @@ struct MessageItem{
         ,timestamp(QDateTime::currentDateTime())
         ,env(MessageEnv::Private)
         ,from(MessageSource::Me)
-        ,isSelected(false){}
+        ,isSelected(false)
+        ,status(0)
+        {}
 };
 
 // 转成发给服务器的im::MessageItem
@@ -62,7 +65,7 @@ static im::MessageItem toPb(const MessageItem &m)
     pb.set_id(m.id.toStdString());
     pb.set_from_id(m.from_id);
     pb.set_to_id(m.to_id);
-    pb.set_timestamp(m.timestamp.toMSecsSinceEpoch());
+    pb.set_timestamp(m.timestamp.toString().toStdString());
     pb.set_env(static_cast<int32_t>(m.env));
 
 
@@ -77,11 +80,12 @@ static im::MessageItem toPb(const MessageItem &m)
 // 服务器收回来解析成MessageItem
 static MessageItem fromPb(const im::MessageItem&pb)
 {
+    QString format = "yyyy-MM-dd HH:mm:ss";
     MessageItem m;
     m.id                = QString::fromStdString(pb.id());
     m.to_id             = pb.to_id();
     m.from_id           = pb.from_id();
-    m.timestamp         = QDateTime::fromMSecsSinceEpoch(pb.timestamp());
+    m.timestamp         = QDateTime::fromString(QString::fromStdString(pb.timestamp()),format);
     m.env               = MessageEnv(pb.env());
     m.from              = MessageSource::Peer;
     m.content.fid       = QString::fromStdString(pb.content().fid());
@@ -90,6 +94,38 @@ static MessageItem fromPb(const im::MessageItem&pb)
     m.content.mimeType  = QString::fromStdString(pb.content().mime_type());
     return m;
 }
+/*
+
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        to_uid      INTEGER NOT NULL UNIQUE,
+        from_uid    INTEGER NOT NULL,
+        create_time INTEGER NOT NULL,
+        update_time INTEGER NOT NULL,
+        name        TEXT    NOT NULL,
+        icon        TEXT    NOT NULL
+*/
+
+struct ConversationItem
+{
+    QString id;
+    int     from_uid;
+    int     to_uid;
+    QDateTime create_time;
+    QDateTime update_time;
+    QString name;
+    QString icon;
+    int     status;
+    int     deleted;
+    int     pined;
+    QString message;
+
+    ConversationItem()
+        : id (QUuid::createUuid().toString())
+        , status(0)
+        , deleted(0)
+        , pined(0)
+    {}
+};
 
 Q_DECLARE_METATYPE(MessageContent)
 Q_DECLARE_METATYPE(QList<MessageContent>)

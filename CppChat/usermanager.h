@@ -7,6 +7,7 @@
 #include "Properties/singleton.h"
 
 enum class MessageEnv;
+struct ConversationItem;
 class UserManager
     : public QObject
     , public Singleton<UserManager>
@@ -59,6 +60,7 @@ public:
     void SetPeerEmail(const QString&)noexcept;
     void SetPeerAvatar(const QPixmap&)noexcept;
     void SetPeerDesc(const QString&)noexcept;
+    void SetPeerIcon(const QString&)noexcept;
 
     template <typename T>
     void SetPerrIcon(T &&icon) noexcept
@@ -80,10 +82,10 @@ public:
 
 
     std::vector<std::shared_ptr<UserInfo>>&GetFriends();
-    std::vector<std::shared_ptr<UserInfo>>&GetMessages();
+    std::vector<std::shared_ptr<ConversationItem>>&GetMessages();
 
     std::span<std::shared_ptr<UserInfo>>GetFriendsPerPage(int size = 20);
-    std::span<std::shared_ptr<UserInfo>>GetMessagesPerPage(int size = 20);
+    std::span<std::shared_ptr<ConversationItem>>GetMessagesPerPage(int size = 20);
 
     bool IsLoadFriendsFinished();
     bool IsLoadMessagesFinished();
@@ -116,7 +118,7 @@ private:
     int _friends_loaded;
 
     std::vector<std::shared_ptr<UserInfo>>_friends;
-    std::vector<std::shared_ptr<UserInfo>>_messages;
+    std::vector<std::shared_ptr<ConversationItem>>_messages;
 };
 
 #endif // USERMANAGER_H

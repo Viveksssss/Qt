@@ -66,10 +66,12 @@ inline constexpr MessageItem::Impl_::Impl_(
         id_(
             &::google::protobuf::internal::fixed_address_empty_string,
             ::_pbi::ConstantInitialized()),
+        timestamp_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
         content_{nullptr},
         to_id_{0},
         from_id_{0},
-        timestamp_{::int64_t{0}},
         env_{0} {}
 
 template <typename>
@@ -120,11 +122,11 @@ const ::uint32_t
         PROTOBUF_FIELD_OFFSET(::im::MessageItem, _impl_.env_),
         PROTOBUF_FIELD_OFFSET(::im::MessageItem, _impl_.content_),
         0,
-        2,
         3,
         4,
-        5,
         1,
+        5,
+        2,
 };
 
 static const ::_pbi::MigrationSchema
@@ -142,7 +144,7 @@ const char descriptor_table_protodef_im_2eproto[] ABSL_ATTRIBUTE_SECTION_VARIABL
     "\030\001 \001(\005\022\014\n\004data\030\002 \001(\t\022\021\n\tmime_type\030\003 \001(\t\022"
     "\013\n\003fid\030\004 \001(\t\"~\n\013MessageItem\022\n\n\002id\030\001 \001(\t\022"
     "\r\n\005to_id\030\002 \001(\005\022\017\n\007from_id\030\003 \001(\005\022\021\n\ttimes"
-    "tamp\030\004 \001(\003\022\013\n\003env\030\005 \001(\005\022#\n\007content\030\006 \001(\013"
+    "tamp\030\004 \001(\t\022\013\n\003env\030\005 \001(\005\022#\n\007content\030\006 \001(\013"
     "2\022.im.MessageContentb\006proto3"
 };
 static ::absl::once_flag descriptor_table_im_2eproto_once;
@@ -579,7 +581,8 @@ PROTOBUF_NDEBUG_INLINE MessageItem::Impl_::Impl_(
     [[maybe_unused]] const ::im::MessageItem& from_msg)
       : _has_bits_{from._has_bits_},
         _cached_size_{0},
-        id_(arena, from.id_) {}
+        id_(arena, from.id_),
+        timestamp_(arena, from.timestamp_) {}
 
 MessageItem::MessageItem(
     ::google::protobuf::Arena* PROTOBUF_NULLABLE arena,
@@ -595,7 +598,7 @@ MessageItem::MessageItem(
       from._internal_metadata_);
   new (&_impl_) Impl_(internal_visibility(), arena, from._impl_, from);
   ::uint32_t cached_has_bits = _impl_._has_bits_[0];
-  _impl_.content_ = (CheckHasBit(cached_has_bits, 0x00000002U))
+  _impl_.content_ = (CheckHasBit(cached_has_bits, 0x00000004U))
                 ? ::google::protobuf::Message::CopyConstruct(arena, *from._impl_.content_)
                 : nullptr;
   ::memcpy(reinterpret_cast<char*>(&_impl_) +
@@ -612,7 +615,8 @@ PROTOBUF_NDEBUG_INLINE MessageItem::Impl_::Impl_(
     [[maybe_unused]] ::google::protobuf::internal::InternalVisibility visibility,
     [[maybe_unused]] ::google::protobuf::Arena* PROTOBUF_NULLABLE arena)
       : _cached_size_{0},
-        id_(arena) {}
+        id_(arena),
+        timestamp_(arena) {}
 
 inline void MessageItem::SharedCtor(::_pb::Arena* PROTOBUF_NULLABLE arena) {
   new (&_impl_) Impl_(internal_visibility(), arena);
@@ -635,6 +639,7 @@ inline void MessageItem::SharedDtor(MessageLite& self) {
   this_._internal_metadata_.Delete<::google::protobuf::UnknownFieldSet>();
   ABSL_DCHECK(this_.GetArena() == nullptr);
   this_._impl_.id_.Destroy();
+  this_._impl_.timestamp_.Destroy();
   delete this_._impl_.content_;
   this_._impl_.~Impl_();
 }
@@ -682,7 +687,7 @@ MessageItem::GetClassData() const {
   return MessageItem_class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<3, 6, 1, 25, 2>
+const ::_pbi::TcParseTable<3, 6, 1, 34, 2>
 MessageItem::_table_ = {
   {
     PROTOBUF_FIELD_OFFSET(MessageItem, _impl_._has_bits_),
@@ -707,16 +712,16 @@ MessageItem::_table_ = {
      {10, 0, 0,
       PROTOBUF_FIELD_OFFSET(MessageItem, _impl_.id_)}},
     // int32 to_id = 2;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(MessageItem, _impl_.to_id_), 2>(),
-     {16, 2, 0,
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(MessageItem, _impl_.to_id_), 3>(),
+     {16, 3, 0,
       PROTOBUF_FIELD_OFFSET(MessageItem, _impl_.to_id_)}},
     // int32 from_id = 3;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(MessageItem, _impl_.from_id_), 3>(),
-     {24, 3, 0,
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(MessageItem, _impl_.from_id_), 4>(),
+     {24, 4, 0,
       PROTOBUF_FIELD_OFFSET(MessageItem, _impl_.from_id_)}},
-    // int64 timestamp = 4;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint64_t, offsetof(MessageItem, _impl_.timestamp_), 4>(),
-     {32, 4, 0,
+    // string timestamp = 4;
+    {::_pbi::TcParser::FastUS1,
+     {34, 1, 0,
       PROTOBUF_FIELD_OFFSET(MessageItem, _impl_.timestamp_)}},
     // int32 env = 5;
     {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(MessageItem, _impl_.env_), 5>(),
@@ -724,7 +729,7 @@ MessageItem::_table_ = {
       PROTOBUF_FIELD_OFFSET(MessageItem, _impl_.env_)}},
     // .im.MessageContent content = 6;
     {::_pbi::TcParser::FastMtS1,
-     {50, 1, 0,
+     {50, 2, 0,
       PROTOBUF_FIELD_OFFSET(MessageItem, _impl_.content_)}},
     {::_pbi::TcParser::MiniParse, {}},
   }}, {{
@@ -733,23 +738,24 @@ MessageItem::_table_ = {
     // string id = 1;
     {PROTOBUF_FIELD_OFFSET(MessageItem, _impl_.id_), _Internal::kHasBitsOffset + 0, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
     // int32 to_id = 2;
-    {PROTOBUF_FIELD_OFFSET(MessageItem, _impl_.to_id_), _Internal::kHasBitsOffset + 2, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
+    {PROTOBUF_FIELD_OFFSET(MessageItem, _impl_.to_id_), _Internal::kHasBitsOffset + 3, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
     // int32 from_id = 3;
-    {PROTOBUF_FIELD_OFFSET(MessageItem, _impl_.from_id_), _Internal::kHasBitsOffset + 3, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
-    // int64 timestamp = 4;
-    {PROTOBUF_FIELD_OFFSET(MessageItem, _impl_.timestamp_), _Internal::kHasBitsOffset + 4, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt64)},
+    {PROTOBUF_FIELD_OFFSET(MessageItem, _impl_.from_id_), _Internal::kHasBitsOffset + 4, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
+    // string timestamp = 4;
+    {PROTOBUF_FIELD_OFFSET(MessageItem, _impl_.timestamp_), _Internal::kHasBitsOffset + 1, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
     // int32 env = 5;
     {PROTOBUF_FIELD_OFFSET(MessageItem, _impl_.env_), _Internal::kHasBitsOffset + 5, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
     // .im.MessageContent content = 6;
-    {PROTOBUF_FIELD_OFFSET(MessageItem, _impl_.content_), _Internal::kHasBitsOffset + 1, 0, (0 | ::_fl::kFcOptional | ::_fl::kMessage | ::_fl::kTvTable)},
+    {PROTOBUF_FIELD_OFFSET(MessageItem, _impl_.content_), _Internal::kHasBitsOffset + 2, 0, (0 | ::_fl::kFcOptional | ::_fl::kMessage | ::_fl::kTvTable)},
   }},
   {{
       {::_pbi::TcParser::GetTable<::im::MessageContent>()},
   }},
   {{
-    "\16\2\0\0\0\0\0\0"
+    "\16\2\0\0\11\0\0\0"
     "im.MessageItem"
     "id"
+    "timestamp"
   }},
 };
 PROTOBUF_NOINLINE void MessageItem::Clear() {
@@ -760,16 +766,19 @@ PROTOBUF_NOINLINE void MessageItem::Clear() {
   (void) cached_has_bits;
 
   cached_has_bits = _impl_._has_bits_[0];
-  if (BatchCheckHasBit(cached_has_bits, 0x00000003U)) {
+  if (BatchCheckHasBit(cached_has_bits, 0x00000007U)) {
     if (CheckHasBit(cached_has_bits, 0x00000001U)) {
       _impl_.id_.ClearNonDefaultToEmpty();
     }
     if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+      _impl_.timestamp_.ClearNonDefaultToEmpty();
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000004U)) {
       ABSL_DCHECK(_impl_.content_ != nullptr);
       _impl_.content_->Clear();
     }
   }
-  if (BatchCheckHasBit(cached_has_bits, 0x0000003cU)) {
+  if (BatchCheckHasBit(cached_has_bits, 0x00000038U)) {
     ::memset(&_impl_.to_id_, 0, static_cast<::size_t>(
         reinterpret_cast<char*>(&_impl_.env_) -
         reinterpret_cast<char*>(&_impl_.to_id_)) + sizeof(_impl_.env_));
@@ -808,7 +817,7 @@ PROTOBUF_NOINLINE void MessageItem::Clear() {
   }
 
   // int32 to_id = 2;
-  if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+  if (CheckHasBit(cached_has_bits, 0x00000008U)) {
     if (this_._internal_to_id() != 0) {
       target =
           ::google::protobuf::internal::WireFormatLite::WriteInt32ToArrayWithField<2>(
@@ -817,7 +826,7 @@ PROTOBUF_NOINLINE void MessageItem::Clear() {
   }
 
   // int32 from_id = 3;
-  if (CheckHasBit(cached_has_bits, 0x00000008U)) {
+  if (CheckHasBit(cached_has_bits, 0x00000010U)) {
     if (this_._internal_from_id() != 0) {
       target =
           ::google::protobuf::internal::WireFormatLite::WriteInt32ToArrayWithField<3>(
@@ -825,12 +834,13 @@ PROTOBUF_NOINLINE void MessageItem::Clear() {
     }
   }
 
-  // int64 timestamp = 4;
-  if (CheckHasBit(cached_has_bits, 0x00000010U)) {
-    if (this_._internal_timestamp() != 0) {
-      target =
-          ::google::protobuf::internal::WireFormatLite::WriteInt64ToArrayWithField<4>(
-              stream, this_._internal_timestamp(), target);
+  // string timestamp = 4;
+  if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+    if (!this_._internal_timestamp().empty()) {
+      const ::std::string& _s = this_._internal_timestamp();
+      ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+          _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "im.MessageItem.timestamp");
+      target = stream->WriteStringMaybeAliased(4, _s, target);
     }
   }
 
@@ -844,7 +854,7 @@ PROTOBUF_NOINLINE void MessageItem::Clear() {
   }
 
   // .im.MessageContent content = 6;
-  if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+  if (CheckHasBit(cached_has_bits, 0x00000004U)) {
     target = ::google::protobuf::internal::WireFormatLite::InternalWriteMessage(
         6, *this_._impl_.content_, this_._impl_.content_->GetCachedSize(), target,
         stream);
@@ -883,30 +893,30 @@ PROTOBUF_NOINLINE void MessageItem::Clear() {
                                         this_._internal_id());
       }
     }
-    // .im.MessageContent content = 6;
+    // string timestamp = 4;
     if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+      if (!this_._internal_timestamp().empty()) {
+        total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                        this_._internal_timestamp());
+      }
+    }
+    // .im.MessageContent content = 6;
+    if (CheckHasBit(cached_has_bits, 0x00000004U)) {
       total_size += 1 +
                     ::google::protobuf::internal::WireFormatLite::MessageSize(*this_._impl_.content_);
     }
     // int32 to_id = 2;
-    if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000008U)) {
       if (this_._internal_to_id() != 0) {
         total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
             this_._internal_to_id());
       }
     }
     // int32 from_id = 3;
-    if (CheckHasBit(cached_has_bits, 0x00000008U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000010U)) {
       if (this_._internal_from_id() != 0) {
         total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
             this_._internal_from_id());
-      }
-    }
-    // int64 timestamp = 4;
-    if (CheckHasBit(cached_has_bits, 0x00000010U)) {
-      if (this_._internal_timestamp() != 0) {
-        total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(
-            this_._internal_timestamp());
       }
     }
     // int32 env = 5;
@@ -947,6 +957,15 @@ void MessageItem::MergeImpl(::google::protobuf::MessageLite& to_msg,
       }
     }
     if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+      if (!from._internal_timestamp().empty()) {
+        _this->_internal_set_timestamp(from._internal_timestamp());
+      } else {
+        if (_this->_impl_.timestamp_.IsDefault()) {
+          _this->_internal_set_timestamp("");
+        }
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000004U)) {
       ABSL_DCHECK(from._impl_.content_ != nullptr);
       if (_this->_impl_.content_ == nullptr) {
         _this->_impl_.content_ = ::google::protobuf::Message::CopyConstruct(arena, *from._impl_.content_);
@@ -954,19 +973,14 @@ void MessageItem::MergeImpl(::google::protobuf::MessageLite& to_msg,
         _this->_impl_.content_->MergeFrom(*from._impl_.content_);
       }
     }
-    if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000008U)) {
       if (from._internal_to_id() != 0) {
         _this->_impl_.to_id_ = from._impl_.to_id_;
       }
     }
-    if (CheckHasBit(cached_has_bits, 0x00000008U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000010U)) {
       if (from._internal_from_id() != 0) {
         _this->_impl_.from_id_ = from._impl_.from_id_;
-      }
-    }
-    if (CheckHasBit(cached_has_bits, 0x00000010U)) {
-      if (from._internal_timestamp() != 0) {
-        _this->_impl_.timestamp_ = from._impl_.timestamp_;
       }
     }
     if (CheckHasBit(cached_has_bits, 0x00000020U)) {
@@ -995,6 +1009,7 @@ void MessageItem::InternalSwap(MessageItem* PROTOBUF_RESTRICT PROTOBUF_NONNULL o
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
   swap(_impl_._has_bits_[0], other->_impl_._has_bits_[0]);
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.id_, &other->_impl_.id_, arena);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.timestamp_, &other->_impl_.timestamp_, arena);
   ::google::protobuf::internal::memswap<
       PROTOBUF_FIELD_OFFSET(MessageItem, _impl_.env_)
       + sizeof(MessageItem::_impl_.env_)

@@ -1,6 +1,7 @@
 #include "frienditemdelegate.h"
 #include "frienditem.h"
 #include "friendslistpart.h"
+#include "../../../Properties/signalrouter.h"
 #include "friendsmodel.h"
 #include <QFile>
 #include <QListView>
@@ -11,11 +12,20 @@
 #include <QPainterPath>
 #include <QStandardItemModel>
 #include <QTimer>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QLabel>
+#include <QPushButton>
+#include <QDialog>
+#include <QFrame>
+#include <QGraphicsDropShadowEffect>
 
 FriendItemDelegate::FriendItemDelegate(QWidget* parent,FriendsListPart*list)
     : QStyledItemDelegate(parent)
     , list(list)
 {
+    setupConnections();
+
     menu = new QMenu();
     toTopAction = new QAction("置顶",menu);
     selectAction = new QAction("选择",menu);
@@ -53,7 +63,7 @@ void FriendItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
     QString name = index.data(FriendsModel::NameRole).toString();
     QString avatarPath = index.data(FriendsModel::AvatarRole).toString();
     int status = index.data(FriendsModel::StatusRole).toInt();
-    QString message = index.data(FriendsModel::MessageRole).toString();
+    QString message = index.data(FriendsModel::DescRole).toString();
 
     // 3. 绘制头像
     QRect avatarRect(rect.left() + 10, rect.top() + 10, 40, 40);
@@ -167,6 +177,16 @@ bool FriendItemDelegate::editorEvent(QEvent *event, QAbstractItemModel *model, c
             showContextMenu(mouseEvent->globalPos(), index);
             return true;
         }
+    }else if(event->type() == QEvent::MouseButtonDblClick){
+        QMouseEvent*mouseEvent = static_cast<QMouseEvent*>(event);
+        if (mouseEvent->button() == Qt::LeftButton){
+            int id = index.data(FriendsModel::FriendRole::IdRole).toInt();
+            QString name = index.data(FriendsModel::FriendRole::NameRole).toString();
+            QString avatar = index.data(FriendsModel::FriendRole::AvatarRole).toString();
+            int status = index.data(FriendsModel::FriendRole::StatusRole).toInt();
+            QString desc = index.data(FriendsModel::FriendRole::DescRole).toString();
+            emit on_open_friend_info(id,name,avatar,status,desc);
+        }
     }
 
     return QStyledItemDelegate::editorEvent(event, model, option, index);
@@ -184,11 +204,6 @@ QListView *FriendItemDelegate::getList()
     return list->getList();
 }
 
-QPixmap FriendItemDelegate::getStatusPximap(const QString &status) const
-{
-
-}
-
 void FriendItemDelegate::showContextMenu(const QPoint &globalPos, const QModelIndex &index)
 {
     QAction *selectedAction = menu->exec(globalPos);
@@ -204,7 +219,7 @@ void FriendItemDelegate::showContextMenu(const QPoint &globalPos, const QModelIn
         if (pos == 0){
             return;
         }else{
-            bool ok = model->moveRow(QModelIndex(), pos,QModelIndex(), 0);
+            [[maybe_unused]]bool ok = model->moveRow(QModelIndex(), pos,QModelIndex(), 0);
         }
     }else if(selectedAction == selectAction){
         auto *p= list->getList();
@@ -215,4 +230,226 @@ void FriendItemDelegate::showContextMenu(const QPoint &globalPos, const QModelIn
     }else if(selectedAction == deleteAction){
         model->removeRow(index.row(),QModelIndex());
     }
+}
+
+void FriendItemDelegate::setupConnections()
+{
+    connect(this,&FriendItemDelegate::on_open_friend_info,this,&FriendItemDelegate::do_open_friend_info);
+}
+
+
+void FriendItemDelegate::do_open_friend_info(int uid, const QString &name, const QString &avatar, int status, const QString& desc)
+{
+    // 创建对话框
+    QDialog* infoDialog = new QDialog();
+    infoDialog->setWindowFlags(Qt::FramelessWindowHint); // 无边框窗口才能显示完整阴影
+    infoDialog->setAttribute(Qt::WA_TranslucentBackground); // 透明背景
+    // infoDialog->setModal(true);
+    QGraphicsDropShadowEffect*shadowEffect = new QGraphicsDropShadowEffect(infoDialog);
+    shadowEffect->setBlurRadius(1);
+    shadowEffect->setOffset(0,0);
+    shadowEffect->setColor(QColor(0,0,0));
+    infoDialog->setGraphicsEffect(shadowEffect);
+    infoDialog->setWindowTitle("好友信息");
+    infoDialog->setFixedSize(350, 250);
+    infoDialog->setWindowFlags(infoDialog->windowFlags() & ~Qt::WindowContextHelpButtonHint);
+
+    // 设置样式
+    infoDialog->setStyleSheet(
+        "QDialog {"
+        "    background-color: white;"
+        "    border-radius: 8px;"
+        "}"
+        "QLabel {"
+        "    color: #333333;"
+        "}"
+        "QLabel#nameLabel {"
+        "    font-size: 16px;"
+        "    font-weight: bold;"
+        "}"
+        "QLabel#uidLabel {"
+        "    font-size: 12px;"
+        "    color: #666666;"
+        "}"
+        "QLabel#descLabel {"
+        "    font-size: 13px;"
+        "    color: #444444;"
+        "    background-color: #f5f5f5;"
+        "    border-radius: 4px;"
+        "    padding: 8px;"
+        "}"
+        "QPushButton {"
+        "    background-color: #007ACC;"
+        "    color: white;"
+        "    border: none;"
+        "    border-radius: 4px;"
+        "    padding: 8px 16px;"
+        "    font-size: 13px;"
+        "}"
+        "QPushButton:hover {"
+        "    background-color: #005A9E;"
+        "}"
+        "QPushButton:pressed {"
+        "    background-color: #004578;"
+        "}"
+        );
+
+    // 主布局
+    QVBoxLayout* mainLayout = new QVBoxLayout(infoDialog);
+    mainLayout->setContentsMargins(20, 20, 20, 20);
+    mainLayout->setSpacing(15);
+
+    // 上部信息区域
+    QHBoxLayout* infoLayout = new QHBoxLayout();
+
+    // 头像
+    QLabel* avatarLabel = new QLabel();
+    avatarLabel->setFixedSize(62, 62);
+
+    QPixmap avatarPixmap;
+    if (!avatar.isEmpty() && QFile::exists(avatar)) {
+        if (avatar.startsWith(":/")) {
+            avatarPixmap = QPixmap(avatar);
+        } else {
+            // base64 或其他格式
+            QByteArray imageData = QByteArray::fromBase64(avatar.toUtf8());
+            avatarPixmap.loadFromData(imageData);
+        }
+    } else {
+        avatarPixmap = QPixmap(":/Resources/main/header-default.png");
+    }
+
+    avatarPixmap = avatarPixmap.scaled(60, 60, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    avatarLabel->setPixmap(avatarPixmap);
+    avatarLabel->setStyleSheet("border-radius: 30px; border: 1px solid #e0e0e0;");
+
+    // 右侧信息
+    QVBoxLayout* textLayout = new QVBoxLayout();
+    textLayout->setSpacing(10);
+
+    // 姓名
+    QLabel* nameLabel = new QLabel(name);
+    nameLabel->setObjectName("nameLabel");
+
+    // UID
+    QLabel* uidLabel = new QLabel(QString("UID: %1").arg(uid));
+    uidLabel->setObjectName("uidLabel");
+
+    textLayout->addWidget(nameLabel);
+    textLayout->addWidget(uidLabel);
+    textLayout->addStretch();
+
+    infoLayout->addWidget(avatarLabel);
+    infoLayout->addSpacing(15);
+    infoLayout->addLayout(textLayout);
+    infoLayout->addStretch();
+
+    // 个性签名
+    QLabel* descLabel = new QLabel(desc.isEmpty() ? "该用户暂时没有个性签名" : desc);
+    descLabel->setObjectName("descLabel");
+    descLabel->setWordWrap(true);
+    descLabel->setAlignment(Qt::AlignTop);
+    descLabel->setFixedHeight(80);
+    descLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+    // 按钮区域
+    QHBoxLayout* buttonLayout = new QHBoxLayout();
+    buttonLayout->setSpacing(10);
+    QPushButton* messageBtn = createIconButton(":/Resources/main/text_chat.png", "发消息", 16);
+    // 语音聊天按钮
+    QPushButton* voiceBtn = createIconButton(":/Resources/main/audio_chat.png", "语音聊天", 16);
+    // 视频聊天按钮
+    QPushButton* videoBtn = createIconButton(":/Resources/main/video_chat.png", "视频聊天", 16);
+
+    // 连接按钮信
+    connect(messageBtn, &QPushButton::clicked, infoDialog, [this, uid,infoDialog]() {
+
+        emit SignalRouter::GetInstance().on_change_peer(uid);
+        infoDialog->accept();
+    });
+
+    connect(voiceBtn, &QPushButton::clicked, infoDialog, [this, uid,infoDialog]() {
+        emit SignalRouter::GetInstance().on_change_peer(uid);
+        infoDialog->accept();
+    });
+
+    connect(videoBtn, &QPushButton::clicked, infoDialog, [this, uid,infoDialog]() {
+        emit SignalRouter::GetInstance().on_change_peer(uid);
+        infoDialog->accept();
+    });
+
+    buttonLayout->addStretch();
+    buttonLayout->addWidget(messageBtn);
+    buttonLayout->addWidget(voiceBtn);
+    buttonLayout->addWidget(videoBtn);
+    buttonLayout->addStretch();
+
+    // 添加到主布局
+    mainLayout->addLayout(infoLayout);
+    mainLayout->addWidget(descLabel);
+    mainLayout->addStretch();
+    mainLayout->addLayout(buttonLayout);
+    // mainLayout->addStretch();
+
+    // 显示在父窗口中央
+    if (QWidget* parent = qobject_cast<QWidget*>(this->parent())) {
+        QPoint center = parent->mapToGlobal(parent->rect().center());
+        infoDialog->move(center.x() - 200, center.y() - 150);
+    }
+
+    // 显示对话框（非模态）
+    infoDialog->setAttribute(Qt::WA_DeleteOnClose);
+    infoDialog->show();
+}
+
+
+// 创建图标按钮的辅助函数
+QPushButton* FriendItemDelegate::createIconButton(const QString& iconPath, const QString& text, int iconSize)
+{
+    QPushButton* button = new QPushButton();
+    button->setFixedSize(60, 40); // 固定按钮大小
+
+    // 设置按钮样式 - 关键在这里
+    button->setStyleSheet(
+        "QPushButton {"
+        "    background-color: transparent;"
+        "    border: 1px solid #e0e0e0;"
+        "    border-radius: 6px;"
+        "}"
+        "QPushButton:hover {"
+        "    background-color: #f8f9fa;"
+        "    border-color: #007ACC;"
+        "}"
+        "QPushButton:pressed {"
+        "    background-color: #e9ecef;"
+        "}"
+        );
+
+    QVBoxLayout* layout = new QVBoxLayout(button);
+    // layout->setContentsMargins(5, 8, 5, 5);
+    layout->setSpacing(5);
+
+    // 图标
+    QLabel* iconLabel = new QLabel();
+    QPixmap iconPixmap(iconPath);
+    if (iconPixmap.isNull()) {
+        // 如果图标不存在，使用默认图标或文字
+        iconLabel->setText("💬");
+        iconLabel->setStyleSheet("font-size: 20px; background: transparent;");
+    } else {
+        iconPixmap = iconPixmap.scaled(iconSize, iconSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        iconLabel->setPixmap(iconPixmap);
+    }
+    iconLabel->setAlignment(Qt::AlignCenter);
+    iconLabel->setStyleSheet("background: transparent;"); // 确保图标标签背景透明
+
+    // 文字
+    QLabel* textLabel = new QLabel(text);
+    textLabel->setAlignment(Qt::AlignCenter);
+    textLabel->setStyleSheet("font-size: 11px; color: #333333; background: transparent;");
+
+    layout->addWidget(iconLabel);
+    layout->addWidget(textLabel);
+
+    return button;
 }

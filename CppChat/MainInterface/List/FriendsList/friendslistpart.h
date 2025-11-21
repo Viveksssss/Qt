@@ -24,6 +24,7 @@ struct UserInfo;
 class FriendsListPart : public QWidget
 {
     Q_OBJECT
+    friend class FriendItemDelegate;
 public:
     explicit FriendsListPart(QWidget *parent = nullptr);
     QListView* getList();

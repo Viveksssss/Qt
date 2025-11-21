@@ -24,10 +24,10 @@ Status ChatGrpcServer::NotifyAddFriend(grpc::ServerContext* context, const AddFr
     json j;
     j["error"] = ErrorCodes::SUCCESS;
     j["from_uid"] = request->fromuid();
-    j["from_name"] = request->name();
-    j["from_icon"] = request->icon();
-    j["from_sex"] = request->sex();
-    j["from_desc"] = request->desc();
+    j["name"] = request->name();
+    j["icon"] = request->icon();
+    j["sex"] = request->sex();
+    j["desc"] = request->desc();
 
     session->Send(j.dump(), static_cast<int>(MsgId::ID_NOTIFY_ADD_FRIEND_REQ));
 
@@ -39,8 +39,19 @@ Status ChatGrpcServer::NotifyAuthFriend(grpc::ServerContext* context, const Auth
 }
 Status ChatGrpcServer::NotifyTextChatMessage(grpc::ServerContext* context, const TextChatMessageRequest* request, TextChatMessageResponse* response)
 {
+    auto to_uid = request->touid();
+    auto session = UserManager::GetInstance()->GetSession(to_uid);
+    Defer defer([request, response]() {
+        response->set_error(static_cast<int>(ErrorCodes::SUCCESS));
+    });
+    if (session == nullptr) {
+        return Status::OK;
+    }
+
+    session->Send(request->data(), static_cast<int>(MsgId::ID_TEXT_CHAT_MSG_REQ));
     return Status::OK;
 }
+
 bool ChatGrpcServer::ChatGrpcServer::GetBaseInfo(std::string base_key, int uid, std::shared_ptr<UserInfo>& userinfo)
 {
     return true;
@@ -71,7 +82,7 @@ Status ChatGrpcServer::NotifyMakeFriends(grpc::ServerContext* context, const Not
     j["from_name"] = request->fromname();
     j["from_sex"] = request->fromsex();
     j["from_icon"] = request->fromicon();
-    j["from_status"] = 1;
+    j["from_status"] = request->fromstatus();
     j["type"] = request->type();
     j["message"] = request->message();
 
@@ -101,7 +112,7 @@ Status ChatGrpcServer::NotifyFriendOnline(grpc::ServerContext* context, const No
     j["icon"] = request->icon();
     j["message"] = request->message();
 
-    session->Send(j.dump(), static_cast<int>(MsgId::ID_NOTIFY_AUTH_FRIEND_REQ));
+    session->Send(j.dump(), static_cast<int>(MsgId::ID_NOTIFY));
 
     return Status::OK;
 }

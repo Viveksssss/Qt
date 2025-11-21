@@ -171,7 +171,7 @@ void FriendsListPart::do_loading_users()
     //TODO:
     // 动态获取信息
     for(auto&info:UserManager::GetInstance()->GetFriendsPerPage()){
-        friendsModel->addFriend(FriendItem(info->id, info->status,info->sex,info->name,info->avatar,info->back ));
+        friendsModel->addFriend(FriendItem(info->id, info->status,info->sex,info->name,info->avatar,info->desc ));
     }
 
     QTimer::singleShot(1000,this,[this](){

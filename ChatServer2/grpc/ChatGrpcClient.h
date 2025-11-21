@@ -2,6 +2,7 @@
 #define CHATGRPCCLIENT_H
 
 #include "../data/UserInfo.h"
+#include "../data/im.pb.h"
 #include "../global/Singleton.h"
 #include "../global/const.h"
 #include "RPCPool.h"
@@ -37,21 +38,15 @@ using message::NotifyMakeFriendsResponse;
 using message::NotifyFriendOnlineRequest;
 using message::NotifyFriendOnlineResponse;
 
+using im::MessageContent;
+using im::MessageItem;
+
 class ChatGrpcClient : public Singleton<ChatGrpcClient> {
     friend class Singleton<ChatGrpcClient>;
 
 public:
     ~ChatGrpcClient() = default;
-    /**
-     * @brief 获取用户的基本信息
-     *
-     * @param base_key
-     * @param uid
-     * @param userinfo
-     * @return true
-     * @return false
-     */
-    bool GetBaseInfo(std::string base_key, int uid, std::shared_ptr<UserInfo>& userinfo);
+
     /**
      * @brief 添加好友请求
      *
@@ -73,7 +68,7 @@ public:
      * @param req
      * @return TextChatMessageResponse
      */
-    TextChatMessageResponse NotifyTextChatMessage(std::string server_ip, const TextChatMessageRequest& req, const json&);
+    TextChatMessageResponse NotifyTextChatMessage(std::string server_ip, const TextChatMessageRequest& req);
     /**
      * @brief 通知好友已经建立关系了
      *

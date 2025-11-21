@@ -22,24 +22,25 @@ class QLabel;
 
 struct UserInfo;
 
-struct FriendItem;
+struct ConversationItem;
 class MessagesListPart : public QWidget
 {
     Q_OBJECT
+    friend class MessagesItemDelegate;
 public:
     explicit MessagesListPart(QWidget *parent = nullptr);
     QListView* getList();
 private:
     void setupUI();
     void setupConnections();
-    std::shared_ptr<UserInfo> userFor(const QModelIndex&index);
+    std::shared_ptr<ConversationItem> userFor(const QModelIndex&index);
 signals:
     void on_loading_messages(); // to do_loading_messages
 
 private slots:
     void do_loading_messages();
-    void do_add_message_to_list(FriendItem); // from TcpManager::on_add_message_to_list;
-    void do_add_messages_to_list(const std::span<std::shared_ptr<UserInfo>>&list); // from TcpManager::on_add_messages_to_list;
+    void do_add_message_to_list(const ConversationItem&); // from TcpManager::on_add_message_to_list;
+    void do_add_messages_to_list(const std::span<std::shared_ptr<ConversationItem>>&list); // from TcpManager::on_add_messages_to_list;
     void do_change_message_status(int,int);  // from MessagesNewsItem->SignalRouter::on_change_message_status;
 
 private:

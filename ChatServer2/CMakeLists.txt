@@ -39,6 +39,7 @@ add_executable(ChatServer2
     redis/RedisManager.cpp
     mysql/MysqlManager.cpp
     mysql/MysqlDao.cpp
+    data/im.pb.cc
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE Boost::headers)

@@ -2,7 +2,9 @@
 #include "tcpmanager.h"
 #include "LoginInterface/loginscreen.h"
 #include "MainInterface/mainscreen.h"
+#include "MainInterface/Chat/ChatArea/MessageArea/messagetypes.h"
 #include "usermanager.h"
+#include "../database.h"
 
 #include <QDir>
 #include <QGuiApplication>
@@ -23,10 +25,15 @@ MainWindow::MainWindow(QWidget *parent)
         emit TcpManager::GetInstance()->on_switch_interface();
     });
 
-    auto&p = UserManager::GetInstance()->GetFriends();
-    auto&p2 = UserManager::GetInstance()->GetMessages();
-    p.push_back(std::make_shared<UserInfo>(1,1,1,"asdasdasd","asdasd","asdasdas"));
-    p2.push_back(std::make_shared<UserInfo>(1,1,1,"asdasdasd","asdasd","asdasdas"));
+    // auto&p = UserManager::GetInstance()->GetFriends();
+    // auto&p2 = UserManager::GetInstance()->GetMessages();
+    // auto ppp = std::make_shared<UserInfo>(1,1,1,"asdasdasd","asdasd","asdasdas");
+    // ppp->desc = "哥只是个传说";
+    // p.push_back(ppp);
+    // auto pp = std::make_shared<ConversationItem>();
+    // pp->name = "asdas";
+    // pp->message = "你好啊，我是大狗熊哦嘿嘿";
+    // p2.push_back(pp);
 
 }
 
@@ -65,6 +72,9 @@ void MainWindow::setConnections()
         // 居中显示
         move(screenGeometry.width()/2 - width/2,
              screenGeometry.height()/2 - height/2);
+
+        // 初始化本地数据库
+        DataBase::GetInstance().initialization();
     });
 }
 

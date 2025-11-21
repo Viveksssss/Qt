@@ -31,6 +31,8 @@ enum class RequestType{
     ID_HEART_BEAT_REQ = 1023,      //心跳请求
     ID_HEARTBEAT_RSP = 1024,       //心跳回复
     ID_NOTIFY = 1025, // 通知用户建立好友关系
+    ID_GET_MESSAGES_OF_FRIEND_REQ = 1026, // 获取与某个好友的信息请求
+    ID_GET_MESSAGES_OF_FRIEND_RSP = 1027, // 获取消息回包
 };
 
 enum class Modules{
@@ -83,6 +85,7 @@ struct FriendInfo
     bool isFriend;
     QString name;
     QString avatar;
+    QString desc;
     FriendInfo(int id,const QString&avatar,const QString&name,int sex,int status,bool isFriend)
         : id (id)
         , avatar(avatar)
