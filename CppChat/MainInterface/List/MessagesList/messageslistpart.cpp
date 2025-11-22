@@ -130,6 +130,8 @@ void MessagesListPart::setupConnections()
             emit SignalRouter::GetInstance().on_change_message_selection(item);
         }
     });
+    // 切换列表
+    connect(&SignalRouter::GetInstance(),&SignalRouter::on_change_peer,this,&MessagesListPart::do_change_peer);
 }
 
 
@@ -192,4 +194,21 @@ void MessagesListPart::do_change_message_status(int uid,int status)
 {
     auto index = messagesModel->indexFromUid(uid);
     messagesModel->setData(index,status,MessagesModel::StatusRole);
+}
+
+void MessagesListPart::do_change_peer(int peerUid)
+{
+    auto index = messagesModel->indexFromUid(peerUid);
+    if (index.isValid()){
+        // 跳转到消息列表
+        emit SignalRouter::GetInstance().on_to_list(0);
+        messagesList->setCurrentIndex(index);   // 切换列表索引至当前好友
+    }else{
+        ConversationItem conv;
+        conv.to_uid = peerUid;
+        conv.name = UserManager::GetInstance()->GetPeerName();
+        conv.icon = UserManager::GetInstance()->GetPeerIcon();
+        messagesModel->addPreMessage(conv);
+        messagesList->setCurrentIndex(messagesModel->index(0, 0));
+    }
 }

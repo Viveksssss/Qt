@@ -18,6 +18,8 @@ signals:
     void on_add_message_to_list(ConversationItem);        // from FriendsItem::clicked
     void on_change_list(int);                       // from SideBar::ButtonGroup::clicked
     void on_change_peer(int);                       // from FriendsDelegate::dialog::clicked/MessageItem::clicked
+    void on_change_last_time(int,QDateTime);                     // from DataBase::getMessages
+    void on_to_list(int);                      // from MessageDelegate::do_change_peer
 public slots:
 
 };

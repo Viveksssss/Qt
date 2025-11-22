@@ -163,6 +163,28 @@ void MessageModel::addMessage(const MessageItem &message)
     endInsertRows();
 }
 
+void MessageModel::addMessage(std::shared_ptr<MessageItem> message)
+{
+    beginInsertRows(QModelIndex(),messages.size(),messages.size());
+    messages.append(*message);
+    endInsertRows();
+}
+
+void MessageModel::addPreMessage(std::shared_ptr<MessageItem> message)
+{
+    if (!message) return;
+    beginInsertRows(QModelIndex(), 0, 0);
+    messages.insert(0, *message);
+    endInsertRows();
+}
+
+void MessageModel::addPreMessage(MessageItem message)
+{
+    beginInsertRows(QModelIndex(), 0, 0);
+    messages.insert(0, message);
+    endInsertRows();
+}
+
 void MessageModel::addMessage(const QList<MessageItem> &_messages)
 {
     if (messages.isEmpty())return;

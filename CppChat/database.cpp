@@ -189,7 +189,7 @@ bool DataBase::storeMessages(const std::vector<std::shared_ptr<MessageItem>> &me
     qDebug() << "Successfully stored" << messages.size() << "messages (shared_ptr version)";
     return true;
 }
-std::vector<MessageItem> DataBase::getMessages(int peerUid, int limit, qint64 sinceTimestamp)
+std::vector<MessageItem> DataBase::getMessages(int peerUid,  QString sinceTimestamp,int limit)
 {
     std::vector<MessageItem>messages;
     QSqlQuery query(_db);
@@ -202,8 +202,8 @@ std::vector<MessageItem> DataBase::getMessages(int peerUid, int limit, qint64 si
     QVariantList params;
     params << peerUid <<UserManager::GetInstance()->GetUid() << UserManager::GetInstance()->GetUid() << peerUid;
 
-    if (sinceTimestamp > 0){
-        sql += "AND timestamp > ? ";
+    if (!sinceTimestamp.isEmpty()){
+        sql += "AND timestamp < ? ";
         params << sinceTimestamp;
     }
 
@@ -221,8 +221,14 @@ std::vector<MessageItem> DataBase::getMessages(int peerUid, int limit, qint64 si
         qDebug() << "Failed To Get Messages:" << query.lastError().text();
         return messages;
     }
+    bool firstMessage = true;
     while(query.next()){
         messages.push_back(createMessageFromQuery(query));
+        if (firstMessage){
+            firstMessage = false;
+            QDateTime last_time = query.value("timestamp").toDateTime();
+            emit SignalRouter::GetInstance().on_change_last_time(peerUid,last_time);
+        }
     }
     return messages;
 }
@@ -681,7 +687,7 @@ std::vector<UserInfo> DataBase::getFriends()
     return friends;
 }
 
-std::vector<std::shared_ptr<UserInfo> > DataBase::getFriendsPtr()
+std::vector<std::shared_ptr<UserInfo>> DataBase::getFriendsPtr()
 {
     std::vector<std::shared_ptr<UserInfo> >friends;
     QSqlQuery query(_db);

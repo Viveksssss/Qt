@@ -79,7 +79,7 @@ QModelIndex MessagesModel::indexFromUid(int uid) const
     // 遍历所有行，检查uid角色
     for (int row = 0; row < rowCount(); ++row) {
         QModelIndex index = createIndex(row, 0);
-        if (data(index, IdRole).toInt() == uid) {
+        if (data(index, ToUidRole).toInt() == uid) {
             return index;
         }
     }

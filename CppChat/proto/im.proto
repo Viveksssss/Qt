@@ -16,3 +16,17 @@ message MessageItem {
     int32  env       = 5;
     MessageContent content =6;
 }
+
+message GetChatHistoryRequest{
+    int32 from_uid = 1;
+    int32 to_uid = 2;
+    string timestamp = 3;
+    int32 load_size = 4;
+}
+
+message GetChatHistoryResponse{
+    int32 from_uid = 1;
+    int32 to_uid = 2;
+    repeated MessageItem messages = 3;
+    bool has_more = 4;
+}

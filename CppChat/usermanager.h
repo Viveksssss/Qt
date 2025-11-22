@@ -16,6 +16,7 @@ class UserManager
     Q_OBJECT
     friend class Singleton<UserManager>;
 public:
+    void setupConnections();
 
     QString pixmapToBase64(const QPixmap& pixmap, const QString& format = "PNG");
 
@@ -83,12 +84,15 @@ public:
 
     std::vector<std::shared_ptr<UserInfo>>&GetFriends();
     std::vector<std::shared_ptr<ConversationItem>>&GetMessages();
+    std::unordered_map<int,QDateTime>&GetTimestamp();
 
     std::span<std::shared_ptr<UserInfo>>GetFriendsPerPage(int size = 20);
     std::span<std::shared_ptr<ConversationItem>>GetMessagesPerPage(int size = 20);
 
     bool IsLoadFriendsFinished();
     bool IsLoadMessagesFinished();
+    QDateTime GetHistoryTimestamp(int);
+    bool HasHistory(int)const;
 private:
     UserManager();
 
@@ -119,6 +123,11 @@ private:
 
     std::vector<std::shared_ptr<UserInfo>>_friends;
     std::vector<std::shared_ptr<ConversationItem>>_messages;
+    std::unordered_map<int,QDateTime>_timestamp;
+
+
+public slots:
+    void do_change_last_time(int,QDateTime);         // from SignalRouter::on_change_last_time
 };
 
 #endif // USERMANAGER_H

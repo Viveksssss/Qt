@@ -75,6 +75,17 @@ void MainWindow::setConnections()
 
         // 初始化本地数据库
         DataBase::GetInstance().initialization();
+
+        // qDebug() << DataBase::GetInstance().getFriendsPtr().size();
+        // qDebug() << DataBase::GetInstance().getConversationListPtr().size();
+
+
+        // UserManager::GetInstance()->SetPeerUid(1);
+        UserManager::GetInstance()->GetFriends() = DataBase::GetInstance().getFriendsPtr();
+        UserManager::GetInstance()->GetMessages() = DataBase::GetInstance().getConversationListPtr();
+
+        emit TcpManager::GetInstance()->on_add_friends_to_list(UserManager::GetInstance()->GetFriendsPerPage());
+        emit TcpManager::GetInstance()->on_add_messages_to_list(UserManager::GetInstance()->GetMessagesPerPage());
     });
 }
 

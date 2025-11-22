@@ -42,6 +42,7 @@ private slots:
     void do_add_message_to_list(const ConversationItem&); // from TcpManager::on_add_message_to_list;
     void do_add_messages_to_list(const std::span<std::shared_ptr<ConversationItem>>&list); // from TcpManager::on_add_messages_to_list;
     void do_change_message_status(int,int);  // from MessagesNewsItem->SignalRouter::on_change_message_status;
+    void do_change_peer(int);
 
 private:
     QLabel *title;

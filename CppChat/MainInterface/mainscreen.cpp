@@ -3,6 +3,7 @@
 #include <QHBoxLayout>
 #include <QPushButton>
 #include <QFrame>
+#include <QTimer>
 #include "List/listpart.h"
 #include "sidebarpart.h"
 #include "toptitlepart.h"
@@ -44,8 +45,8 @@ void MainScreen::setupUI()
     sideBarPart = new SideBarPart(this);
     // FriendsListPart
     listPart = new ListPart(this);
-    bar_friends_hlay->addWidget(sideBarPart,0);
-    bar_friends_hlay->addWidget(listPart,0);
+    bar_friends_hlay->addWidget(sideBarPart);
+    bar_friends_hlay->addWidget(listPart,1);
 
     // ChatPart
     chatPart = new ChatPart(this);
@@ -68,6 +69,7 @@ void MainScreen::setupUI()
     sep2->setStyleSheet("color: #c0c0c0;");
     sep2->setContentsMargins(0,20,0,20);
     bar_friends_hlay->addWidget(sep2);
+
 
 }
 

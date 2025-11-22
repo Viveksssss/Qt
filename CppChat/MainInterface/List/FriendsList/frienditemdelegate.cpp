@@ -363,7 +363,6 @@ void FriendItemDelegate::do_open_friend_info(int uid, const QString &name, const
 
     // 连接按钮信
     connect(messageBtn, &QPushButton::clicked, infoDialog, [this, uid,infoDialog]() {
-
         emit SignalRouter::GetInstance().on_change_peer(uid);
         infoDialog->accept();
     });

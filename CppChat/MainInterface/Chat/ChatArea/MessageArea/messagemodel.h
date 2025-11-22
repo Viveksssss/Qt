@@ -32,6 +32,9 @@ public:
 
     QHash<int,QByteArray>roleNames()const override;
     void addMessage(const MessageItem&message);
+    void addMessage(std::shared_ptr<MessageItem>message);
+    void addPreMessage(std::shared_ptr<MessageItem>message);
+    void addPreMessage(MessageItem message);
     void addMessage(const QList<MessageItem>&messages);
     void removeMessage(const QString&id);
     void clearMessage();

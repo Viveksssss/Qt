@@ -1,5 +1,6 @@
 #include "messageitemdelegate.h"
 #include "../FriendsList/frienditem.h"
+#include "../../../../Properties/signalrouter.h"
 #include "messageslistpart.h"
 #include "messagesmodel.h"
 #include <QFile>
@@ -166,6 +167,11 @@ bool MessageItemDelegate::editorEvent(QEvent *event, QAbstractItemModel *model, 
         QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
         if (mouseEvent->button() == Qt::RightButton){
             showContextMenu(mouseEvent->globalPos(), index);
+            return true;
+        }else if(mouseEvent->button() == Qt::LeftButton){
+            UserManager::GetInstance()->SetPeerUid(index.data(MessagesModel::ToUidRole).toInt());
+            qDebug() << "点击了列表：" << index.data(MessagesModel::ToUidRole).toInt();
+            emit SignalRouter::GetInstance().on_change_peer(index.data(MessagesModel::ToUidRole).toInt());
             return true;
         }
     }

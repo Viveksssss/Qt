@@ -9,6 +9,7 @@
 #include <functional>
 
 struct ConversationItem;
+struct MessageItem;
 class TcpManager
     : public QObject
     , public Singleton<TcpManager>
@@ -63,6 +64,7 @@ signals:
     void on_notify_friend(std::shared_ptr<UserInfo>info,bool accept);   // to NotificationPanel::do_notify_friend
     void on_notify_friend2(std::shared_ptr<UserInfo>info,bool accept);   // to NotificationPanel::do_notify_friend2
     void on_change_friend_status(int,int);  // to FriendsListPart::do_change_friend_status;
+    void on_change_chat_history(std::vector<std::shared_ptr<MessageItem>>); // to ChatArea::do_change_chat_history;
 };
 
 #endif // TCPMANAGER_H

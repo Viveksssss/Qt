@@ -5,6 +5,7 @@
 #include <vector>
 #include <memory>
 #include "MainInterface/Chat/ChatArea/MessageArea/messagetypes.h"
+#include "../Properties/signalrouter.h"
 
 
 class DataBase
@@ -22,7 +23,7 @@ public:
     bool storeMessages(const std::vector<MessageItem>&messages);
     bool storeMessages(const std::vector<std::shared_ptr<MessageItem>>&messages);
 
-    std::vector<MessageItem>getMessages(int peerUid,int limit = 100,qint64 sinceTimestamp = 0);
+    std::vector<MessageItem>getMessages(int peerUid, QString sinceTimestamp = 0,int limit = 20);
 
     bool updateMessageStatus(int messageId,int status);
 

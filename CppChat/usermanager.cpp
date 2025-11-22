@@ -1,5 +1,6 @@
 #include "usermanager.h"
 #include "MainInterface/Chat/ChatArea/MessageArea/messagetypes.h"
+#include "../Properties/signalrouter.h"
 #include <QBuffer>
 #include <span>
 
@@ -201,6 +202,11 @@ std::vector<std::shared_ptr<ConversationItem> > &UserManager::GetMessages()
     return this->_messages;
 }
 
+std::unordered_map<int, QDateTime> &UserManager::GetTimestamp()
+{
+    return this->_timestamp;
+}
+
 std::span<std::shared_ptr<UserInfo> > UserManager::GetFriendsPerPage(int size)
 {
     if (size <= 0 || _friends_loaded >= _friends.size()) {
@@ -216,7 +222,7 @@ std::span<std::shared_ptr<UserInfo> > UserManager::GetFriendsPerPage(int size)
 
 std::span<std::shared_ptr<ConversationItem>>  UserManager::GetMessagesPerPage(int size)
 {
-    if (size <= 0 || _friends_loaded >= _friends.size()) {
+    if (size <= 0 || _messages_loaded >= _messages.size()) {
         return {};
     }
 
@@ -238,6 +244,15 @@ bool UserManager::IsLoadMessagesFinished()
     return _messages_loaded>=_messages.size()?true:false;
 }
 
+QDateTime UserManager::GetHistoryTimestamp(int peerUid)
+{
+    return _timestamp[peerUid];
+}
+
+bool UserManager::HasHistory(int peerUid) const
+{
+    return _timestamp.find(peerUid)!=_timestamp.end();
+}
 
 UserManager::UserManager()
     : _name("")
@@ -247,7 +262,15 @@ UserManager::UserManager()
     , _friends_loaded(0)
 {}
 
+void UserManager::do_change_last_time(int uid, QDateTime time)
+{
+    _timestamp[uid] = time;
+}
 
+void UserManager::setupConnections()
+{
+    connect(&SignalRouter::GetInstance(),&SignalRouter::on_change_last_time,this,&UserManager::do_change_last_time);
+}
 
 QString UserManager::pixmapToBase64(const QPixmap& pixmap, const QString& format) {
     if (pixmap.isNull()) {

@@ -408,7 +408,13 @@ void TcpManager::initHandlers()
             return;
         }
 
-        // TODO:
+        std::vector<std::shared_ptr<MessageItem>>historys;
+        if (jsonObj.contains("historys")){
+            const QJsonArray&array = jsonObj["historys"].toArray();
+            for (const auto&item:array){
+                QJsonObject obj = item.toObject();
+            }
+        }
     };
 
 }
