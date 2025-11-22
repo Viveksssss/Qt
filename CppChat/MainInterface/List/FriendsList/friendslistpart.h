@@ -19,7 +19,7 @@ class FriendItemDelegate;
 class QListView;
 class QPushButton;
 class QLabel;
-
+class MessageItem;
 struct UserInfo;
 class FriendsListPart : public QWidget
 {

@@ -145,6 +145,8 @@ void FriendsNewsItem::do_accept_clicked()
             TcpManager::GetInstance()->do_send_data(RequestType::ID_AUTH_FRIEND_REQ,doc.toJson(QJsonDocument::Compact));
         }else if (_code == static_cast<int>(NotificationCodes::ID_NOTIFY_FRIEND_ONLINE)){
             emit SignalRouter::GetInstance().on_change_friend_status(_uid,1);
+        }else if(_code == static_cast<int>(NotificationCodes::ID_NOTIFY_NOT_FRIENDs)){
+
         }
     }else{
         emit on_accepted_clicked(); // 提示消除item
@@ -155,6 +157,7 @@ void FriendsNewsItem::do_accept_clicked()
         jsonObj["from_name"] = UserManager::GetInstance()->GetName();
         jsonObj["from_sex"] = UserManager::GetInstance()->GetSex();
         jsonObj["from_icon"] =UserManager::GetInstance()->GetIcon();
+        jsonObj["from_desc"] =UserManager::GetInstance()->GetDesc();
         jsonObj["accept"] = true;
         QJsonDocument doc(jsonObj);
         qDebug() << "MyName:" << UserManager::GetInstance()->GetName();
@@ -172,6 +175,7 @@ void FriendsNewsItem::do_reject_clcked()
     jsonObj["from_name"] = UserManager::GetInstance()->GetName();
     jsonObj["from_sex"] = UserManager::GetInstance()->GetSex();
     jsonObj["from_icon"] =UserManager::GetInstance()->GetIcon();
+    jsonObj["from_desc"] =UserManager::GetInstance()->GetDesc();
     jsonObj["accept"] = false;
     QJsonDocument doc(jsonObj);
     TcpManager::GetInstance()->do_send_data(RequestType::ID_AUTH_FRIEND_REQ,doc.toJson(QJsonDocument::Compact));

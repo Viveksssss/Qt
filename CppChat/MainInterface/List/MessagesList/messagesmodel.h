@@ -18,9 +18,11 @@ public:
         AvatarRole,                 // 头像
         StatusRole,                 // 状态
         MessageRole,                // 最近消息
+        RedDotRole,                 // 红点
     };
 
     explicit MessagesModel(QObject *parent = nullptr);
+    ~MessagesModel();
     // QAbstractItemModel interface
     int rowCount(const QModelIndex&parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
@@ -30,6 +32,8 @@ public:
     void addPreMessage(const ConversationItem&messageItem);
     ConversationItem getMessage(int index);
 
+    ConversationItem getConversation(int to_uid);
+
     // 在 MessagesModel 类中添加方法
     QModelIndex indexFromUid(int uid) const;
 
@@ -37,10 +41,12 @@ public:
 
     // 根据uid查找消息
     bool existMessage(int uid);
-
+    // 处理信息存储到数据库
+    void processPendingUpdates();
 
 private:
     QVector<ConversationItem>_messages;
+    QSet<int>_pendingUpdates;
 
     // QAbstractItemModel interface
 public:

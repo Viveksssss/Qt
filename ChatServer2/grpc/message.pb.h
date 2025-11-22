@@ -1991,6 +1991,7 @@ class NotifyMakeFriendsRequest final : public ::google::protobuf::Message
     kFromIconFieldNumber = 5,
     kFromNameFieldNumber = 6,
     kMessageFieldNumber = 7,
+    kFromDescFieldNumber = 9,
     kFromUidFieldNumber = 1,
     kToUidFieldNumber = 2,
     kTypeFieldNumber = 3,
@@ -2040,6 +2041,21 @@ class NotifyMakeFriendsRequest final : public ::google::protobuf::Message
   const ::std::string& _internal_message() const;
   PROTOBUF_ALWAYS_INLINE void _internal_set_message(const ::std::string& value);
   ::std::string* PROTOBUF_NONNULL _internal_mutable_message();
+
+  public:
+  // string fromDesc = 9;
+  void clear_fromdesc() ;
+  const ::std::string& fromdesc() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_fromdesc(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_fromdesc();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_fromdesc();
+  void set_allocated_fromdesc(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_fromdesc() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_fromdesc(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_fromdesc();
 
   public:
   // int32 fromUid = 1;
@@ -2096,8 +2112,8 @@ class NotifyMakeFriendsRequest final : public ::google::protobuf::Message
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<3, 8,
-                                   0, 72,
+  static const ::google::protobuf::internal::TcParseTable<4, 9,
+                                   0, 80,
                                    2>
       _table_;
 
@@ -2121,6 +2137,7 @@ class NotifyMakeFriendsRequest final : public ::google::protobuf::Message
     ::google::protobuf::internal::ArenaStringPtr fromicon_;
     ::google::protobuf::internal::ArenaStringPtr fromname_;
     ::google::protobuf::internal::ArenaStringPtr message_;
+    ::google::protobuf::internal::ArenaStringPtr fromdesc_;
     ::int32_t fromuid_;
     ::int32_t touid_;
     ::int32_t type_;
@@ -6599,7 +6616,7 @@ inline void NotifyMakeFriendsRequest::clear_fromuid() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.fromuid_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000008U);
+                  0x00000010U);
 }
 inline ::int32_t NotifyMakeFriendsRequest::fromuid() const {
   // @@protoc_insertion_point(field_get:message.NotifyMakeFriendsRequest.fromUid)
@@ -6607,7 +6624,7 @@ inline ::int32_t NotifyMakeFriendsRequest::fromuid() const {
 }
 inline void NotifyMakeFriendsRequest::set_fromuid(::int32_t value) {
   _internal_set_fromuid(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
   // @@protoc_insertion_point(field_set:message.NotifyMakeFriendsRequest.fromUid)
 }
 inline ::int32_t NotifyMakeFriendsRequest::_internal_fromuid() const {
@@ -6624,7 +6641,7 @@ inline void NotifyMakeFriendsRequest::clear_touid() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.touid_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000010U);
+                  0x00000020U);
 }
 inline ::int32_t NotifyMakeFriendsRequest::touid() const {
   // @@protoc_insertion_point(field_get:message.NotifyMakeFriendsRequest.toUid)
@@ -6632,7 +6649,7 @@ inline ::int32_t NotifyMakeFriendsRequest::touid() const {
 }
 inline void NotifyMakeFriendsRequest::set_touid(::int32_t value) {
   _internal_set_touid(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000020U);
   // @@protoc_insertion_point(field_set:message.NotifyMakeFriendsRequest.toUid)
 }
 inline ::int32_t NotifyMakeFriendsRequest::_internal_touid() const {
@@ -6649,7 +6666,7 @@ inline void NotifyMakeFriendsRequest::clear_type() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.type_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000020U);
+                  0x00000040U);
 }
 inline ::int32_t NotifyMakeFriendsRequest::type() const {
   // @@protoc_insertion_point(field_get:message.NotifyMakeFriendsRequest.type)
@@ -6657,7 +6674,7 @@ inline ::int32_t NotifyMakeFriendsRequest::type() const {
 }
 inline void NotifyMakeFriendsRequest::set_type(::int32_t value) {
   _internal_set_type(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000020U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000040U);
   // @@protoc_insertion_point(field_set:message.NotifyMakeFriendsRequest.type)
 }
 inline ::int32_t NotifyMakeFriendsRequest::_internal_type() const {
@@ -6674,7 +6691,7 @@ inline void NotifyMakeFriendsRequest::clear_fromsex() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.fromsex_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000040U);
+                  0x00000080U);
 }
 inline ::int32_t NotifyMakeFriendsRequest::fromsex() const {
   // @@protoc_insertion_point(field_get:message.NotifyMakeFriendsRequest.fromSex)
@@ -6682,7 +6699,7 @@ inline ::int32_t NotifyMakeFriendsRequest::fromsex() const {
 }
 inline void NotifyMakeFriendsRequest::set_fromsex(::int32_t value) {
   _internal_set_fromsex(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000040U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000080U);
   // @@protoc_insertion_point(field_set:message.NotifyMakeFriendsRequest.fromSex)
 }
 inline ::int32_t NotifyMakeFriendsRequest::_internal_fromsex() const {
@@ -6894,7 +6911,7 @@ inline void NotifyMakeFriendsRequest::clear_fromstatus() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.fromstatus_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000080U);
+                  0x00000100U);
 }
 inline ::int32_t NotifyMakeFriendsRequest::fromstatus() const {
   // @@protoc_insertion_point(field_get:message.NotifyMakeFriendsRequest.fromStatus)
@@ -6902,7 +6919,7 @@ inline ::int32_t NotifyMakeFriendsRequest::fromstatus() const {
 }
 inline void NotifyMakeFriendsRequest::set_fromstatus(::int32_t value) {
   _internal_set_fromstatus(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000080U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000100U);
   // @@protoc_insertion_point(field_set:message.NotifyMakeFriendsRequest.fromStatus)
 }
 inline ::int32_t NotifyMakeFriendsRequest::_internal_fromstatus() const {
@@ -6912,6 +6929,71 @@ inline ::int32_t NotifyMakeFriendsRequest::_internal_fromstatus() const {
 inline void NotifyMakeFriendsRequest::_internal_set_fromstatus(::int32_t value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.fromstatus_ = value;
+}
+
+// string fromDesc = 9;
+inline void NotifyMakeFriendsRequest::clear_fromdesc() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.fromdesc_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000008U);
+}
+inline const ::std::string& NotifyMakeFriendsRequest::fromdesc() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:message.NotifyMakeFriendsRequest.fromDesc)
+  return _internal_fromdesc();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void NotifyMakeFriendsRequest::set_fromdesc(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
+  _impl_.fromdesc_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:message.NotifyMakeFriendsRequest.fromDesc)
+}
+inline ::std::string* PROTOBUF_NONNULL NotifyMakeFriendsRequest::mutable_fromdesc()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
+  ::std::string* _s = _internal_mutable_fromdesc();
+  // @@protoc_insertion_point(field_mutable:message.NotifyMakeFriendsRequest.fromDesc)
+  return _s;
+}
+inline const ::std::string& NotifyMakeFriendsRequest::_internal_fromdesc() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.fromdesc_.Get();
+}
+inline void NotifyMakeFriendsRequest::_internal_set_fromdesc(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.fromdesc_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL NotifyMakeFriendsRequest::_internal_mutable_fromdesc() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.fromdesc_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE NotifyMakeFriendsRequest::release_fromdesc() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:message.NotifyMakeFriendsRequest.fromDesc)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000008U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000008U);
+  auto* released = _impl_.fromdesc_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.fromdesc_.Set("", GetArena());
+  }
+  return released;
+}
+inline void NotifyMakeFriendsRequest::set_allocated_fromdesc(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000008U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000008U);
+  }
+  _impl_.fromdesc_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.fromdesc_.IsDefault()) {
+    _impl_.fromdesc_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:message.NotifyMakeFriendsRequest.fromDesc)
 }
 
 // -------------------------------------------------------------------

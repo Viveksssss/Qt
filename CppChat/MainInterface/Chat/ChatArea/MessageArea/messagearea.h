@@ -22,9 +22,9 @@ public slots:
     void do_change_peer(int);    // from SignalRoute::on_change_peer;
     void do_change_chat_history(std::vector<std::shared_ptr<MessageItem>>); // from TcpManager::on_change_chat_history;
     void do_change_chat_history(std::vector<MessageItem>); // from TcpManager::on_change_chat_history;
-    void do_load_more_message();
+    void do_load_more_message();            // fron this::on_load_more_message
+    void do_add_new_message(const MessageItem&item);    // from MessageListPart::do_get_message->SignalRouter::on_add_new_message
 public:
-
     QListView *list;
     MessageDelegate*delegate;
     MessageModel*model;

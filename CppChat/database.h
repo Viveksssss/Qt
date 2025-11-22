@@ -54,6 +54,10 @@ public:
     // 好友列表
     bool createFriendsTable();
 
+    std::shared_ptr<UserInfo>getFriendInfoPtr(int peerUid);
+
+    UserInfo getFriendInfo(int peerUid);
+
     std::vector<UserInfo>getFriends();
 
     std::vector<std::shared_ptr<UserInfo>>getFriendsPtr();
@@ -63,6 +67,8 @@ public:
     bool storeFriends(const std::vector<UserInfo>friends);
 
     bool storeFriend(const UserInfo&info);
+
+    bool storeFriend(const std::shared_ptr<UserInfo>&info);
 
     UserInfo createFriendInfoFromQuery(const QSqlQuery& query);
 

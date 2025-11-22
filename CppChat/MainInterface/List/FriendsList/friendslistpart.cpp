@@ -181,13 +181,13 @@ void FriendsListPart::do_loading_users()
 
 void FriendsListPart::do_add_friend_to_list(std::shared_ptr<UserInfo>info)
 {
-    friendsModel->addFriend(FriendItem(info->id, info->status,info->sex,info->name,info->avatar,info->back ));
+    friendsModel->addFriend(FriendItem(info->id, info->status,info->sex,info->name,info->avatar,info->desc ));
 }
 
 void FriendsListPart::do_add_friends_to_list(const std::span<std::shared_ptr<UserInfo> > &list)
 {
     for (auto&item:list){
-        friendsModel->addFriend(FriendItem(item->id, item->status,item->sex,item->name,item->avatar,item->back ));
+        friendsModel->addFriend(FriendItem(item->id, item->status,item->sex,item->name,item->avatar,item->desc ));
     }
 }
 

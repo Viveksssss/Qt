@@ -33,7 +33,6 @@ void ListPart::setupUI()
 void ListPart::setupConnections()
 {
     connect(&SignalRouter::GetInstance(),&SignalRouter::on_change_list,this,&ListPart::do_change_list);
-    connect(&SignalRouter::GetInstance(),&SignalRouter::on_to_list,this,&ListPart::do_change_list);
 }
 
 void ListPart::do_change_list(int index)

@@ -65,11 +65,7 @@ void MessageArea::do_area_to_bottom()
 void MessageArea::do_change_peer(int uid)
 {
     auto&friends = UserManager::GetInstance()-> GetFriends();
-    qDebug() << friends.size();
-    qDebug() << "uid:"<<uid;
-    for (auto&p:friends){
-        qDebug() << "to_uid:" << p->id;
-    }
+
     auto it = std::find_if(friends.begin(),friends.end(),[uid](std::shared_ptr<UserInfo> info){
         return info->id == uid;
     });
@@ -89,9 +85,12 @@ void MessageArea::do_change_peer(int uid)
 
         QString timestamp = UserManager::GetInstance()->HasHistory((*it)->id) ? UserManager::GetInstance()->GetHistoryTimestamp((*it)->id).toString():"";
         const auto&historys = DataBase::GetInstance().getMessages((*it)->id,timestamp);
+
+        emit SignalRouter::GetInstance().on_message_item(uid);
+
         do_change_chat_history(historys);
     }else{
-        qDebug() << "wrong";
+
     }
 
 
@@ -133,6 +132,11 @@ void MessageArea::do_load_more_message()
     QTimer::singleShot(1000,this,[this](){
         this->isLoading = false;
     });
+}
+
+void MessageArea::do_add_new_message(const MessageItem &item)
+{
+    model->addPreMessage(item);
 }
 
 void MessageArea::resizeEvent(QResizeEvent *event)

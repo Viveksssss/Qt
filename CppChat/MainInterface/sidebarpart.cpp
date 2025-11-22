@@ -41,6 +41,10 @@ void SideBarPart::setupConnections()
     connect(buttonGroup, &QButtonGroup::idClicked, this, [this](int id) {
         emit SignalRouter::GetInstance().on_change_list(id);
     });
+    connect(&SignalRouter::GetInstance(),&SignalRouter::on_change_list,this,[this](){
+        buttonGroup->setExclusive(false);  // 先取消互斥
+        buttonGroup->setExclusive(true);   // 再恢复互斥，这样会清除选中状态
+    });
 }
 
 

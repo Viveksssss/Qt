@@ -733,7 +733,7 @@ bool MysqlDao::GetFriendList(const std::string& uid, std::vector<std::shared_ptr
     }
 }
 
-bool MysqlDao::AddMessage(int from_uid, int to_uid, const std::string& timestamp, int env, int content_type, const std::string& content_data, const std::string& content_mime_type, const std::string& content_fid)
+bool MysqlDao::AddMessage(const std::string&uid,int from_uid, int to_uid, const std::string& timestamp, int env, int content_type, const std::string& content_data, const std::string& content_mime_type, const std::string& content_fid, int status)
 {
     auto conn = _pool->GetConnection();
     if (!conn) {
@@ -745,16 +745,16 @@ bool MysqlDao::AddMessage(int from_uid, int to_uid, const std::string& timestamp
     });
     try {
         mysqlpp::Query query = conn->query();
-        query << "INSERT INTO messages (from_uid,to_uid,timestamp,env,content_type,content_data,content_mime_type,content_fid) VALUES(%0q,%1q,%2q,%3q,%4q,%5q,%6q,%7q)";
+        query << "INSERT INTO messages (uid,from_uid,to_uid,timestamp,env,content_type,content_data,content_mime_type,content_fid,status) VALUES(%0q,%1q,%2q,%3q,%4q,%5q,%6q,%7q,%8q)";
         query.parse();
-        mysqlpp::SimpleResult res = query.execute(from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, content_fid);
+        mysqlpp::SimpleResult res = query.execute(uid,from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, content_fid, status);
         if (res) {
             int affected_rows = res.rows();
             if (affected_rows > 0) {
-                SPDLOG_INFO("Message added successfully for from_uid: {}, to_uid: {}, timestamp: {}, env: {}, content_type: {}, content_data: {}, content_mime_type: {}, fid: {}", from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, content_fid);
+                SPDLOG_INFO("Message added successfully for from_uid: {}, to_uid: {}, timestamp: {}, env: {}, content_type: {}, content_data: {}, content_mime_type: {}, fid: {}, status: {}", from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, content_fid, status);
                 return true;
             } else {
-                SPDLOG_WARN("Failed to add message for from_uid: {}, to_uid: {}, timestamp: {}, env: {}, content_type: {}, content_data: {}, content_mime_type: {}, fid: {}", from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, content_fid);
+                SPDLOG_WARN("Failed to add message for from_uid: {}, to_uid: {}, timestamp: {}, env: {}, content_type: {}, content_data: {}, content_mime_type: {}, fid: {}, status: {}", from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, content_fid, status);
                 return false;
             }
         } else {

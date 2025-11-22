@@ -458,10 +458,10 @@ class MessageItem final : public ::google::protobuf::Message
   // accessors -------------------------------------------------------
   enum : int {
     kIdFieldNumber = 1,
+    kTimestampFieldNumber = 4,
     kContentFieldNumber = 6,
     kToIdFieldNumber = 2,
     kFromIdFieldNumber = 3,
-    kTimestampFieldNumber = 4,
     kEnvFieldNumber = 5,
   };
   // string id = 1;
@@ -477,6 +477,21 @@ class MessageItem final : public ::google::protobuf::Message
   const ::std::string& _internal_id() const;
   PROTOBUF_ALWAYS_INLINE void _internal_set_id(const ::std::string& value);
   ::std::string* PROTOBUF_NONNULL _internal_mutable_id();
+
+  public:
+  // string timestamp = 4;
+  void clear_timestamp() ;
+  const ::std::string& timestamp() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_timestamp(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_timestamp();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_timestamp();
+  void set_allocated_timestamp(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_timestamp() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_timestamp(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_timestamp();
 
   public:
   // .im.MessageContent content = 6;
@@ -514,16 +529,6 @@ class MessageItem final : public ::google::protobuf::Message
   void _internal_set_from_id(::int32_t value);
 
   public:
-  // int64 timestamp = 4;
-  void clear_timestamp() ;
-  ::int64_t timestamp() const;
-  void set_timestamp(::int64_t value);
-
-  private:
-  ::int64_t _internal_timestamp() const;
-  void _internal_set_timestamp(::int64_t value);
-
-  public:
   // int32 env = 5;
   void clear_env() ;
   ::int32_t env() const;
@@ -539,7 +544,7 @@ class MessageItem final : public ::google::protobuf::Message
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<3, 6,
-                                   1, 25,
+                                   1, 34,
                                    2>
       _table_;
 
@@ -561,10 +566,10 @@ class MessageItem final : public ::google::protobuf::Message
     ::google::protobuf::internal::HasBits<1> _has_bits_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     ::google::protobuf::internal::ArenaStringPtr id_;
+    ::google::protobuf::internal::ArenaStringPtr timestamp_;
     ::im::MessageContent* PROTOBUF_NULLABLE content_;
     ::int32_t to_id_;
     ::int32_t from_id_;
-    ::int64_t timestamp_;
     ::int32_t env_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -884,7 +889,7 @@ inline void MessageItem::clear_to_id() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.to_id_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000004U);
+                  0x00000008U);
 }
 inline ::int32_t MessageItem::to_id() const {
   // @@protoc_insertion_point(field_get:im.MessageItem.to_id)
@@ -892,7 +897,7 @@ inline ::int32_t MessageItem::to_id() const {
 }
 inline void MessageItem::set_to_id(::int32_t value) {
   _internal_set_to_id(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
   // @@protoc_insertion_point(field_set:im.MessageItem.to_id)
 }
 inline ::int32_t MessageItem::_internal_to_id() const {
@@ -909,7 +914,7 @@ inline void MessageItem::clear_from_id() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.from_id_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000008U);
+                  0x00000010U);
 }
 inline ::int32_t MessageItem::from_id() const {
   // @@protoc_insertion_point(field_get:im.MessageItem.from_id)
@@ -917,7 +922,7 @@ inline ::int32_t MessageItem::from_id() const {
 }
 inline void MessageItem::set_from_id(::int32_t value) {
   _internal_set_from_id(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
   // @@protoc_insertion_point(field_set:im.MessageItem.from_id)
 }
 inline ::int32_t MessageItem::_internal_from_id() const {
@@ -929,29 +934,69 @@ inline void MessageItem::_internal_set_from_id(::int32_t value) {
   _impl_.from_id_ = value;
 }
 
-// int64 timestamp = 4;
+// string timestamp = 4;
 inline void MessageItem::clear_timestamp() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.timestamp_ = ::int64_t{0};
+  _impl_.timestamp_.ClearToEmpty();
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000010U);
+                  0x00000002U);
 }
-inline ::int64_t MessageItem::timestamp() const {
+inline const ::std::string& MessageItem::timestamp() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
   // @@protoc_insertion_point(field_get:im.MessageItem.timestamp)
   return _internal_timestamp();
 }
-inline void MessageItem::set_timestamp(::int64_t value) {
-  _internal_set_timestamp(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void MessageItem::set_timestamp(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  _impl_.timestamp_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
   // @@protoc_insertion_point(field_set:im.MessageItem.timestamp)
 }
-inline ::int64_t MessageItem::_internal_timestamp() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.timestamp_;
+inline ::std::string* PROTOBUF_NONNULL MessageItem::mutable_timestamp()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  ::std::string* _s = _internal_mutable_timestamp();
+  // @@protoc_insertion_point(field_mutable:im.MessageItem.timestamp)
+  return _s;
 }
-inline void MessageItem::_internal_set_timestamp(::int64_t value) {
+inline const ::std::string& MessageItem::_internal_timestamp() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.timestamp_.Get();
+}
+inline void MessageItem::_internal_set_timestamp(const ::std::string& value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.timestamp_ = value;
+  _impl_.timestamp_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL MessageItem::_internal_mutable_timestamp() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.timestamp_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE MessageItem::release_timestamp() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:im.MessageItem.timestamp)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000002U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  auto* released = _impl_.timestamp_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.timestamp_.Set("", GetArena());
+  }
+  return released;
+}
+inline void MessageItem::set_allocated_timestamp(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  }
+  _impl_.timestamp_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.timestamp_.IsDefault()) {
+    _impl_.timestamp_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:im.MessageItem.timestamp)
 }
 
 // int32 env = 5;
@@ -981,7 +1026,7 @@ inline void MessageItem::_internal_set_env(::int32_t value) {
 
 // .im.MessageContent content = 6;
 inline bool MessageItem::has_content() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000002U);
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000004U);
   PROTOBUF_ASSUME(!value || _impl_.content_ != nullptr);
   return value;
 }
@@ -989,7 +1034,7 @@ inline void MessageItem::clear_content() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   if (_impl_.content_ != nullptr) _impl_.content_->Clear();
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000002U);
+                  0x00000004U);
 }
 inline const ::im::MessageContent& MessageItem::_internal_content() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
@@ -1008,16 +1053,16 @@ inline void MessageItem::unsafe_arena_set_allocated_content(
   }
   _impl_.content_ = reinterpret_cast<::im::MessageContent*>(value);
   if (value != nullptr) {
-    SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+    SetHasBit(_impl_._has_bits_[0], 0x00000004U);
   } else {
-    ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+    ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
   }
   // @@protoc_insertion_point(field_unsafe_arena_set_allocated:im.MessageItem.content)
 }
 inline ::im::MessageContent* PROTOBUF_NULLABLE MessageItem::release_content() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
 
-  ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
   ::im::MessageContent* released = _impl_.content_;
   _impl_.content_ = nullptr;
   if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
@@ -1037,7 +1082,7 @@ inline ::im::MessageContent* PROTOBUF_NULLABLE MessageItem::unsafe_arena_release
   ::google::protobuf::internal::TSanWrite(&_impl_);
   // @@protoc_insertion_point(field_release:im.MessageItem.content)
 
-  ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
   ::im::MessageContent* temp = _impl_.content_;
   _impl_.content_ = nullptr;
   return temp;
@@ -1052,7 +1097,7 @@ inline ::im::MessageContent* PROTOBUF_NONNULL MessageItem::_internal_mutable_con
 }
 inline ::im::MessageContent* PROTOBUF_NONNULL MessageItem::mutable_content()
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
   ::im::MessageContent* _msg = _internal_mutable_content();
   // @@protoc_insertion_point(field_mutable:im.MessageItem.content)
   return _msg;
@@ -1069,9 +1114,9 @@ inline void MessageItem::set_allocated_content(::im::MessageContent* PROTOBUF_NU
     if (message_arena != submessage_arena) {
       value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
     }
-    SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+    SetHasBit(_impl_._has_bits_[0], 0x00000004U);
   } else {
-    ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+    ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
   }
 
   _impl_.content_ = reinterpret_cast<::im::MessageContent*>(value);

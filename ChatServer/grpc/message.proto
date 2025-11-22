@@ -115,6 +115,7 @@ message NotifyMakeFriendsRequest{
     string fromName = 6;
     string message = 7;
     int32 fromStatus = 8;
+    string fromDesc = 9;
 }
 
 message NotifyMakeFriendsResponse{

@@ -117,7 +117,27 @@ void LogicSystem::RegisterCallBacks()
             jj["notifications"] = notifications;
         }
 
-        // 获取消息列表
+        // 获取会话列表
+        std::vector<std::shared_ptr<SessionInfo>> session_list;
+        bool b_session = MysqlManager::GetInstance()->GetSeessionList(uid_str, session_list);
+        if (b_session && session_list.size() > 0) {
+            json conversations;
+            for (auto& session_item : session_list) {
+                json conversation;
+                conversation["uid"] = session_item->uid;
+                conversation["from_uid"] = session_item->from_uid;
+                conversation["to_uid"] = session_item->to_uid;
+                conversation["create_time"] = session_item->create_time;
+                conversation["update_time"] = session_item->update_time;
+                conversation["name"] = session_item->name;
+                conversation["icon"] = session_item->icon;
+                conversation["status"] = session_item->status;
+                conversation["deleted"] = session_item->deleted;
+                conversation["pined"] = session_item->pined;
+                conversations.push_back(conversation);
+            }
+            jj["conversations"] = conversations;
+        }
 
         // 获取好友列表
         std::vector<std::shared_ptr<UserInfo>> friend_list;
@@ -352,7 +372,9 @@ void LogicSystem::RegisterCallBacks()
         j["error"] = ErrorCodes::SUCCESS;
         j["ok"] = false; // 标记失败
 
-        if (bool b = j.value("reply", false)) {
+
+        if (j.contains("reply")) {
+            bool b = j["reply"].get<bool>();
             if (b) {
                 // 只是收到通知回复，我们把数据库状态更新一下
                 // 如果失败说明当前双方都在线，消息就没有入库，所以这里不做处理。
@@ -373,6 +395,7 @@ void LogicSystem::RegisterCallBacks()
         auto fromName = j["from_name"].get<std::string>();
         auto fromSex = j["from_sex"].get<int>();
         auto fromIcon = j["from_icon"].get<std::string>();
+        auto fromDesc = j["from_desc"].get<std::string>();
         int fromStatus = 1;
 
         bool accept = j["accept"].get<bool>();
@@ -445,6 +468,7 @@ void LogicSystem::RegisterCallBacks()
             req.set_fromsex(fromSex);
             req.set_fromicon(fromIcon);
             req.set_fromstatus(fromStatus);
+            req.set_fromdesc(fromDesc);
             if (!accept) {
                 req.set_type(static_cast<int>(NotificationCodes::ID_NOTIFY_NOT_FRIENDS));
                 req.set_message(fromName + "拒绝了你的好友申请");
@@ -477,7 +501,7 @@ void LogicSystem::RegisterCallBacks()
 
         Defer defer_send([this, &pb, to_ip_value] {
             // 最后一定要留存信息入库
-            bool ok = MysqlManager::GetInstance()->AddMessage(pb.from_id(), pb.to_id(), pb.timestamp(), pb.env(), pb.content().type(), pb.content().data(), pb.content().mime_type(), pb.content().fid());
+            bool ok = MysqlManager::GetInstance()->AddMessage(pb.id(),pb.from_id(), pb.to_id(), pb.timestamp(), pb.env(), pb.content().type(), pb.content().data(), pb.content().mime_type(), pb.content().fid());
         });
         if (!b_ip) {
             // 当前不在线

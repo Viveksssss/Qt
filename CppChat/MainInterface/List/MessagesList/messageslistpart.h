@@ -21,7 +21,7 @@ class QPushButton;
 class QLabel;
 
 struct UserInfo;
-
+class MessageItem;
 struct ConversationItem;
 class MessagesListPart : public QWidget
 {
@@ -37,12 +37,14 @@ private:
 signals:
     void on_loading_messages(); // to do_loading_messages
 
-private slots:
+public slots:
     void do_loading_messages();
     void do_add_message_to_list(const ConversationItem&); // from TcpManager::on_add_message_to_list;
     void do_add_messages_to_list(const std::span<std::shared_ptr<ConversationItem>>&list); // from TcpManager::on_add_messages_to_list;
     void do_change_message_status(int,int);  // from MessagesNewsItem->SignalRouter::on_change_message_status;
     void do_change_peer(int);
+    void do_get_message(const MessageItem&);    // from TcpManager::on_get_message
+    void do_change_message_status(int peerUid,bool);  // from
 
 private:
     QLabel *title;
@@ -52,7 +54,6 @@ private:
     MessageItemDelegate *messagesDelegate;
     // 是否正在加载列表
     bool isLoading;
-
 
     // QObject interface
 public:

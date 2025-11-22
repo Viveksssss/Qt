@@ -20,6 +20,9 @@ signals:
     void on_change_peer(int);                       // from FriendsDelegate::dialog::clicked/MessageItem::clicked
     void on_change_last_time(int,QDateTime);                     // from DataBase::getMessages
     void on_to_list(int);                      // from MessageDelegate::do_change_peer
+    void on_message_item(int);                 // from MessageArea::do_change_peer
+    void on_add_new_message(const MessageItem&item);    // from MessageListPart::on_get_message
+    void on_change_message_status(const MessageItem&item);  // from MessageListPart::on_get_message
 public slots:
 
 };

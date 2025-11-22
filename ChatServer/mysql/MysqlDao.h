@@ -33,7 +33,7 @@
  */
 
 struct UserInfo;
-
+struct SessionInfo;
 class MysqlPool {
 public:
     MysqlPool(const std::string& url, const std::string& user, const std::string& password, const std::string& schedma, const std::string& port = "3306", int poolSize = std::thread::hardware_concurrency());
@@ -76,7 +76,9 @@ public:
     bool AddNotification(const std::string& uid, int type, const std::string& message);
     bool GetNotificationList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& notificationList);
     bool GetFriendList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& friendList);
-    bool AddMessage(int from_uid, int to_uid, int64_t timestamp, int env, int content_type, const std::string& content_data, const std::string& content_mime_type, const std::string& fid);
+    bool AddMessage(const std::string&uid,int from_uid, int to_uid, const std::string& timestamp, int env, int content_type, const std::string& content_data, const std::string& content_mime_type, const std::string& fid, int status);
+    bool AddConversation(const std::string& uid, int from_uid, int to_uid, const std::string& create_time, const std::string& update_time, const std::string& name, const std::string& icon, int staus, int deleted, int pined);
+    bool GetSeessionList(const std::string& uid, std::vector<std::shared_ptr<SessionInfo>>& sessionList);
 
     std::string ValueOrEmpty(std::string value);
 

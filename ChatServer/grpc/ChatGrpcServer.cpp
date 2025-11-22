@@ -48,7 +48,7 @@ Status ChatGrpcServer::NotifyTextChatMessage(grpc::ServerContext* context, const
         return Status::OK;
     }
 
-    session->Send(request->data(), static_cast<int>(MsgId::ID_TEXT_CHAT_MSG_REQ));
+    session->Send(request->data(), static_cast<int>(MsgId::ID_NOTIFY_TEXT_CHAT_MSG_REQ));
     return Status::OK;
 }
 
@@ -85,6 +85,7 @@ Status ChatGrpcServer::NotifyMakeFriends(grpc::ServerContext* context, const Not
     j["from_status"] = request->fromstatus();
     j["type"] = request->type();
     j["message"] = request->message();
+    j["from_desc"] = request->fromdesc();
 
     session->Send(j.dump(), static_cast<int>(MsgId::ID_NOTIFY_AUTH_FRIEND_REQ));
 

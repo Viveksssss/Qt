@@ -45,7 +45,7 @@ struct MessageItem{
     MessageEnv            env;          // 私聊还是群聊
     MessageContent        content;      // 实际的内容串
     bool                  isSelected;   // 之后可能会有聊天记录的选择，删除
-    int status;
+    int                   status;
 
     MessageItem()
         :id(QUuid::createUuid().toString())
@@ -107,24 +107,27 @@ static MessageItem fromPb(const im::MessageItem&pb)
 
 struct ConversationItem
 {
-    QString id;
-    int     from_uid;
-    int     to_uid;
-    QDateTime create_time;
-    QDateTime update_time;
-    QString name;
-    QString icon;
-    int     status;
-    int     deleted;
-    int     pined;
-    QString message;
+    QString               id;           // 唯一id
+    int                   from_uid;     // 自己
+    int                   to_uid;       // 对方id
+    QDateTime             create_time;  // 创建时间
+    QDateTime             update_time;  // 更新时间
+    QString               name;         // 名称
+    QString               icon;         // 头像
+    int                   status;       // 在线状态
+    int                   deleted;      // 是否删除
+    int                   pined;        // 是否置顶
+    QString               message;      // 最近消息
+    bool                  processed;    // 是否处理了
 
     ConversationItem()
         : id (QUuid::createUuid().toString())
         , status(0)
         , deleted(0)
         , pined(0)
+        , processed(true)
     {}
+
 };
 
 Q_DECLARE_METATYPE(MessageContent)

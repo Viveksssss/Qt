@@ -185,6 +185,7 @@ bool FriendItemDelegate::editorEvent(QEvent *event, QAbstractItemModel *model, c
             QString avatar = index.data(FriendsModel::FriendRole::AvatarRole).toString();
             int status = index.data(FriendsModel::FriendRole::StatusRole).toInt();
             QString desc = index.data(FriendsModel::FriendRole::DescRole).toString();
+            qDebug() <<id << "\t" << name;
             emit on_open_friend_info(id,name,avatar,status,desc);
         }
     }
@@ -363,17 +364,22 @@ void FriendItemDelegate::do_open_friend_info(int uid, const QString &name, const
 
     // 连接按钮信
     connect(messageBtn, &QPushButton::clicked, infoDialog, [this, uid,infoDialog]() {
+        emit SignalRouter::GetInstance().on_change_list(0);
         emit SignalRouter::GetInstance().on_change_peer(uid);
         infoDialog->accept();
     });
 
     connect(voiceBtn, &QPushButton::clicked, infoDialog, [this, uid,infoDialog]() {
+        emit SignalRouter::GetInstance().on_change_list(0);
         emit SignalRouter::GetInstance().on_change_peer(uid);
+        //TODO:视频聊天
         infoDialog->accept();
     });
 
     connect(videoBtn, &QPushButton::clicked, infoDialog, [this, uid,infoDialog]() {
+        emit SignalRouter::GetInstance().on_change_list(0);
         emit SignalRouter::GetInstance().on_change_peer(uid);
+        //TODO:音频聊天
         infoDialog->accept();
     });
 

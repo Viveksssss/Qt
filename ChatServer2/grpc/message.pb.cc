@@ -259,6 +259,9 @@ inline constexpr NotifyMakeFriendsRequest::Impl_::Impl_(
         message_(
             &::google::protobuf::internal::fixed_address_empty_string,
             ::_pbi::ConstantInitialized()),
+        fromdesc_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
         fromuid_{0},
         touid_{0},
         type_{0},
@@ -788,7 +791,7 @@ const ::uint32_t
         0,
         0x081, // bitmap
         PROTOBUF_FIELD_OFFSET(::message::NotifyMakeFriendsRequest, _impl_._has_bits_),
-        11, // hasbit index offset
+        12, // hasbit index offset
         PROTOBUF_FIELD_OFFSET(::message::NotifyMakeFriendsRequest, _impl_.fromuid_),
         PROTOBUF_FIELD_OFFSET(::message::NotifyMakeFriendsRequest, _impl_.touid_),
         PROTOBUF_FIELD_OFFSET(::message::NotifyMakeFriendsRequest, _impl_.type_),
@@ -797,14 +800,16 @@ const ::uint32_t
         PROTOBUF_FIELD_OFFSET(::message::NotifyMakeFriendsRequest, _impl_.fromname_),
         PROTOBUF_FIELD_OFFSET(::message::NotifyMakeFriendsRequest, _impl_.message_),
         PROTOBUF_FIELD_OFFSET(::message::NotifyMakeFriendsRequest, _impl_.fromstatus_),
-        3,
+        PROTOBUF_FIELD_OFFSET(::message::NotifyMakeFriendsRequest, _impl_.fromdesc_),
         4,
         5,
         6,
+        7,
         0,
         1,
         2,
-        7,
+        8,
+        3,
         0x081, // bitmap
         PROTOBUF_FIELD_OFFSET(::message::NotifyMakeFriendsResponse, _impl_._has_bits_),
         6, // hasbit index offset
@@ -856,9 +861,9 @@ static const ::_pbi::MigrationSchema
         {129, sizeof(::message::TextChatMessageRequest)},
         {138, sizeof(::message::TextChatMessageResponse)},
         {143, sizeof(::message::NotifyMakeFriendsRequest)},
-        {162, sizeof(::message::NotifyMakeFriendsResponse)},
-        {171, sizeof(::message::NotifyFriendOnlineRequest)},
-        {186, sizeof(::message::NotifyFriendOnlineResponse)},
+        {164, sizeof(::message::NotifyMakeFriendsResponse)},
+        {173, sizeof(::message::NotifyFriendOnlineRequest)},
+        {188, sizeof(::message::NotifyFriendOnlineResponse)},
 };
 static const ::_pb::Message* PROTOBUF_NONNULL const file_default_instances[] = {
     &::message::_GetSecurityCodeRequest_default_instance_._instance,
@@ -912,46 +917,46 @@ const char descriptor_table_protodef_message_2eproto[] ABSL_ATTRIBUTE_SECTION_VA
     "a\022\r\n\005msgId\030\001 \001(\t\022\022\n\nmsgContent\030\002 \001(\t\"F\n\026"
     "TextChatMessageRequest\022\017\n\007fromUid\030\001 \001(\005\022"
     "\r\n\005toUid\030\002 \001(\005\022\014\n\004data\030\003 \001(\014\"(\n\027TextChat"
-    "MessageResponse\022\r\n\005error\030\001 \001(\005\"\242\001\n\030Notif"
+    "MessageResponse\022\r\n\005error\030\001 \001(\005\"\264\001\n\030Notif"
     "yMakeFriendsRequest\022\017\n\007fromUid\030\001 \001(\005\022\r\n\005"
     "toUid\030\002 \001(\005\022\014\n\004type\030\003 \001(\005\022\017\n\007fromSex\030\004 \001"
     "(\005\022\020\n\010fromIcon\030\005 \001(\t\022\020\n\010fromName\030\006 \001(\t\022\017"
-    "\n\007message\030\007 \001(\t\022\022\n\nfromStatus\030\010 \001(\005\"J\n\031N"
-    "otifyMakeFriendsResponse\022\r\n\005error\030\001 \001(\005\022"
-    "\017\n\007fromUid\030\002 \001(\005\022\r\n\005toUid\030\003 \001(\005\"v\n\031Notif"
-    "yFriendOnlineRequest\022\017\n\007fromUid\030\001 \001(\005\022\r\n"
-    "\005toUid\030\002 \001(\005\022\014\n\004type\030\003 \001(\005\022\014\n\004name\030\004 \001(\t"
-    "\022\017\n\007message\030\005 \001(\t\022\014\n\004icon\030\006 \001(\t\"+\n\032Notif"
-    "yFriendOnlineResponse\022\r\n\005error\030\001 \001(\0052g\n\r"
-    "VarifyService\022V\n\017GetSecurityCode\022\037.messa"
-    "ge.GetSecurityCodeRequest\032 .message.GetS"
-    "ecurityCodeResponse\"\0002\233\001\n\rStatusService\022"
-    "P\n\rGetChatServer\022\035.message.GetChatServer"
-    "Request\032\036.message.GetChatServerResponse\""
-    "\000\0228\n\005Login\022\025.message.LoginRequest\032\026.mess"
-    "age.LoginResponse\"\0002\353\004\n\nChatServer\022\\\n\021No"
-    "tifyMakeFriends\022!.message.NotifyMakeFrie"
-    "ndsRequest\032\".message.NotifyMakeFriendsRe"
-    "sponse\"\000\022_\n\022NotifyFriendOnline\022\".message"
-    ".NotifyFriendOnlineRequest\032#.message.Not"
-    "ifyFriendOnlineResponse\"\000\022J\n\017NotifyAddFr"
-    "iend\022\031.message.AddFriendRequest\032\032.messag"
-    "e.AddFriendResponse\"\000\022M\n\016ReplyAddFriend\022"
-    "\033.message.ReplyFriendRequest\032\034.message.R"
-    "eplyFriendResponse\"\000\022V\n\017SendChatMessage\022"
-    "\037.message.SendChatMessageRequest\032 .messa"
-    "ge.SendChatMessageResponse\"\000\022M\n\020NotifyAu"
-    "thFriend\022\032.message.AuthFriendRequest\032\033.m"
-    "essage.AuthFriendResponse\"\000\022\\\n\025NotifyTex"
-    "tChatMessage\022\037.message.TextChatMessageRe"
-    "quest\032 .message.TextChatMessageResponse\""
-    "\000b\006proto3"
+    "\n\007message\030\007 \001(\t\022\022\n\nfromStatus\030\010 \001(\005\022\020\n\010f"
+    "romDesc\030\t \001(\t\"J\n\031NotifyMakeFriendsRespon"
+    "se\022\r\n\005error\030\001 \001(\005\022\017\n\007fromUid\030\002 \001(\005\022\r\n\005to"
+    "Uid\030\003 \001(\005\"v\n\031NotifyFriendOnlineRequest\022\017"
+    "\n\007fromUid\030\001 \001(\005\022\r\n\005toUid\030\002 \001(\005\022\014\n\004type\030\003"
+    " \001(\005\022\014\n\004name\030\004 \001(\t\022\017\n\007message\030\005 \001(\t\022\014\n\004i"
+    "con\030\006 \001(\t\"+\n\032NotifyFriendOnlineResponse\022"
+    "\r\n\005error\030\001 \001(\0052g\n\rVarifyService\022V\n\017GetSe"
+    "curityCode\022\037.message.GetSecurityCodeRequ"
+    "est\032 .message.GetSecurityCodeResponse\"\0002"
+    "\233\001\n\rStatusService\022P\n\rGetChatServer\022\035.mes"
+    "sage.GetChatServerRequest\032\036.message.GetC"
+    "hatServerResponse\"\000\0228\n\005Login\022\025.message.L"
+    "oginRequest\032\026.message.LoginResponse\"\0002\353\004"
+    "\n\nChatServer\022\\\n\021NotifyMakeFriends\022!.mess"
+    "age.NotifyMakeFriendsRequest\032\".message.N"
+    "otifyMakeFriendsResponse\"\000\022_\n\022NotifyFrie"
+    "ndOnline\022\".message.NotifyFriendOnlineReq"
+    "uest\032#.message.NotifyFriendOnlineRespons"
+    "e\"\000\022J\n\017NotifyAddFriend\022\031.message.AddFrie"
+    "ndRequest\032\032.message.AddFriendResponse\"\000\022"
+    "M\n\016ReplyAddFriend\022\033.message.ReplyFriendR"
+    "equest\032\034.message.ReplyFriendResponse\"\000\022V"
+    "\n\017SendChatMessage\022\037.message.SendChatMess"
+    "ageRequest\032 .message.SendChatMessageResp"
+    "onse\"\000\022M\n\020NotifyAuthFriend\022\032.message.Aut"
+    "hFriendRequest\032\033.message.AuthFriendRespo"
+    "nse\"\000\022\\\n\025NotifyTextChatMessage\022\037.message"
+    ".TextChatMessageRequest\032 .message.TextCh"
+    "atMessageResponse\"\000b\006proto3"
 };
 static ::absl::once_flag descriptor_table_message_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_message_2eproto = {
     false,
     false,
-    2409,
+    2427,
     descriptor_table_protodef_message_2eproto,
     "message.proto",
     &descriptor_table_message_2eproto_once,
@@ -6565,7 +6570,8 @@ PROTOBUF_NDEBUG_INLINE NotifyMakeFriendsRequest::Impl_::Impl_(
         _cached_size_{0},
         fromicon_(arena, from.fromicon_),
         fromname_(arena, from.fromname_),
-        message_(arena, from.message_) {}
+        message_(arena, from.message_),
+        fromdesc_(arena, from.fromdesc_) {}
 
 NotifyMakeFriendsRequest::NotifyMakeFriendsRequest(
     ::google::protobuf::Arena* PROTOBUF_NULLABLE arena,
@@ -6596,7 +6602,8 @@ PROTOBUF_NDEBUG_INLINE NotifyMakeFriendsRequest::Impl_::Impl_(
       : _cached_size_{0},
         fromicon_(arena),
         fromname_(arena),
-        message_(arena) {}
+        message_(arena),
+        fromdesc_(arena) {}
 
 inline void NotifyMakeFriendsRequest::SharedCtor(::_pb::Arena* PROTOBUF_NULLABLE arena) {
   new (&_impl_) Impl_(internal_visibility(), arena);
@@ -6621,6 +6628,7 @@ inline void NotifyMakeFriendsRequest::SharedDtor(MessageLite& self) {
   this_._impl_.fromicon_.Destroy();
   this_._impl_.fromname_.Destroy();
   this_._impl_.message_.Destroy();
+  this_._impl_.fromdesc_.Destroy();
   this_._impl_.~Impl_();
 }
 
@@ -6667,16 +6675,16 @@ NotifyMakeFriendsRequest::GetClassData() const {
   return NotifyMakeFriendsRequest_class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<3, 8, 0, 72, 2>
+const ::_pbi::TcParseTable<4, 9, 0, 80, 2>
 NotifyMakeFriendsRequest::_table_ = {
   {
     PROTOBUF_FIELD_OFFSET(NotifyMakeFriendsRequest, _impl_._has_bits_),
     0, // no _extensions_
-    8, 56,  // max_field_number, fast_idx_mask
+    9, 120,  // max_field_number, fast_idx_mask
     offsetof(decltype(_table_), field_lookup_table),
-    4294967040,  // skipmap
+    4294966784,  // skipmap
     offsetof(decltype(_table_), field_entries),
-    8,  // num_field_entries
+    9,  // num_field_entries
     0,  // num_aux_entries
     offsetof(decltype(_table_), field_names),  // no aux_entries
     NotifyMakeFriendsRequest_class_data_.base(),
@@ -6686,25 +6694,22 @@ NotifyMakeFriendsRequest::_table_ = {
     ::_pbi::TcParser::GetTable<::message::NotifyMakeFriendsRequest>(),  // to_prefetch
     #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
   }, {{
-    // int32 fromStatus = 8;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(NotifyMakeFriendsRequest, _impl_.fromstatus_), 7>(),
-     {64, 7, 0,
-      PROTOBUF_FIELD_OFFSET(NotifyMakeFriendsRequest, _impl_.fromstatus_)}},
+    {::_pbi::TcParser::MiniParse, {}},
     // int32 fromUid = 1;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(NotifyMakeFriendsRequest, _impl_.fromuid_), 3>(),
-     {8, 3, 0,
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(NotifyMakeFriendsRequest, _impl_.fromuid_), 4>(),
+     {8, 4, 0,
       PROTOBUF_FIELD_OFFSET(NotifyMakeFriendsRequest, _impl_.fromuid_)}},
     // int32 toUid = 2;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(NotifyMakeFriendsRequest, _impl_.touid_), 4>(),
-     {16, 4, 0,
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(NotifyMakeFriendsRequest, _impl_.touid_), 5>(),
+     {16, 5, 0,
       PROTOBUF_FIELD_OFFSET(NotifyMakeFriendsRequest, _impl_.touid_)}},
     // int32 type = 3;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(NotifyMakeFriendsRequest, _impl_.type_), 5>(),
-     {24, 5, 0,
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(NotifyMakeFriendsRequest, _impl_.type_), 6>(),
+     {24, 6, 0,
       PROTOBUF_FIELD_OFFSET(NotifyMakeFriendsRequest, _impl_.type_)}},
     // int32 fromSex = 4;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(NotifyMakeFriendsRequest, _impl_.fromsex_), 6>(),
-     {32, 6, 0,
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(NotifyMakeFriendsRequest, _impl_.fromsex_), 7>(),
+     {32, 7, 0,
       PROTOBUF_FIELD_OFFSET(NotifyMakeFriendsRequest, _impl_.fromsex_)}},
     // string fromIcon = 5;
     {::_pbi::TcParser::FastUS1,
@@ -6718,17 +6723,31 @@ NotifyMakeFriendsRequest::_table_ = {
     {::_pbi::TcParser::FastUS1,
      {58, 2, 0,
       PROTOBUF_FIELD_OFFSET(NotifyMakeFriendsRequest, _impl_.message_)}},
+    // int32 fromStatus = 8;
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(NotifyMakeFriendsRequest, _impl_.fromstatus_), 8>(),
+     {64, 8, 0,
+      PROTOBUF_FIELD_OFFSET(NotifyMakeFriendsRequest, _impl_.fromstatus_)}},
+    // string fromDesc = 9;
+    {::_pbi::TcParser::FastUS1,
+     {74, 3, 0,
+      PROTOBUF_FIELD_OFFSET(NotifyMakeFriendsRequest, _impl_.fromdesc_)}},
+    {::_pbi::TcParser::MiniParse, {}},
+    {::_pbi::TcParser::MiniParse, {}},
+    {::_pbi::TcParser::MiniParse, {}},
+    {::_pbi::TcParser::MiniParse, {}},
+    {::_pbi::TcParser::MiniParse, {}},
+    {::_pbi::TcParser::MiniParse, {}},
   }}, {{
     65535, 65535
   }}, {{
     // int32 fromUid = 1;
-    {PROTOBUF_FIELD_OFFSET(NotifyMakeFriendsRequest, _impl_.fromuid_), _Internal::kHasBitsOffset + 3, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
+    {PROTOBUF_FIELD_OFFSET(NotifyMakeFriendsRequest, _impl_.fromuid_), _Internal::kHasBitsOffset + 4, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
     // int32 toUid = 2;
-    {PROTOBUF_FIELD_OFFSET(NotifyMakeFriendsRequest, _impl_.touid_), _Internal::kHasBitsOffset + 4, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
+    {PROTOBUF_FIELD_OFFSET(NotifyMakeFriendsRequest, _impl_.touid_), _Internal::kHasBitsOffset + 5, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
     // int32 type = 3;
-    {PROTOBUF_FIELD_OFFSET(NotifyMakeFriendsRequest, _impl_.type_), _Internal::kHasBitsOffset + 5, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
+    {PROTOBUF_FIELD_OFFSET(NotifyMakeFriendsRequest, _impl_.type_), _Internal::kHasBitsOffset + 6, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
     // int32 fromSex = 4;
-    {PROTOBUF_FIELD_OFFSET(NotifyMakeFriendsRequest, _impl_.fromsex_), _Internal::kHasBitsOffset + 6, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
+    {PROTOBUF_FIELD_OFFSET(NotifyMakeFriendsRequest, _impl_.fromsex_), _Internal::kHasBitsOffset + 7, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
     // string fromIcon = 5;
     {PROTOBUF_FIELD_OFFSET(NotifyMakeFriendsRequest, _impl_.fromicon_), _Internal::kHasBitsOffset + 0, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
     // string fromName = 6;
@@ -6736,15 +6755,18 @@ NotifyMakeFriendsRequest::_table_ = {
     // string message = 7;
     {PROTOBUF_FIELD_OFFSET(NotifyMakeFriendsRequest, _impl_.message_), _Internal::kHasBitsOffset + 2, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
     // int32 fromStatus = 8;
-    {PROTOBUF_FIELD_OFFSET(NotifyMakeFriendsRequest, _impl_.fromstatus_), _Internal::kHasBitsOffset + 7, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
+    {PROTOBUF_FIELD_OFFSET(NotifyMakeFriendsRequest, _impl_.fromstatus_), _Internal::kHasBitsOffset + 8, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
+    // string fromDesc = 9;
+    {PROTOBUF_FIELD_OFFSET(NotifyMakeFriendsRequest, _impl_.fromdesc_), _Internal::kHasBitsOffset + 3, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
   }},
   // no aux_entries
   {{
-    "\40\0\0\0\0\10\10\7\0\0\0\0\0\0\0\0"
+    "\40\0\0\0\0\10\10\7\0\10\0\0\0\0\0\0"
     "message.NotifyMakeFriendsRequest"
     "fromIcon"
     "fromName"
     "message"
+    "fromDesc"
   }},
 };
 PROTOBUF_NOINLINE void NotifyMakeFriendsRequest::Clear() {
@@ -6755,7 +6777,7 @@ PROTOBUF_NOINLINE void NotifyMakeFriendsRequest::Clear() {
   (void) cached_has_bits;
 
   cached_has_bits = _impl_._has_bits_[0];
-  if (BatchCheckHasBit(cached_has_bits, 0x00000007U)) {
+  if (BatchCheckHasBit(cached_has_bits, 0x0000000fU)) {
     if (CheckHasBit(cached_has_bits, 0x00000001U)) {
       _impl_.fromicon_.ClearNonDefaultToEmpty();
     }
@@ -6765,12 +6787,16 @@ PROTOBUF_NOINLINE void NotifyMakeFriendsRequest::Clear() {
     if (CheckHasBit(cached_has_bits, 0x00000004U)) {
       _impl_.message_.ClearNonDefaultToEmpty();
     }
+    if (CheckHasBit(cached_has_bits, 0x00000008U)) {
+      _impl_.fromdesc_.ClearNonDefaultToEmpty();
+    }
   }
-  if (BatchCheckHasBit(cached_has_bits, 0x000000f8U)) {
+  if (BatchCheckHasBit(cached_has_bits, 0x000000f0U)) {
     ::memset(&_impl_.fromuid_, 0, static_cast<::size_t>(
-        reinterpret_cast<char*>(&_impl_.fromstatus_) -
-        reinterpret_cast<char*>(&_impl_.fromuid_)) + sizeof(_impl_.fromstatus_));
+        reinterpret_cast<char*>(&_impl_.fromsex_) -
+        reinterpret_cast<char*>(&_impl_.fromuid_)) + sizeof(_impl_.fromsex_));
   }
+  _impl_.fromstatus_ = 0;
   _impl_._has_bits_.Clear();
   _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
 }
@@ -6795,7 +6821,7 @@ PROTOBUF_NOINLINE void NotifyMakeFriendsRequest::Clear() {
 
   cached_has_bits = this_._impl_._has_bits_[0];
   // int32 fromUid = 1;
-  if (CheckHasBit(cached_has_bits, 0x00000008U)) {
+  if (CheckHasBit(cached_has_bits, 0x00000010U)) {
     if (this_._internal_fromuid() != 0) {
       target =
           ::google::protobuf::internal::WireFormatLite::WriteInt32ToArrayWithField<1>(
@@ -6804,7 +6830,7 @@ PROTOBUF_NOINLINE void NotifyMakeFriendsRequest::Clear() {
   }
 
   // int32 toUid = 2;
-  if (CheckHasBit(cached_has_bits, 0x00000010U)) {
+  if (CheckHasBit(cached_has_bits, 0x00000020U)) {
     if (this_._internal_touid() != 0) {
       target =
           ::google::protobuf::internal::WireFormatLite::WriteInt32ToArrayWithField<2>(
@@ -6813,7 +6839,7 @@ PROTOBUF_NOINLINE void NotifyMakeFriendsRequest::Clear() {
   }
 
   // int32 type = 3;
-  if (CheckHasBit(cached_has_bits, 0x00000020U)) {
+  if (CheckHasBit(cached_has_bits, 0x00000040U)) {
     if (this_._internal_type() != 0) {
       target =
           ::google::protobuf::internal::WireFormatLite::WriteInt32ToArrayWithField<3>(
@@ -6822,7 +6848,7 @@ PROTOBUF_NOINLINE void NotifyMakeFriendsRequest::Clear() {
   }
 
   // int32 fromSex = 4;
-  if (CheckHasBit(cached_has_bits, 0x00000040U)) {
+  if (CheckHasBit(cached_has_bits, 0x00000080U)) {
     if (this_._internal_fromsex() != 0) {
       target =
           ::google::protobuf::internal::WireFormatLite::WriteInt32ToArrayWithField<4>(
@@ -6861,11 +6887,21 @@ PROTOBUF_NOINLINE void NotifyMakeFriendsRequest::Clear() {
   }
 
   // int32 fromStatus = 8;
-  if (CheckHasBit(cached_has_bits, 0x00000080U)) {
+  if (CheckHasBit(cached_has_bits, 0x00000100U)) {
     if (this_._internal_fromstatus() != 0) {
       target =
           ::google::protobuf::internal::WireFormatLite::WriteInt32ToArrayWithField<8>(
               stream, this_._internal_fromstatus(), target);
+    }
+  }
+
+  // string fromDesc = 9;
+  if (CheckHasBit(cached_has_bits, 0x00000008U)) {
+    if (!this_._internal_fromdesc().empty()) {
+      const ::std::string& _s = this_._internal_fromdesc();
+      ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+          _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "message.NotifyMakeFriendsRequest.fromDesc");
+      target = stream->WriteStringMaybeAliased(9, _s, target);
     }
   }
 
@@ -6916,36 +6952,45 @@ PROTOBUF_NOINLINE void NotifyMakeFriendsRequest::Clear() {
                                         this_._internal_message());
       }
     }
-    // int32 fromUid = 1;
+    // string fromDesc = 9;
     if (CheckHasBit(cached_has_bits, 0x00000008U)) {
+      if (!this_._internal_fromdesc().empty()) {
+        total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                        this_._internal_fromdesc());
+      }
+    }
+    // int32 fromUid = 1;
+    if (CheckHasBit(cached_has_bits, 0x00000010U)) {
       if (this_._internal_fromuid() != 0) {
         total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
             this_._internal_fromuid());
       }
     }
     // int32 toUid = 2;
-    if (CheckHasBit(cached_has_bits, 0x00000010U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000020U)) {
       if (this_._internal_touid() != 0) {
         total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
             this_._internal_touid());
       }
     }
     // int32 type = 3;
-    if (CheckHasBit(cached_has_bits, 0x00000020U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000040U)) {
       if (this_._internal_type() != 0) {
         total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
             this_._internal_type());
       }
     }
     // int32 fromSex = 4;
-    if (CheckHasBit(cached_has_bits, 0x00000040U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000080U)) {
       if (this_._internal_fromsex() != 0) {
         total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
             this_._internal_fromsex());
       }
     }
+  }
+   {
     // int32 fromStatus = 8;
-    if (CheckHasBit(cached_has_bits, 0x00000080U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000100U)) {
       if (this_._internal_fromstatus() != 0) {
         total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
             this_._internal_fromstatus());
@@ -6999,29 +7044,38 @@ void NotifyMakeFriendsRequest::MergeImpl(::google::protobuf::MessageLite& to_msg
       }
     }
     if (CheckHasBit(cached_has_bits, 0x00000008U)) {
+      if (!from._internal_fromdesc().empty()) {
+        _this->_internal_set_fromdesc(from._internal_fromdesc());
+      } else {
+        if (_this->_impl_.fromdesc_.IsDefault()) {
+          _this->_internal_set_fromdesc("");
+        }
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000010U)) {
       if (from._internal_fromuid() != 0) {
         _this->_impl_.fromuid_ = from._impl_.fromuid_;
       }
     }
-    if (CheckHasBit(cached_has_bits, 0x00000010U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000020U)) {
       if (from._internal_touid() != 0) {
         _this->_impl_.touid_ = from._impl_.touid_;
       }
     }
-    if (CheckHasBit(cached_has_bits, 0x00000020U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000040U)) {
       if (from._internal_type() != 0) {
         _this->_impl_.type_ = from._impl_.type_;
       }
     }
-    if (CheckHasBit(cached_has_bits, 0x00000040U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000080U)) {
       if (from._internal_fromsex() != 0) {
         _this->_impl_.fromsex_ = from._impl_.fromsex_;
       }
     }
-    if (CheckHasBit(cached_has_bits, 0x00000080U)) {
-      if (from._internal_fromstatus() != 0) {
-        _this->_impl_.fromstatus_ = from._impl_.fromstatus_;
-      }
+  }
+  if (CheckHasBit(cached_has_bits, 0x00000100U)) {
+    if (from._internal_fromstatus() != 0) {
+      _this->_impl_.fromstatus_ = from._impl_.fromstatus_;
     }
   }
   _this->_impl_._has_bits_[0] |= cached_has_bits;
@@ -7046,6 +7100,7 @@ void NotifyMakeFriendsRequest::InternalSwap(NotifyMakeFriendsRequest* PROTOBUF_R
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.fromicon_, &other->_impl_.fromicon_, arena);
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.fromname_, &other->_impl_.fromname_, arena);
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.message_, &other->_impl_.message_, arena);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.fromdesc_, &other->_impl_.fromdesc_, arena);
   ::google::protobuf::internal::memswap<
       PROTOBUF_FIELD_OFFSET(NotifyMakeFriendsRequest, _impl_.fromstatus_)
       + sizeof(NotifyMakeFriendsRequest::_impl_.fromstatus_)

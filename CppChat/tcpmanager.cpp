@@ -49,6 +49,8 @@ void TcpManager::initHandlers()
             emit on_login_failed(err);
             return;
         }
+        // 初始化本地数据库
+        DataBase::GetInstance().initialization();
 
         // 先是本地加载
         UserManager::GetInstance()->GetFriends() = DataBase::GetInstance().getFriendsPtr();
@@ -119,8 +121,9 @@ void TcpManager::initHandlers()
                 // UserManager::GetInstance()->GetFriends().push_back(user_info);
             }
             if (lists.size()!=UserManager::GetInstance()->GetFriends().size()){
-                (void)std::async(std::launch::async,[this](){
-                    DataBase::GetInstance().storeFriends(UserManager::GetInstance()->GetFriends());
+                (void)std::async(std::launch::async,[this,&lists](){
+                    DataBase::GetInstance().storeFriends(lists);
+                    UserManager::GetInstance()->GetFriends() = std::move(lists);
                     emit on_add_friends_to_list(UserManager::GetInstance()->GetFriendsPerPage());
                 });
             }
@@ -148,8 +151,9 @@ void TcpManager::initHandlers()
             }
 
             if (UserManager::GetInstance()->GetMessages().size()!=lists.size()){
-                (void)std::async(std::launch::async,[this](){
-                    DataBase::GetInstance().createOrUpdateConversations(UserManager::GetInstance()->GetMessages());
+                (void)std::async(std::launch::async,[this,&lists](){
+                    DataBase::GetInstance().createOrUpdateConversations(lists);
+                    UserManager::GetInstance()->GetMessages() = std::move(lists);
                     emit on_add_messages_to_list(UserManager::GetInstance()->GetMessagesPerPage());
                 });
             }
@@ -310,6 +314,7 @@ void TcpManager::initHandlers()
             info->back = jsonObj["to_message"].toString();
             if (jsonObj["accept"].toBool()){
                 emit on_add_friend_to_list(info);
+                DataBase::GetInstance().storeFriend(info);
             }
             emit on_notify_friend(info,jsonObj["accept"].toBool());
         }else{
@@ -337,12 +342,15 @@ void TcpManager::initHandlers()
         info->id = jsonObj["from_uid"].toInt();
         info->name = jsonObj["from_name"].toString();
         info->sex = jsonObj["from_sex"].toInt();
+        info->email = jsonObj["from_email"].toString();
         info->avatar = jsonObj["from_icon"].toString();
         info->status = jsonObj["from_status"].toInt();
-        info->desc = jsonObj["message"].toString();     // 临时存放消息
+        info->desc = jsonObj["from_desc"].toString();     // 临时存放消息
+        info->back = jsonObj["message"].toString();
         if (jsonObj["type"].toInt() == static_cast<int>(NotificationCodes::ID_NOTIFY_MAKE_FRIENDS)){
             emit on_add_friend_to_list(info);
             emit on_notify_friend2(info,true);
+            DataBase::GetInstance().storeFriend(info);
         }else{
             emit on_notify_friend2(info,false);
         }
@@ -383,38 +391,19 @@ void TcpManager::initHandlers()
      * @brief 收到消息
     */
     _handlers[RequestType::ID_NOTIFY_TEXT_CHAT_MSG_REQ] = [this](RequestType requestType,int len,QByteArray data){
-        im::MessageContent pb;
-        pb.ParseFromString(data);
-        // TODO:
-        // emit on_get_message
+        im::MessageItem pb;
+        if (pb.ParseFromString(data.toStdString())){
+            emit on_get_message(fromPb(pb));
+        }else{
+            qDebug() << "Failed to parse Message from data";
+        }
     };
 
     /**
      * @brief 获取与某人的消息记录回报
     */
     _handlers[RequestType::ID_GET_MESSAGES_OF_FRIEND_RSP] = [this](RequestType requestType,int len,QByteArray data){
-        QJsonDocument jsonDoc = QJsonDocument::fromJson(data);
-        if (jsonDoc.isNull()){
-            return;
-        }
-        QJsonObject jsonObj = jsonDoc.object();
-        if (!jsonObj.contains("error")){
-            int err = static_cast<int>(ErrorCodes::ERROR_JSON);
-            return;
-        }
-
-        int err = jsonObj["error"].toInt();
-        if (err != static_cast<int>(ErrorCodes::SUCCESS)){
-            return;
-        }
-
-        std::vector<std::shared_ptr<MessageItem>>historys;
-        if (jsonObj.contains("historys")){
-            const QJsonArray&array = jsonObj["historys"].toArray();
-            for (const auto&item:array){
-                QJsonObject obj = item.toObject();
-            }
-        }
+        // TODO:获取与某人的聊天记录列表
     };
 
 }
@@ -459,6 +448,8 @@ void TcpManager::connections()
     connect(&_socket,&QTcpSocket::errorOccurred,[&](QTcpSocket::SocketError socketError){
         qDebug() << "Socket Error["<<socketError<< "]:" << _socket.errorString();
         emit on_login_failed(static_cast<int>(ErrorCodes::ERROR_NETWORK));
+        // 初始化本地数据库
+        DataBase::GetInstance().initialization();
 
         // 连接网络失败直接使用本地数据库展示。
         UserManager::GetInstance()->GetFriends() = DataBase::GetInstance().getFriendsPtr();

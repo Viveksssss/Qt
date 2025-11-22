@@ -157,7 +157,7 @@ public:
      * @return true
      * @return false
      */
-    bool AddMessage(int from_uid, int to_uid, const std::string& timestamp, int env, int content_type, const std::string& content_data, const std::string& content_mime_type, const std::string& fid);
+    bool AddMessage(const std::string&uid,int from_uid, int to_uid, const std::string& timestamp, int env, int content_type, const std::string& content_data, const std::string& content_mime_type, const std::string& fid, int status = 0);
     /**
      * @brief 添加会话
      *

@@ -51,3 +51,17 @@ struct ApplyInfo {
     int uid;
     int sex;
 };
+
+struct SessionInfo {
+    std::string uid;
+    int from_uid;
+    int to_uid;
+    std::string create_time;
+    std::string update_time;
+    std::string name;
+    std::string icon;
+    int status;
+    int deleted;
+    int pined;
+    SessionInfo() { }
+};

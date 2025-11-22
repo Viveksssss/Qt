@@ -733,7 +733,7 @@ bool MysqlDao::GetFriendList(const std::string& uid, std::vector<std::shared_ptr
     }
 }
 
-bool MysqlDao::AddMessage(int from_uid, int to_uid, int64_t timestamp, int env, int content_type, const std::string& content_data, const std::string& content_mime_type, const std::string& content_fid)
+bool MysqlDao::AddMessage(const std::string&uid,int from_uid, int to_uid, const std::string& timestamp, int env, int content_type, const std::string& content_data, const std::string& content_mime_type, const std::string& content_fid, int status)
 {
     auto conn = _pool->GetConnection();
     if (!conn) {
@@ -745,22 +745,104 @@ bool MysqlDao::AddMessage(int from_uid, int to_uid, int64_t timestamp, int env, 
     });
     try {
         mysqlpp::Query query = conn->query();
-        query << "INSERT INTO messages (from_uid,to_uid,timestamp,env,content_type,content_data,content_mime_type,content_fid) VALUES(%0q,%1q,%2q,%3q,%4q,%5q,%6q,%7q)";
+        query << "INSERT INTO messages (uid,from_uid,to_uid,timestamp,env,content_type,content_data,content_mime_type,content_fid,status) VALUES(%0q,%1q,%2q,%3q,%4q,%5q,%6q,%7q,%8q)";
         query.parse();
-        mysqlpp::SimpleResult res = query.execute(from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, content_fid);
+        mysqlpp::SimpleResult res = query.execute(uid,from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, content_fid, status);
         if (res) {
             int affected_rows = res.rows();
             if (affected_rows > 0) {
-                SPDLOG_INFO("Message added successfully for from_uid: {}, to_uid: {}, timestamp: {}, env: {}, content_type: {}, content_data: {}, content_mime_type: {}, fid: {}", from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, content_fid);
+                SPDLOG_INFO("Message added successfully for from_uid: {}, to_uid: {}, timestamp: {}, env: {}, content_type: {}, content_data: {}, content_mime_type: {}, fid: {}, status: {}", from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, content_fid, status);
                 return true;
             } else {
-                SPDLOG_WARN("Failed to add message for from_uid: {}, to_uid: {}, timestamp: {}, env: {}, content_type: {}, content_data: {}, content_mime_type: {}, fid: {}", from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, content_fid);
+                SPDLOG_WARN("Failed to add message for from_uid: {}, to_uid: {}, timestamp: {}, env: {}, content_type: {}, content_data: {}, content_mime_type: {}, fid: {}, status: {}", from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, content_fid, status);
                 return false;
             }
         } else {
             SPDLOG_ERROR("Failed to add message: {}", query.error());
             return false;
         }
+    } catch (const mysqlpp::Exception& e) {
+        SPDLOG_ERROR("MySQL++ exception: {}", e.what());
+        return false;
+    } catch (const std::exception& e) {
+        SPDLOG_ERROR("Exception: {}", e.what());
+        return false;
+    }
+}
+
+bool MysqlDao::AddConversation(const std::string& uid, int from_uid, int to_uid, const std::string& create_time, const std::string& update_time, const std::string& name, const std::string& icon, int staus, int deleted, int pined)
+{
+    auto conn = _pool->GetConnection();
+    if (!conn) {
+        SPDLOG_ERROR("Failed to get connection from pool");
+        return false;
+    }
+    Defer defer([this, &conn]() {
+        _pool->ReturnConnection(std::move(conn));
+    });
+    try {
+        mysqlpp::Query query = conn->query();
+        query << "INSERT INTO conversations (uid,from_uid,to_uid,create_time,update_time,name,icon,status,deleted,pined) VALUES(%0q,%1q,%2q,%3q,%4q,%5q,%6q,%7q,%8q,%9q)";
+        query.parse();
+        mysqlpp::SimpleResult res = query.execute(uid, from_uid, to_uid, create_time, update_time, name, icon, staus, deleted, pined);
+        if (res) {
+            int affected_rows = res.rows();
+            if (affected_rows > 0) {
+                SPDLOG_INFO("Conversation added successfully for uid: {}, from_uid: {}, to_uid: {}, create_time: {}, update_time: {}, name: {}, icon: {}, status: {}, deleted: {}, pined: {}", uid, from_uid, to_uid, create_time, update_time, name, icon, staus, deleted, pined);
+                return true;
+            } else {
+                SPDLOG_WARN("Failed to add conversation for uid: {}, from_uid: {}, to_uid: {}, create_time: {}, update_time: {}, name: {}, icon: {}, status: {}, deleted: {}, pined: {}", uid, from_uid, to_uid, create_time, update_time, name, icon, staus, deleted, pined);
+                return false;
+            }
+        } else {
+            SPDLOG_ERROR("Failed to add conversation: {}", query.error());
+            return false;
+        }
+    } catch (const mysqlpp::Exception& e) {
+        SPDLOG_ERROR("MySQL++ exception: {}", e.what());
+        return false;
+    } catch (const std::exception& e) {
+        SPDLOG_ERROR("Exception: {}", e.what());
+        return false;
+    }
+}
+
+bool MysqlDao::GetSeessionList(const std::string& uid, std::vector<std::shared_ptr<SessionInfo>>& sessionList)
+{
+    auto conn = _pool->GetConnection();
+    if (!conn) {
+        SPDLOG_ERROR("Failed to get connection from pool");
+        return false;
+    }
+    Defer defer([this, &conn]() {
+        _pool->ReturnConnection(std::move(conn));
+    });
+    try {
+        mysqlpp::Query query = conn->query();
+        query << "SELECT * FROM conversations"
+              << " WHERE (from_uid = %0q AND deleted = 0)";
+        query.parse();
+        mysqlpp::StoreQueryResult res = query.store(std::stoi(uid));
+        int count = res.num_rows();
+        if (res && res.num_rows() > 0) {
+            sessionList.reserve(res.num_rows()); // 预分配内存
+            for (size_t i = 0; i < res.num_rows(); ++i) {
+                auto session_info = std::make_shared<SessionInfo>();
+                session_info->uid = res[i]["uid"].c_str();
+                session_info->from_uid = res[i]["from_uid"];
+                session_info->to_uid = res[i]["to_uid"];
+                session_info->create_time = res[i]["create_time"].c_str();
+                session_info->update_time = res[i]["update_time"].c_str();
+                session_info->name = ValueOrEmpty(std::string(res[i]["name"]));
+                session_info->icon = ValueOrEmpty(std::string(res[i]["icon"]));
+                session_info->status = res[i]["status"];
+                session_info->deleted = res[i]["deleted"];
+                session_info->pined = res[i]["pined"];
+                sessionList.push_back(session_info);
+            }
+            return true;
+        }
+        return false;
     } catch (const mysqlpp::Exception& e) {
         SPDLOG_ERROR("MySQL++ exception: {}", e.what());
         return false;

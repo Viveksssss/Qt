@@ -26,6 +26,7 @@ private:
     QPixmap getStatusPximap(const QString &status)const;
     void showContextMenu(const QPoint &globalPos, const QModelIndex &index);
 private:
+
     MessagesListPart*list;
 
     QMenu*menu;

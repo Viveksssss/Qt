@@ -56,6 +56,7 @@ void MessageItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
     QString avatarPath = index.data(MessagesModel::AvatarRole).toString();
     int status = index.data(MessagesModel::StatusRole).toInt();
     QString message = index.data(MessagesModel::MessageRole).toString();
+    bool processed = index.data(MessagesModel::RedDotRole).toBool();
 
     // 3. 绘制头像
     QRect avatarRect(rect.left() + 10, rect.top() + 10, 40, 40);
@@ -73,6 +74,34 @@ void MessageItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
         // avatar.fill(QColor(200,200,200));
     }
 
+    // 绘制红点
+    if (!processed){
+        painter->save();
+        painter->setRenderHint(QPainter::Antialiasing);
+
+        // 红点位置：头像右上角，稍微向内偏移
+        int redDotSize = 10; // 红点大小
+        int offset = 2; // 向内偏移量，避免紧贴边缘
+
+        QPoint redDotCenter(
+            avatarRect.right() - redDotSize/2 + offset,
+            avatarRect.top() + redDotSize/2 - offset
+            );
+
+        QRect redDotRect(
+            redDotCenter.x() - redDotSize/2,
+            redDotCenter.y() - redDotSize/2,
+            redDotSize,
+            redDotSize
+            );
+
+        // 绘制红点
+        painter->setPen(Qt::NoPen);
+        painter->setBrush(QColor(255, 0, 0)); // 红色
+        painter->drawEllipse(redDotRect);
+
+        painter->restore();
+    }
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing);
     QPainterPath mask;
@@ -169,8 +198,9 @@ bool MessageItemDelegate::editorEvent(QEvent *event, QAbstractItemModel *model, 
             showContextMenu(mouseEvent->globalPos(), index);
             return true;
         }else if(mouseEvent->button() == Qt::LeftButton){
-            UserManager::GetInstance()->SetPeerUid(index.data(MessagesModel::ToUidRole).toInt());
-            qDebug() << "点击了列表：" << index.data(MessagesModel::ToUidRole).toInt();
+            int peerUid =index.data(MessagesModel::ToUidRole).toInt();
+            UserManager::GetInstance()->SetPeerUid(peerUid);
+            list->do_change_message_status(peerUid,true);
             emit SignalRouter::GetInstance().on_change_peer(index.data(MessagesModel::ToUidRole).toInt());
             return true;
         }

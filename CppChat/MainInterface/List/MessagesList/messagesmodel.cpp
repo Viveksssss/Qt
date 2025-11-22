@@ -1,11 +1,18 @@
 #include "messagesmodel.h"
 
 #include <QLabel>
+#include <algorithm>
+#include "../../../../database.h"
 
 
 MessagesModel::MessagesModel(QObject *parent)
     : QAbstractListModel{parent}
 {}
+
+MessagesModel::~MessagesModel()
+{
+    processPendingUpdates();
+}
 
 int MessagesModel::rowCount(const QModelIndex &parent) const
 {
@@ -35,9 +42,12 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
         return messageItem.status;
     case MessageRole:
         return messageItem.message;
+    case RedDotRole:
+        return messageItem.processed;
     default:
         return QVariant();
     }
+
 }
 
 QHash<int, QByteArray> MessagesModel::roleNames() const
@@ -49,6 +59,7 @@ QHash<int, QByteArray> MessagesModel::roleNames() const
     roles[AvatarRole] = "avatar";
     roles[StatusRole] = "status";
     roles[MessageRole] = "message";
+    roles[RedDotRole] = "redDot";
     return roles;
 }
 
@@ -74,6 +85,18 @@ ConversationItem MessagesModel::getMessage(int index)
     return ConversationItem();
 }
 
+ConversationItem MessagesModel::getConversation(int to_uid)
+{
+    auto it = std::find_if(_messages.begin(),_messages.end(),[to_uid](const ConversationItem&item){
+        return item.to_uid == to_uid;
+    });
+    if (it != _messages.end()){
+        return *it;
+    }else{
+        return ConversationItem{};
+    }
+}
+
 QModelIndex MessagesModel::indexFromUid(int uid) const
 {
     // 遍历所有行，检查uid角色
@@ -97,6 +120,17 @@ bool MessagesModel::existMessage(int uid)
         return item.to_uid == uid;
     });
     return it == _messages.end() ? false : true;
+}
+
+void MessagesModel::processPendingUpdates()
+{
+    qDebug() << _pendingUpdates.size();
+    for(int to_uid:_pendingUpdates){
+        const auto&item = getConversation(to_uid);
+        DataBase::GetInstance().createOrUpdateConversation(item);
+    }
+
+    _pendingUpdates.clear();
 }
 
 bool MessagesModel::removeRows(int row, int count, const QModelIndex &parent)
@@ -162,11 +196,19 @@ bool MessagesModel::setData(const QModelIndex &index, const QVariant &value, int
     case MessageRole:
         messageItem.message = value.toString();
         break;
+    case RedDotRole:
+        messageItem.processed = value.toBool();
+        break;
     default:
         return false;
     }
 
+    _pendingUpdates.insert(messageItem.to_uid);
+    if (_pendingUpdates.size() >= 10){
+        processPendingUpdates();
+    }
     emit dataChanged(index, index, {role});
+
     return true;
 }
 

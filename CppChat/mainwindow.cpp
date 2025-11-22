@@ -21,20 +21,9 @@ MainWindow::MainWindow(QWidget *parent)
     stack = new AuthStack(this);
     mainScreen = new MainScreen;
     setCentralWidget(stack);
-    QTimer::singleShot(50,this,[this](){
-        emit TcpManager::GetInstance()->on_switch_interface();
-    });
-
-    // auto&p = UserManager::GetInstance()->GetFriends();
-    // auto&p2 = UserManager::GetInstance()->GetMessages();
-    // auto ppp = std::make_shared<UserInfo>(1,1,1,"asdasdasd","asdasd","asdasdas");
-    // ppp->desc = "哥只是个传说";
-    // p.push_back(ppp);
-    // auto pp = std::make_shared<ConversationItem>();
-    // pp->name = "asdas";
-    // pp->message = "你好啊，我是大狗熊哦嘿嘿";
-    // p2.push_back(pp);
-
+    // QTimer::singleShot(50,this,[this](){
+    //     emit TcpManager::GetInstance()->on_switch_interface();
+    // });f
 }
 
 void MainWindow::setupUI()
@@ -73,19 +62,13 @@ void MainWindow::setConnections()
         move(screenGeometry.width()/2 - width/2,
              screenGeometry.height()/2 - height/2);
 
-        // 初始化本地数据库
-        DataBase::GetInstance().initialization();
-
         // qDebug() << DataBase::GetInstance().getFriendsPtr().size();
         // qDebug() << DataBase::GetInstance().getConversationListPtr().size();
-
-
         // UserManager::GetInstance()->SetPeerUid(1);
-        UserManager::GetInstance()->GetFriends() = DataBase::GetInstance().getFriendsPtr();
-        UserManager::GetInstance()->GetMessages() = DataBase::GetInstance().getConversationListPtr();
-
-        emit TcpManager::GetInstance()->on_add_friends_to_list(UserManager::GetInstance()->GetFriendsPerPage());
-        emit TcpManager::GetInstance()->on_add_messages_to_list(UserManager::GetInstance()->GetMessagesPerPage());
+        // UserManager::GetInstance()->GetFriends() = DataBase::GetInstance().getFriendsPtr();
+        // UserManager::GetInstance()->GetMessages() = DataBase::GetInstance().getConversationListPtr();
+        // emit TcpManager::GetInstance()->on_add_friends_to_list(UserManager::GetInstance()->GetFriendsPerPage());
+        // emit TcpManager::GetInstance()->on_add_messages_to_list(UserManager::GetInstance()->GetMessagesPerPage());
     });
 }
 

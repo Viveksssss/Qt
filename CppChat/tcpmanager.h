@@ -65,6 +65,7 @@ signals:
     void on_notify_friend2(std::shared_ptr<UserInfo>info,bool accept);   // to NotificationPanel::do_notify_friend2
     void on_change_friend_status(int,int);  // to FriendsListPart::do_change_friend_status;
     void on_change_chat_history(std::vector<std::shared_ptr<MessageItem>>); // to ChatArea::do_change_chat_history;
+    void on_get_message(const MessageItem&);// to MessageListPart::do_get_message
 };
 
 #endif // TCPMANAGER_H

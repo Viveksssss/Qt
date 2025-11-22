@@ -13,7 +13,7 @@ struct FriendItem : public UserInfo {
                const QString &avatar = "",const QString&desc = "",
                const QString &message = "")
 
-        : message(message)  // 如果是消息列表message就是最近的消息，如果是好友列表就是个性签名
+        : message(message)  // 个性签名
     {
         this->status = status;
         this->id = id;

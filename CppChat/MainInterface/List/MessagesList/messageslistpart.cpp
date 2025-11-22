@@ -1,11 +1,11 @@
 #include "messageslistpart.h"
 #include "messageitemdelegate.h"
 #include "messagesmodel.h"
-#include "../FriendsList/frienditem.h"
 #include "../../../../Properties/global.h"
 #include "../../../../Properties/signalrouter.h"
 #include "../../../../tcpmanager.h"
 #include "../../../../usermanager.h"
+#include "../../../../database.h"
 
 
 
@@ -131,7 +131,9 @@ void MessagesListPart::setupConnections()
         }
     });
     // 切换列表
-    connect(&SignalRouter::GetInstance(),&SignalRouter::on_change_peer,this,&MessagesListPart::do_change_peer);
+    connect(&SignalRouter::GetInstance(),&SignalRouter::on_message_item,this,&MessagesListPart::do_change_peer);
+    // 有新消息来临
+    connect(TcpManager::GetInstance().get(),&TcpManager::on_get_message,this,&MessagesListPart::do_get_message);
 }
 
 
@@ -200,8 +202,6 @@ void MessagesListPart::do_change_peer(int peerUid)
 {
     auto index = messagesModel->indexFromUid(peerUid);
     if (index.isValid()){
-        // 跳转到消息列表
-        emit SignalRouter::GetInstance().on_to_list(0);
         messagesList->setCurrentIndex(index);   // 切换列表索引至当前好友
     }else{
         ConversationItem conv;
@@ -211,4 +211,50 @@ void MessagesListPart::do_change_peer(int peerUid)
         messagesModel->addPreMessage(conv);
         messagesList->setCurrentIndex(messagesModel->index(0, 0));
     }
+}
+
+void MessagesListPart::do_get_message(const MessageItem &message)
+{
+    int peerUid = message.from_id;
+    // 先直接存储到数据库
+    DataBase::GetInstance().storeMessage(message);
+    if (messagesModel->existMessage(peerUid)){
+        if (messagesModel->indexFromUid(peerUid) == messagesList->currentIndex()){
+            // 添加message
+            emit SignalRouter::GetInstance().on_add_new_message(message);
+        }else{
+            // 红点
+            do_change_message_status(peerUid,false);
+        }
+    }else{
+        // 不存在会话，那就创建插入会话
+        std::shared_ptr<UserInfo>info = DataBase::GetInstance().getFriendInfoPtr(peerUid);
+        ConversationItem conv;
+        // 这里故意反过来，对于自己来说所有的好友都是to,自己是from
+        conv.to_uid = message.from_id;
+        conv.from_uid = message.to_id;
+        conv.icon = info->avatar;
+        if (message.content.type == MessageType::TextMessage){
+            conv.message = message.content.data.toString();
+        }else{
+            //TODO:比如图片，文件。。。
+            conv.message = "Other:暂时没做";
+        }
+        conv.pined = 0;
+        conv.status = 1;
+        conv.create_time = QDateTime::currentDateTime();
+        conv.update_time = QDateTime::currentDateTime();
+        conv.deleted = 0;
+        conv.name = info->name;
+        conv.processed = false;
+        messagesModel->addPreMessage(conv);
+        // 存放数据库中
+        DataBase::GetInstance().createOrUpdateConversation(conv);
+        // TODO:发给服务器
+    }
+}
+
+void MessagesListPart::do_change_message_status(int peerUid, bool processed)
+{
+    messagesModel->setData(messagesModel->indexFromUid(peerUid),processed,MessagesModel::MessageRole::RedDotRole);
 }

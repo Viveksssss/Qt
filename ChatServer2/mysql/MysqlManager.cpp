@@ -1,6 +1,5 @@
 #include "MysqlManager.h"
 #include "MysqlDao.h"
-#include <cstdint>
 MysqlManager::~MysqlManager()
 {
 }
@@ -88,9 +87,9 @@ bool MysqlManager::GetFriendList(const std::string& uid, std::vector<std::shared
     return _dao.GetFriendList(uid, friendList);
 }
 
-bool MysqlManager::AddMessage(int from_uid, int to_uid, const std::string& timestamp, int env, int content_type, const std::string& content_data, const std::string& content_mime_type, const std::string& fid)
+bool MysqlManager::AddMessage(const std::string&uid,int from_uid, int to_uid, const std::string& timestamp, int env, int content_type, const std::string& content_data, const std::string& content_mime_type, const std::string& fid, int status)
 {
-    return _dao.AddMessage(from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, fid);
+    return _dao.AddMessage(uid,from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, fid, status);
 }
 
 bool MysqlManager::AddConversation(const std::string& uid, int from_uid, int to_uid, const std::string& create_time, const std::string& update_time, const std::string& name, const std::string& icon, int staus, int deleted, int pined)
