@@ -19,6 +19,7 @@ public:
         StatusRole,                 // 状态
         MessageRole,                // 最近消息
         RedDotRole,                 // 红点
+        MessageEnvRole              // 私聊/群聊
     };
 
     explicit MessagesModel(QObject *parent = nullptr);

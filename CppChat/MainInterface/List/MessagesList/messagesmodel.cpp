@@ -12,6 +12,9 @@ MessagesModel::MessagesModel(QObject *parent)
 MessagesModel::~MessagesModel()
 {
     processPendingUpdates();
+    for(const ConversationItem&item:_messages){
+        DataBase::GetInstance().createOrUpdateConversation(item);
+    }
 }
 
 int MessagesModel::rowCount(const QModelIndex &parent) const
@@ -124,7 +127,6 @@ bool MessagesModel::existMessage(int uid)
 
 void MessagesModel::processPendingUpdates()
 {
-    qDebug() << _pendingUpdates.size();
     for(int to_uid:_pendingUpdates){
         const auto&item = getConversation(to_uid);
         DataBase::GetInstance().createOrUpdateConversation(item);

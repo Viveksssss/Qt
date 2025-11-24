@@ -27,6 +27,8 @@ public:
 
     bool updateMessageStatus(int messageId,int status);
 
+    bool updateMessagesStatus(int peerUid, int status);
+
     bool deleteMessage(int messageId);
 
     MessageItem createMessageFromQuery(const QSqlQuery& query);

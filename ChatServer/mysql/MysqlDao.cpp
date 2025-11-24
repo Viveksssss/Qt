@@ -733,7 +733,7 @@ bool MysqlDao::GetFriendList(const std::string& uid, std::vector<std::shared_ptr
     }
 }
 
-bool MysqlDao::AddMessage(const std::string&uid,int from_uid, int to_uid, const std::string& timestamp, int env, int content_type, const std::string& content_data, const std::string& content_mime_type, const std::string& content_fid, int status)
+bool MysqlDao::AddMessage(const std::string& uid, int from_uid, int to_uid, const std::string& timestamp, int env, int content_type, const std::string& content_data, const std::string& content_mime_type, const std::string& content_fid, int status)
 {
     auto conn = _pool->GetConnection();
     if (!conn) {
@@ -745,9 +745,12 @@ bool MysqlDao::AddMessage(const std::string&uid,int from_uid, int to_uid, const 
     });
     try {
         mysqlpp::Query query = conn->query();
-        query << "INSERT INTO messages (uid,from_uid,to_uid,timestamp,env,content_type,content_data,content_mime_type,content_fid,status) VALUES(%0q,%1q,%2q,%3q,%4q,%5q,%6q,%7q,%8q)";
+        query << "INSERT INTO messages (uid,from_uid,to_uid,timestamp,env,content_type,content_data,content_mime_type,content_fid,status) VALUES(%0q,%1q,%2q,%3q,%4q,%5q,%6q,%7q,%8q,%9q)";
         query.parse();
-        mysqlpp::SimpleResult res = query.execute(uid,from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, content_fid, status);
+        if (env < 0 || env > 255){
+            env = 0;
+        }
+        mysqlpp::SimpleResult res = query.execute(uid, from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, content_fid, status);
         if (res) {
             int affected_rows = res.rows();
             if (affected_rows > 0) {
@@ -770,7 +773,7 @@ bool MysqlDao::AddMessage(const std::string&uid,int from_uid, int to_uid, const 
     }
 }
 
-bool MysqlDao::AddConversation(const std::string& uid, int from_uid, int to_uid, const std::string& create_time, const std::string& update_time, const std::string& name, const std::string& icon, int staus, int deleted, int pined)
+bool MysqlDao::AddConversation(const std::string& uid, int from_uid, int to_uid, const std::string& create_time, const std::string& update_time, const std::string& name, const std::string& icon, int staus, int deleted, int pined, bool processed)
 {
     auto conn = _pool->GetConnection();
     if (!conn) {
@@ -782,9 +785,9 @@ bool MysqlDao::AddConversation(const std::string& uid, int from_uid, int to_uid,
     });
     try {
         mysqlpp::Query query = conn->query();
-        query << "INSERT INTO conversations (uid,from_uid,to_uid,create_time,update_time,name,icon,status,deleted,pined) VALUES(%0q,%1q,%2q,%3q,%4q,%5q,%6q,%7q,%8q,%9q)";
+        query << "INSERT INTO conversations (uid,from_uid,to_uid,create_time,update_time,name,icon,status,deleted,pined,processed) VALUES(%0q,%1q,%2q,%3q,%4q,%5q,%6q,%7q,%8q,%9q,%10)";
         query.parse();
-        mysqlpp::SimpleResult res = query.execute(uid, from_uid, to_uid, create_time, update_time, name, icon, staus, deleted, pined);
+        mysqlpp::SimpleResult res = query.execute(uid, from_uid, to_uid, create_time, update_time, name, icon, staus, deleted, pined, processed);
         if (res) {
             int affected_rows = res.rows();
             if (affected_rows > 0) {
@@ -838,6 +841,7 @@ bool MysqlDao::GetSeessionList(const std::string& uid, std::vector<std::shared_p
                 session_info->status = res[i]["status"];
                 session_info->deleted = res[i]["deleted"];
                 session_info->pined = res[i]["pined"];
+                session_info->processed = res[i]["processed"];
                 sessionList.push_back(session_info);
             }
             return true;

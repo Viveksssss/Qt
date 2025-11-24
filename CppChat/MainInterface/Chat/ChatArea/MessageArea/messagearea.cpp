@@ -20,6 +20,8 @@ MessageArea::MessageArea(QWidget *parent)
 {
     setupUI();
     setupConnections();
+
+    do_load_more_message();
 }
 
 void MessageArea::setupUI()
@@ -50,6 +52,7 @@ void MessageArea::setupConnections()
 {
     connect(&SignalRouter::GetInstance(),&SignalRouter::on_change_peer,this,&MessageArea::do_change_peer);
     connect(this,&MessageArea::on_load_more_message,this,&MessageArea::do_load_more_message);
+    connect(&SignalRouter::GetInstance(),&SignalRouter::on_add_new_message,this,&MessageArea::do_add_new_message);
 }
 
 MessageModel *MessageArea::getModel()
@@ -64,33 +67,46 @@ void MessageArea::do_area_to_bottom()
 
 void MessageArea::do_change_peer(int uid)
 {
+    if (uid == UserManager::GetInstance()->GetPeerUid()){
+        return;
+    }
+
     auto&friends = UserManager::GetInstance()-> GetFriends();
 
+    // Is Friend
     auto it = std::find_if(friends.begin(),friends.end(),[uid](std::shared_ptr<UserInfo> info){
         return info->id == uid;
     });
 
+    model->clearMessage();
+
     if (it!=friends.end()){
-        UserManager::GetInstance()->GetTimestamp().erase(UserManager::GetInstance()->GetPeerUid());
+        // Private
         // 首先点击了好友的列表，我们需要切换对方信息，同时发送请求获取和对方的聊天信息。
-        UserManager::GetInstance()->SetPeerName((*it)->name);
-        UserManager::GetInstance()->SetPeerUid((*it)->id);
         UserManager::GetInstance()->SetPeerEmail((*it)->email);
         UserManager::GetInstance()->SetPeerDesc((*it)->desc);
         UserManager::GetInstance()->SetPeerSex((*it)->sex);
         UserManager::GetInstance()->SetPeerStatus((*it)->status);
+        UserManager::GetInstance()->SetEnv(MessageEnv::Private);
+        UserManager::GetInstance()->GetTimestamp().erase(UserManager::GetInstance()->GetPeerUid());
+        UserManager::GetInstance()->SetPeerName((*it)->name);
+        UserManager::GetInstance()->SetPeerUid(uid);
         UserManager::GetInstance()->SetPeerIcon((*it)->avatar);
 
-        model->clearMessage();
-
-        QString timestamp = UserManager::GetInstance()->HasHistory((*it)->id) ? UserManager::GetInstance()->GetHistoryTimestamp((*it)->id).toString():"";
-        const auto&historys = DataBase::GetInstance().getMessages((*it)->id,timestamp);
+        // UserManager::GetInstance()->SetEnv();
+        const auto&historys = DataBase::GetInstance().getMessages((*it)->id,QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss"));
+        do_change_chat_history(historys,true);
 
         emit SignalRouter::GetInstance().on_message_item(uid);
 
-        do_change_chat_history(historys);
+        do_area_to_bottom();
     }else{
-
+        // Group
+        // UserManager::GetInstance()->SetEnv(MessageEnv::Private);
+        // UserManager::GetInstance()->GetTimestamp().erase(UserManager::GetInstance()->GetPeerUid());
+        // UserManager::GetInstance()->SetPeerName((*it)->name);
+        // UserManager::GetInstance()->SetPeerUid(uid);
+        // UserManager::GetInstance()->SetPeerIcon((*it)->avatar);
     }
 
 
@@ -102,15 +118,21 @@ void MessageArea::do_change_peer(int uid)
     // TcpManager::GetInstance()->on_send_data(RequestType::ID_GET_MESSAGES_OF_FRIEND_REQ,doc.toJson());
 }
 
-void MessageArea::do_change_chat_history(std::vector<std::shared_ptr<MessageItem>>messages)
+void MessageArea::do_change_chat_history(std::vector<std::shared_ptr<MessageItem>>messages,bool _delete)
 {
+    if (_delete){
+        model->clearMessage();
+    }
     for (const auto&message:messages){
         model->addPreMessage(message);
     }
 }
 
-void MessageArea::do_change_chat_history(std::vector<MessageItem>messages)
+void MessageArea::do_change_chat_history(std::vector<MessageItem>messages,bool _delete)
 {
+    if (_delete){
+        model->clearMessage();
+    }
     for (const auto&message:messages){
         model->addPreMessage(message);
     }
@@ -124,9 +146,12 @@ void MessageArea::do_load_more_message()
     isLoading = true;
 
 
-    QString timestamp = UserManager::GetInstance()->HasHistory(UserManager::GetInstance()->GetPeerUid()) ? UserManager::GetInstance()->GetHistoryTimestamp(UserManager::GetInstance()->GetPeerUid()).toString():"";
+    QString timestamp =UserManager::GetInstance()->GetHistoryTimestamp(UserManager::GetInstance()->GetPeerUid()).toString("yyyy-MM-dd HH:mm:ss");
     const auto&historys = DataBase::GetInstance().getMessages(UserManager::GetInstance()->GetPeerUid(),timestamp);
-    do_change_chat_history(historys);
+    do_change_chat_history(historys,false);
+    if (historys.size()>0){
+        showToast("loading...");
+    }
 
 
     QTimer::singleShot(1000,this,[this](){
@@ -134,9 +159,39 @@ void MessageArea::do_load_more_message()
     });
 }
 
+void MessageArea::showToast(const QString& message, int duration)
+{
+    if (!toastLabel) {
+        toastLabel = new QLabel(this);
+        toastLabel->setAlignment(Qt::AlignCenter);
+        toastLabel->setStyleSheet(
+            "background-color: rgba(0, 0, 0, 180);"
+            "color: white;"
+            "padding: 8px 16px;"
+            "border-radius: 4px;"
+            "font-size: 14px;"
+            );
+        toastLabel->setAttribute(Qt::WA_TransparentForMouseEvents);
+        toastLabel->hide();
+    }
+
+    toastLabel->setText(message);
+    toastLabel->adjustSize();
+
+    // 居中显示
+    QPoint center = rect().center();
+    toastLabel->move(center.x() - toastLabel->width()/2,
+                     center.y() - toastLabel->height()/2);
+    toastLabel->show();
+
+    // 自动隐藏
+    QTimer::singleShot(duration, toastLabel, &QLabel::hide);
+}
+
 void MessageArea::do_add_new_message(const MessageItem &item)
 {
-    model->addPreMessage(item);
+    model->addMessage(item);
+    do_area_to_bottom();
 }
 
 void MessageArea::resizeEvent(QResizeEvent *event)
@@ -155,9 +210,9 @@ bool MessageArea::eventFilter(QObject *obj, QEvent *event)
             int step = delta > 0 ? -30 : 30;  // 反向，因为滚动条值增加是向下
             vScrollBar->setValue(vScrollBar->value() + step);
 
-            int maxValue = vScrollBar->maximum();
+            int minimum = vScrollBar->minimum();
             int currentValue = vScrollBar->value();
-            if (currentValue <= 10 && !UserManager::GetInstance()->IsLoadFriendsFinished()){
+            if (currentValue <= minimum+10 && !UserManager::GetInstance()->IsLoadMessagesFinished(UserManager::GetInstance()->GetPeerUid())){
                 qDebug() << "load more historys";
                 emit on_load_more_message();
             }

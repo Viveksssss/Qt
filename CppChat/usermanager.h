@@ -91,8 +91,12 @@ public:
 
     bool IsLoadFriendsFinished();
     bool IsLoadMessagesFinished();
+    void ResetLoadFriends();
+    void ResetLoadMessages();
+    bool IsLoadMessagesFinished(int peerUid); // history
+    void setMessagesFinished(int peerUid);
     QDateTime GetHistoryTimestamp(int);
-    bool HasHistory(int)const;
+    void setHistoryTimestamp(int,QDateTime);
 private:
     UserManager();
 
@@ -106,7 +110,7 @@ private:
     int _uid;
     int _sex;
     int _status;
-    MessageEnv _env;
+    MessageEnv _env ;
 
     QString _peer_token;
     QString _peer_name;
@@ -114,9 +118,9 @@ private:
     QPixmap _peer_avatar;
     QString _peer_desc;
     QString _peer_icon;
-    int _peer_uid;
-    int _peer_sex;
-    int _peer_status;
+    int _peer_uid = -1;
+    int _peer_sex = -1;
+    int _peer_status = -1;
 
     int _messages_loaded;
     int _friends_loaded;
@@ -124,6 +128,7 @@ private:
     std::vector<std::shared_ptr<UserInfo>>_friends;
     std::vector<std::shared_ptr<ConversationItem>>_messages;
     std::unordered_map<int,QDateTime>_timestamp;
+    std::unordered_map<int,bool>_messages_finished;
 
 
 public slots:

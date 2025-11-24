@@ -31,7 +31,6 @@ MessageItemDelegate::MessageItemDelegate(QWidget* parent,MessagesListPart*list)
 void MessageItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index)const
 {
     painter->save();
-
     // 1. 绘制背景
     QRect rect = option.rect;
     int radius = 12;
@@ -195,13 +194,10 @@ bool MessageItemDelegate::editorEvent(QEvent *event, QAbstractItemModel *model, 
     if (event->type() == QEvent::MouseButtonPress) {
         QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
         if (mouseEvent->button() == Qt::RightButton){
-            showContextMenu(mouseEvent->globalPos(), index);
+            showContextMenu(mouseEvent->globalPosition().toPoint(), index);
             return true;
         }else if(mouseEvent->button() == Qt::LeftButton){
-            int peerUid =index.data(MessagesModel::ToUidRole).toInt();
-            UserManager::GetInstance()->SetPeerUid(peerUid);
-            list->do_change_message_status(peerUid,true);
-            emit SignalRouter::GetInstance().on_change_peer(index.data(MessagesModel::ToUidRole).toInt());
+            change_info(index);
             return true;
         }
     }
@@ -221,9 +217,20 @@ QListView *MessageItemDelegate::getList()
     return list->getList();
 }
 
+void MessageItemDelegate::change_info(const QModelIndex &index)
+{
+    UserManager::GetInstance()->setHistoryTimestamp(UserManager::GetInstance()->GetPeerUid(),QDateTime::currentDateTime());
+
+    // int env = index.data(MessagesModel::MessageEnvRole).toInt();
+    int peerUid =index.data(MessagesModel::ToUidRole).toInt();
+    // UserManager::GetInstance()->SetPeerUid(peerUid);
+    list->do_change_message_status(peerUid,true);
+
+    emit SignalRouter::GetInstance().on_change_peer(index.data(MessagesModel::ToUidRole).toInt());
+}
+
 QPixmap MessageItemDelegate::getStatusPximap(const QString &status) const
 {
-
 }
 
 void MessageItemDelegate::showContextMenu(const QPoint &globalPos, const QModelIndex &index)
@@ -246,7 +253,6 @@ void MessageItemDelegate::showContextMenu(const QPoint &globalPos, const QModelI
     }else if(selectedAction == selectAction){
         auto *p= list->getList();
         if(p){
-            qDebug() <<"yes";
             p->setCurrentIndex(index);
         }
     }else if(selectedAction == deleteAction){

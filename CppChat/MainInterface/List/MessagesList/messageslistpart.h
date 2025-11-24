@@ -13,6 +13,7 @@
  *****************************************************************************/
 
 #include <QWidget>
+#include <vector>
 
 class MessagesModel;
 class MessageItemDelegate;
@@ -29,10 +30,13 @@ class MessagesListPart : public QWidget
     friend class MessagesItemDelegate;
 public:
     explicit MessagesListPart(QWidget *parent = nullptr);
+    ~MessagesListPart();
     QListView* getList();
 private:
     void setupUI();
     void setupConnections();
+    void setLoading(bool loading);
+    void syncConversations();
     std::shared_ptr<ConversationItem> userFor(const QModelIndex&index);
 signals:
     void on_loading_messages(); // to do_loading_messages
@@ -45,6 +49,7 @@ public slots:
     void do_change_peer(int);
     void do_get_message(const MessageItem&);    // from TcpManager::on_get_message
     void do_change_message_status(int peerUid,bool);  // from
+    void do_data_ready(const std::span<std::shared_ptr<ConversationItem>> &list);
 
 private:
     QLabel *title;
@@ -53,13 +58,16 @@ private:
     MessagesModel *messagesModel;
     MessageItemDelegate *messagesDelegate;
     // 是否正在加载列表
-    bool isLoading;
+    bool isLoading = false;
+    bool dataReady;
+
+    std::vector<ConversationItem>_wait_sync_conversations;
 
     // QObject interface
 public:
     bool eventFilter(QObject *watched, QEvent *event);
     inline bool getIsLoading()noexcept{return isLoading;}
-    inline void setLoading(bool loading)noexcept{this->isLoading = loading;}
+    // inline void setLoading(bool loading)noexcept{this->isLoading = loading;}
 };
 
 #endif // MESSAGESLISTPART_H

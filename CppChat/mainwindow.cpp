@@ -19,6 +19,7 @@ MainWindow::MainWindow(QWidget *parent)
     setupUI();
     setConnections();
     stack = new AuthStack(this);
+    DataBase::GetInstance().initialization();
     mainScreen = new MainScreen;
     setCentralWidget(stack);
     // QTimer::singleShot(50,this,[this](){

@@ -30,7 +30,6 @@ NotificationPanel::NotificationPanel(QWidget *parent)
 void NotificationPanel::addFriendNews(bool isReply,int code ,int uid, int sex,const QString &iconPath, const QString &name, const QString &content)
 {
     emit on_show_red_dot();
-    qDebug() << "iconPath" << iconPath;
     QString icon = (iconPath.isNull() || iconPath.isEmpty())?  ":/Resources/main/header-default.png":iconPath;
     FriendsNewsItem *itemWidget = new FriendsNewsItem(isReply,code,uid,sex,icon, name, content);
     QListWidgetItem*item = new QListWidgetItem;
@@ -84,7 +83,6 @@ void NotificationPanel::showPanel()
         QRect parentR = mainWindow->geometry();
 
         QRect startRect = QRect(parentR.width(),10,width(),mainWindow->height() - 20);
-        qDebug() << startRect;
         QRect endRect(parentR.width() - width() - 10,10,width(),mainWindow->height() - 20);
         setGeometry(startRect);
 
@@ -236,9 +234,7 @@ void NotificationPanel::do_auth_friend(std::shared_ptr<UserInfo> info)
 
 void NotificationPanel::do_notifications_to_list(const std::vector<std::shared_ptr<UserInfo>> &list)
 {
-    qDebug() << "yes...";
     for(auto&item:list){
-        qDebug() << item->desc;
         addFriendNews(true,item->status,item->id,-1,item->avatar,"时间"+item->back,item->desc);
     }
 }

@@ -15,12 +15,11 @@ public:
         SenderRole,
         TimestampRole,
         ContentsRole,
-        SourceRole,
         SelectedRole,
         DisplayTimeRole,
         BubbleColorRole,
         AlignmentRole,
-        MessageEnvRole
+        MessageEnvRole,
     };
 
     explicit MessageModel(QObject *parent = nullptr);

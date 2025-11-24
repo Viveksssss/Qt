@@ -25,8 +25,8 @@ enum class MessageSource{
 };
 
 enum class MessageEnv{
-    Private,
-    Group
+    Private,    // 0
+    Group       // 1
 };
 
 struct MessageContent{
@@ -41,7 +41,6 @@ struct MessageItem{
     int                   to_id;        // 接受者id
     int                   from_id;      // 发送者的id
     QDateTime             timestamp;    // 时间
-    MessageSource         from;         // 自己还是对方发送的
     MessageEnv            env;          // 私聊还是群聊
     MessageContent        content;      // 实际的内容串
     bool                  isSelected;   // 之后可能会有聊天记录的选择，删除
@@ -52,7 +51,6 @@ struct MessageItem{
         ,from_id(UserManager::GetInstance()->GetUid())
         ,timestamp(QDateTime::currentDateTime())
         ,env(MessageEnv::Private)
-        ,from(MessageSource::Me)
         ,isSelected(false)
         ,status(0)
         {}
@@ -65,8 +63,9 @@ static im::MessageItem toPb(const MessageItem &m)
     pb.set_id(m.id.toStdString());
     pb.set_from_id(m.from_id);
     pb.set_to_id(m.to_id);
-    pb.set_timestamp(m.timestamp.toString().toStdString());
+    pb.set_timestamp(m.timestamp.toString("yyyy-MM-dd HH:mm:ss").toStdString());
     pb.set_env(static_cast<int32_t>(m.env));
+    qDebug() << "env!!!:" << static_cast<int>(m.env);
 
 
     auto* c = pb.mutable_content();
@@ -87,7 +86,6 @@ static MessageItem fromPb(const im::MessageItem&pb)
     m.from_id           = pb.from_id();
     m.timestamp         = QDateTime::fromString(QString::fromStdString(pb.timestamp()),format);
     m.env               = MessageEnv(pb.env());
-    m.from              = MessageSource::Peer;
     m.content.fid       = QString::fromStdString(pb.content().fid());
     m.content.type      = MessageType(pb.content().type());
     m.content.data      = QString::fromStdString(pb.content().data());
@@ -119,6 +117,7 @@ struct ConversationItem
     int                   pined;        // 是否置顶
     QString               message;      // 最近消息
     bool                  processed;    // 是否处理了
+    int                   env;          // 0私聊，1群聊
 
     ConversationItem()
         : id (QUuid::createUuid().toString())
@@ -126,6 +125,7 @@ struct ConversationItem
         , deleted(0)
         , pined(0)
         , processed(true)
+        , env(0)
     {}
 
 };

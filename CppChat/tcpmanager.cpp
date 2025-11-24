@@ -52,10 +52,6 @@ void TcpManager::initHandlers()
         // 初始化本地数据库
         DataBase::GetInstance().initialization();
 
-        // 先是本地加载
-        UserManager::GetInstance()->GetFriends() = DataBase::GetInstance().getFriendsPtr();
-        UserManager::GetInstance()->GetMessages() = DataBase::GetInstance().getConversationListPtr();
-
         // 基本信息
         UserManager::GetInstance()->SetName(jsonObj["name"].toString());
         UserManager::GetInstance()->SetEmail(jsonObj["email"].toString());
@@ -64,6 +60,14 @@ void TcpManager::initHandlers()
         UserManager::GetInstance()->SetUid(jsonObj["uid"].toInt());
         UserManager::GetInstance()->SetSex(jsonObj["sex"].toInt());
         UserManager::GetInstance()->SetStatus(1);
+
+
+        // 先是本地加载
+        UserManager::GetInstance()->GetFriends() = DataBase::GetInstance().getFriendsPtr();
+        UserManager::GetInstance()->GetMessages() = DataBase::GetInstance().getConversationListPtr();
+
+        emit on_add_friends_to_list(UserManager::GetInstance()->GetFriendsPerPage());
+        emit on_add_messages_to_list(UserManager::GetInstance()->GetMessagesPerPage());
 
 
 
@@ -117,20 +121,27 @@ void TcpManager::initHandlers()
                 user_info->email = obj["email"].toString();
                 user_info->avatar = obj["icon"].toString();
                 user_info->desc = obj["desc"].toString();
+                user_info->back = obj["back"].toString();
                 lists.push_back(user_info);
                 // UserManager::GetInstance()->GetFriends().push_back(user_info);
             }
-            if (lists.size()!=UserManager::GetInstance()->GetFriends().size()){
+            int ss = UserManager::GetInstance()->GetFriends().size();
+            qDebug() << UserManager::GetInstance()->GetFriends().size() <<"\t" << lists.size();
+            if (lists.size()>UserManager::GetInstance()->GetFriends().size()){
                 (void)std::async(std::launch::async,[this,&lists](){
+                    qDebug() << "friends";
                     DataBase::GetInstance().storeFriends(lists);
                     UserManager::GetInstance()->GetFriends() = std::move(lists);
+                    UserManager::GetInstance()->ResetLoadFriends();
                     emit on_add_friends_to_list(UserManager::GetInstance()->GetFriendsPerPage());
                 });
             }
         }
+
         //TODO: 会话列表
         if (jsonObj.contains("conversations")){
             const QJsonArray &conversations = jsonObj["conversations"].toArray();
+            qDebug() << "conversations" <<conversations;
             std::vector<std::shared_ptr<ConversationItem>>lists;
             for(const QJsonValue&value:conversations){
                 QJsonObject obj = value.toObject();
@@ -150,10 +161,11 @@ void TcpManager::initHandlers()
                 lists.push_back(conversation);
             }
 
-            if (UserManager::GetInstance()->GetMessages().size()!=lists.size()){
+            if (UserManager::GetInstance()->GetMessages().size()<lists.size()){
                 (void)std::async(std::launch::async,[this,&lists](){
                     DataBase::GetInstance().createOrUpdateConversations(lists);
                     UserManager::GetInstance()->GetMessages() = std::move(lists);
+                    UserManager::GetInstance()->ResetLoadMessages();
                     emit on_add_messages_to_list(UserManager::GetInstance()->GetMessagesPerPage());
                 });
             }
@@ -400,6 +412,13 @@ void TcpManager::initHandlers()
     };
 
     /**
+     * @brief 发送消息回包
+    */
+    _handlers[RequestType::ID_TEXT_CHAT_MSG_RSP] = [this](RequestType requestType,int len,QByteArray data){
+        // qDebug() << "暂时不处理";
+    };
+
+    /**
      * @brief 获取与某人的消息记录回报
     */
     _handlers[RequestType::ID_GET_MESSAGES_OF_FRIEND_RSP] = [this](RequestType requestType,int len,QByteArray data){
@@ -420,7 +439,6 @@ void TcpManager::connections()
         _buffer.append(_socket.readAll());
         QDataStream stream(&_buffer,QIODevice::ReadOnly);
         stream.setByteOrder(QDataStream::BigEndian);
-        qDebug() << _buffer;
         forever{
             if (!_recv_pending){
                 if (_buffer.size() < static_cast<int>(sizeof(qint16)*2)){
@@ -436,11 +454,11 @@ void TcpManager::connections()
             QByteArray msgBody = _buffer.mid(4,_msg_len);
             _buffer.remove(0,4+_msg_len);
             // 在TLV解析的最开始添加
-            qDebug() << "=== 收到TLV消息 ===";
-            qDebug() << "Type:" << static_cast<int>(_msg_id);
-            qDebug() << "Length:" << _msg_len;
-            qDebug() << "Data:" << msgBody;
-            qDebug() << "===================";
+            // qDebug() << "=== 收到TLV消息 ===";
+            // qDebug() << "Type:" << static_cast<int>(_msg_id);
+            // qDebug() << "Length:" << _msg_len;
+            // qDebug() << "Data:" << msgBody;
+            // qDebug() << "===================";
             handleMessage(RequestType(_msg_id),_msg_len,msgBody);
         }
     });

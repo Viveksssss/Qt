@@ -118,7 +118,7 @@ bool SideBarPart::eventFilter(QObject *watched, QEvent *event)
         if (buttonGroup) {
             for (QAbstractButton *button : buttonGroup->buttons()) {
                 QPushButton *pushButton = qobject_cast<QPushButton*>(button);
-                if (pushButton && pushButton->rect().contains(pushButton->mapFromGlobal(mouseEvent->globalPos()))) {
+                if (pushButton && pushButton->rect().contains(pushButton->mapFromGlobal(mouseEvent->globalPosition().toPoint()))) {
                     clickOnButton = true;
                     break;
                 }

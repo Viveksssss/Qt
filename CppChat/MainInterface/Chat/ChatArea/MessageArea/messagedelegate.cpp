@@ -24,6 +24,7 @@
 #include <QtConcurrent/QtConcurrent>
 #include <QMimeDatabase>
 #include <QDir>
+#include <QStaticText>
 #include "../../../../usermanager.h"
 #include "../../../../stylemanager.h"
 #include "../../../../Properties/sourcemanager.h"
@@ -47,7 +48,7 @@ void MessageDelegate::paint(QPainter *painter, const QStyleOptionViewItem &optio
     painter->save();
     painter->setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
 
-    bool isMe = index.data(MessageModel::SourceRole).toInt() == static_cast<int>(MessageSource::Me);
+    bool isMe = index.data(MessageModel::SenderRole).toInt() == UserManager::GetInstance()->GetUid();
     QColor bubbleColor = index.data(MessageModel::BubbleColorRole).value<QColor>();
     bool isSelected = index.data(MessageModel::SelectedRole).toBool();
     auto content = index.data(MessageModel::ContentsRole).value<MessageContent>();
@@ -120,7 +121,7 @@ void MessageDelegate::paintAvatar(QPainter *painter, const QRect &rect, const QP
     painter->drawPixmap(rect.topLeft(), scaled.copy(x, y, rect.width(), rect.height()));
 
     painter->restore();
-    painter->setPen(QPen(QColor("#3b3b3b"), 1));
+    painter->setPen(QPen(QColor(59,59,59), 1));
     painter->drawEllipse(rect.adjusted(1, 1, -1, -1));
 
     painter->restore();
@@ -160,28 +161,103 @@ void MessageDelegate::paintButtleBackground(QPainter *painter, const QRect &rect
     painter->restore();
 }
 
+// int MessageDelegate::paintTextMessage(QPainter *painter, const QRect &rect, const MessageContent &content, const QStyleOptionViewItem &option) const
+// {
+
+//     QString text = content.data.toString();
+//     QFont font = option.font;
+//     font.setPointSize(12);
+//     painter->setFont(font);
+//     painter->setPen(Qt::black);
+
+//     QTextOption textOption;
+//     textOption.setWrapMode(QTextOption::WrapAnywhere);
+//     textOption.setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+
+//     QRect textRect = rect.adjusted(3,3,0,0);
+//     QFontMetrics fm(font);
+//     QRect boundingRect = fm.boundingRect(textRect, Qt::TextWrapAnywhere, text);
+
+//     painter->drawText(boundingRect, text, textOption);
+
+//     return boundingRect.height();
+// }
+
+
+// int MessageDelegate::paintTextMessage(QPainter *painter, const QRect &rect, const MessageContent &content, const QStyleOptionViewItem &option) const
+// {
+//     QString text = content.data.toString();
+//     QFont font = option.font;
+//     font.setPointSize(12);
+//     painter->setFont(font);
+//     painter->setPen(Qt::black);
+
+//     // 直接使用 QStaticText（不缓存）
+//     QStaticText staticText(text);
+//     staticText.setTextFormat(Qt::PlainText);
+//     staticText.setPerformanceHint(QStaticText::AggressiveCaching);
+//     staticText.setTextWidth(rect.width() - 6);
+
+//     QRect textRect = rect.adjusted(3, 3, 0, 0);
+//     painter->drawStaticText(textRect.topLeft(), staticText);
+
+//     QFontMetrics fm(font);
+//     QRect boundingRect = fm.boundingRect(textRect, Qt::TextWrapAnywhere, text);
+//     return boundingRect.height();
+// }
+
+
 int MessageDelegate::paintTextMessage(QPainter *painter, const QRect &rect, const MessageContent &content, const QStyleOptionViewItem &option) const
 {
-
     QString text = content.data.toString();
     QFont font = option.font;
     font.setPointSize(12);
-    painter->setFont(font);
-    painter->setPen(Qt::black);
 
-    QTextOption textOption;
-    textOption.setWrapMode(QTextOption::WrapAnywhere);
-    textOption.setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-
-    QRect textRect = rect.adjusted(3,3,0,0);
+    QRect textRect = rect.adjusted(3, 3, 0, 0);
     QFontMetrics fm(font);
     QRect boundingRect = fm.boundingRect(textRect, Qt::TextWrapAnywhere, text);
 
-    painter->drawText(boundingRect, text, textOption);
+    // 创建包含宽度信息的缓存键
+    QString cacheKey = QString("%1_%2").arg(text).arg(rect.width());
+
+    if (text.length() > 10) {
+        painter->setRenderHint(QPainter::Antialiasing, false);
+        painter->setRenderHint(QPainter::TextAntialiasing, false);
+    }
+
+    static QCache<QString, QStaticText> textCache(500);
+    static QMutex cacheMutex;
+
+    QStaticText* staticText = nullptr;
+    {
+        QMutexLocker locker(&cacheMutex);
+        staticText = textCache.object(cacheKey);
+    }
+
+    if (staticText) {
+        // 缓存命中，直接使用
+        painter->setFont(font);
+        painter->setPen(Qt::black);
+        painter->drawStaticText(textRect.topLeft(), *staticText);
+    } else {
+        // 缓存未命中，创建并缓存
+        staticText = new QStaticText(text);
+        staticText->setTextFormat(Qt::PlainText);
+        staticText->setPerformanceHint(QStaticText::AggressiveCaching);
+        staticText->setTextWidth(textRect.width());
+
+        painter->setFont(font);
+        painter->setPen(Qt::black);
+        painter->drawStaticText(textRect.topLeft(), *staticText);
+
+        {
+            QMutexLocker locker(&cacheMutex);
+            textCache.insert(cacheKey, staticText);
+        }
+    }
 
     return boundingRect.height();
 }
-
 
 
 
@@ -277,6 +353,19 @@ QSize MessageDelegate::calculateMessageSize(const MessageContent&content,const Q
 }
 
 
+bool MessageDelegate::containsManyEmojis(const QString& text) const
+{
+    int emojiCount = 0;
+    for (const QChar& ch : text) {
+        // 简单判断：如果字符是emoji或特殊符号
+        if (ch.unicode() >= 0x1F600 && ch.unicode() <= 0x1F64F) { // 常见emoji范围
+            emojiCount++;
+        }
+    }
+    return emojiCount > text.length() / 2; // 超过一半是表情
+}
+
+
 
 bool MessageDelegate::editorEvent(QEvent *event, QAbstractItemModel *model, const QStyleOptionViewItem &option, const QModelIndex &index)
 {
@@ -286,20 +375,16 @@ bool MessageDelegate::editorEvent(QEvent *event, QAbstractItemModel *model, cons
             // 切换选择状态
             bool currentSelection = index.data(MessageModel::SelectedRole).toBool();
             bool newSelection = !currentSelection;
-            bool success = model->setData(index, newSelection, MessageModel::SelectedRole);
+            model->setData(index, newSelection, MessageModel::SelectedRole);
             emit model->dataChanged(index, index,{MessageModel::SelectedRole});
             return true;
         }else if (mouseEvent->button() == Qt::RightButton) {
             // 右键点击，显示复制菜单
-            showContextMenu(mouseEvent->globalPos(), index);
+            showContextMenu(mouseEvent->globalPosition().toPoint(), index);
             return true;
         }
     }else if (event->type() == QEvent::MouseButtonDblClick) {
-        QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
-
         auto contents = index.data(MessageModel::ContentsRole).value<MessageContent>();
-
-
         MessageType type = contents.type;
         QString filePath = contents.data.toString();
 
@@ -346,7 +431,7 @@ void MessageDelegate::showContextMenu(const QPoint &globalPos, const QModelIndex
             QString imagePath = content.data.value<QString>();
 
             // 在新线程中加载图片
-            QtConcurrent::run([imagePath]() {
+            (void)QtConcurrent::run([imagePath]() {
                 QPixmap img = SourceManager::GetInstance()->getPixmap(imagePath);
                 if (!img.isNull()) {
                     // 在主线程中设置剪贴板
@@ -409,7 +494,7 @@ void MessageDelegate::paintBubbleMessage(QPainter *painter, const QStyleOptionVi
 
     QSize size = calculateMessageSize(content, option);
 
-    QSize contentSize = calculateMessageSize(content, option);
+    // QSize contentSize = calculateMessageSize(content, option);
 
 
     QRect avatarRect;
@@ -1410,7 +1495,7 @@ void MessageDelegate::openAudio(const QString &filePath) const
     });
 
     // 更新进度
-    connect(player, &QMediaPlayer::positionChanged, [=](qint64 position) {
+    connect(player, &QMediaPlayer::positionChanged, [=,this](qint64 position) {
         if (player->duration() > 0) {
             progressSlider->setValue(static_cast<int>((position * 100) / player->duration()));
             currentTimeLabel->setText(formatTime(position));

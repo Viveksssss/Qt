@@ -43,9 +43,10 @@ bool DataBase::createMessagesTables()
         "CREATE TABLE IF NOT EXISTS messages ("
         "id                INTEGER PRIMARY KEY AUTOINCREMENT,"
         "uid               TEXT    NOT NULL,"
+        "owner             INTEGER NOT NULL,"
         "from_uid          INTEGER NOT NULL,"
         "to_uid            INTEGER NOT NULL,"
-        "timestamp         INTEGER,"  // 毫秒时间戳
+        "timestamp         TEXT,"  // 毫秒时间戳
         "env               INTEGER NOT NULL,"  // 0=Private 1=Group
         "content_type      INTEGER NOT NULL,"  // MessageType 枚举
         "content_data      TEXT    NOT NULL,"  // 文本或缩略图 base64
@@ -81,20 +82,21 @@ bool DataBase::storeMessage(const MessageItem &message)
     QSqlQuery query(_db);
     query.prepare(R"(
         INSERT INTO messages
-        (uid,from_uid,to_uid,timestamp,env,content_type,content_data,content_mime_type,content_fid,status)
-        values(?,?,?,?,?,?,?,?,?,?)
+        (uid,from_uid,to_uid,timestamp,env,content_type,content_data,content_mime_type,content_fid,status,owner)
+        values(?,?,?,?,?,?,?,?,?,?,?)
     )");
 
     query.addBindValue(message.id);
     query.addBindValue(message.from_id);
     query.addBindValue(message.to_id);
-    query.addBindValue(message.timestamp.toString());
+    query.addBindValue(message.timestamp.toString("yyyy-MM-dd HH:mm:ss"));
     query.addBindValue(static_cast<int>(message.env));
     query.addBindValue(static_cast<int>(message.content.type));
     query.addBindValue(message.content.data);
     query.addBindValue(message.content.mimeType);
     query.addBindValue(message.content.fid);
-    query.addBindValue(1);
+    query.addBindValue(0);
+    query.addBindValue(UserManager::GetInstance()->GetUid());
 
     if (!query.exec()){
         qDebug() << "Failed to store message:" << query.lastError().text();
@@ -118,21 +120,22 @@ bool DataBase::storeMessages(const std::vector<MessageItem> &messages)
     QSqlQuery query(_db);
     query.prepare(R"(
         INSERT INTO messages
-        (uid,from_uid,to_uid,timestamp,env,content_type,content_data,content_mime_type,content_fid,status)
-        values(?,?,?,?,?,?,?,?,?,?)
+        (uid,from_uid,to_uid,timestamp,env,content_type,content_data,content_mime_type,content_fid,status,owner)
+        values(?,?,?,?,?,?,?,?,?,?,?)
     )");
 
     for (const MessageItem&message:messages){
         query.addBindValue(message.id);
         query.addBindValue(message.from_id);
         query.addBindValue(message.to_id);
-        query.addBindValue(message.timestamp);
+        query.addBindValue(message.timestamp.toString("yyyy-MM-dd HH:mm:ss"));
         query.addBindValue(static_cast<int>(message.env));
         query.addBindValue(static_cast<int>(message.content.type));
         query.addBindValue(message.content.data);
         query.addBindValue(message.content.mimeType);
         query.addBindValue(message.content.fid);
         query.addBindValue(message.status);
+        query.addBindValue(UserManager::GetInstance()->GetUid());
     }
     if (!query.execBatch()){
         qDebug() << "ExecBatch Error:" << query.lastError().text();
@@ -161,8 +164,8 @@ bool DataBase::storeMessages(const std::vector<std::shared_ptr<MessageItem>> &me
     QSqlQuery query(_db);
     query.prepare(R"(
         INSERT INTO messages
-        (uid, from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, content_fid, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (uid, from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, content_fid, status,owner)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     )");
 
     for (const auto& message_ptr : messages){
@@ -170,13 +173,14 @@ bool DataBase::storeMessages(const std::vector<std::shared_ptr<MessageItem>> &me
         query.addBindValue(message.id);
         query.addBindValue(message.from_id);
         query.addBindValue(message.to_id);
-        query.addBindValue(message.timestamp);
+        query.addBindValue(message.timestamp.toString("yyyy-MM-dd HH:mm:ss"));
         query.addBindValue(static_cast<int>(message.env));
         query.addBindValue(static_cast<int>(message.content.type));
         query.addBindValue(message.content.data);
         query.addBindValue(message.content.mimeType);
         query.addBindValue(message.content.fid);
         query.addBindValue(message.status);
+        query.addBindValue(UserManager::GetInstance()->GetUid());
     }
 
     if (!query.execBatch()){
@@ -200,18 +204,18 @@ std::vector<MessageItem> DataBase::getMessages(int peerUid,  QString sinceTimest
 
     QString sql = R"(
         SELECT * FROM messages
-        WHERE ((from_uid = ? AND to_uid = ?) OR (from_uid = ? AND to_uid = ?))
+        WHERE ((from_uid = ? AND to_uid = ?) OR (from_uid = ? AND to_uid = ?)) AND owner = ?
     )";
 
     QVariantList params;
-    params << peerUid <<UserManager::GetInstance()->GetUid() << UserManager::GetInstance()->GetUid() << peerUid;
+    params << peerUid << UserManager::GetInstance()->GetUid() << UserManager::GetInstance()->GetUid() << peerUid << UserManager::GetInstance()->GetUid();
 
     if (!sinceTimestamp.isEmpty()){
         sql += "AND timestamp < ? ";
         params << sinceTimestamp;
     }
 
-    sql += "ORDER BY timestamp DESC ";
+    sql += "ORDER BY timestamp desc ";
     if (limit > 0){
         sql+="LIMIT ?";
         params << limit;
@@ -225,14 +229,20 @@ std::vector<MessageItem> DataBase::getMessages(int peerUid,  QString sinceTimest
         qDebug() << "Failed To Get Messages:" << query.lastError().text();
         return messages;
     }
-    bool firstMessage = true;
+
+    int count = 0;
+    QDateTime last_time;
     while(query.next()){
         messages.push_back(createMessageFromQuery(query));
-        if (firstMessage){
-            firstMessage = false;
-            QDateTime last_time = query.value("timestamp").toDateTime();
-            emit SignalRouter::GetInstance().on_change_last_time(peerUid,last_time);
-        }
+        count++;
+        last_time = query.value("timestamp").toDateTime();
+    }
+    if (count > 0){
+        emit SignalRouter::GetInstance().on_change_last_time(peerUid,last_time);
+    }
+
+    if (count<limit){
+        UserManager::GetInstance()->setMessagesFinished(peerUid);
     }
     return messages;
 }
@@ -241,7 +251,7 @@ std::vector<MessageItem> DataBase::getMessages(int peerUid,  QString sinceTimest
 bool DataBase::updateMessageStatus(int messageId, int status)
 {
     QSqlQuery query(_db);
-    query.prepare("UPDATE messages SET status = ? WHERE uid = ?");
+    query.prepare("UPDATE messages SET status = ? WHERE to_uid = ?");
 
     query.addBindValue(status);
     query.addBindValue(messageId);
@@ -252,11 +262,30 @@ bool DataBase::updateMessageStatus(int messageId, int status)
     }
 
     if (query.numRowsAffected() == 0) {
-        qDebug() << "No message found with id:" << messageId;
+        qDebug() << "updateMessageStatus::No message found with id:" << messageId;
         return false;
     }
 
-    qDebug() << "Updated message" << messageId << "status to" << status;
+    return true;
+}
+
+bool DataBase::updateMessagesStatus(int peerUid, int status)
+{
+    QSqlQuery query(_db);
+    query.prepare("UPDATE messages SET status = ? WHERE to_uid = ?");
+
+    query.addBindValue(status);
+    query.addBindValue(peerUid);
+
+    if (!query.exec()) {
+        qDebug() << "Failed to update message status:" << query.lastError().text();
+        return false;
+    }
+
+    if (query.numRowsAffected() == 0) {
+        qDebug() << "updateMessagesStatus::No message found with id:" << peerUid;
+        return false;
+    }
     return true;
 }
 
@@ -273,7 +302,7 @@ bool DataBase::deleteMessage(int messageId)
     }
 
     if (query.numRowsAffected() == 0) {
-        qDebug() << "No message found with id:" << messageId;
+        qDebug() << "deleteMessage::No message found with id:" << messageId;
         return false;
     }
 
@@ -306,14 +335,15 @@ bool DataBase::createConversationTable()
         uid         TEXT    NOT NULL UNIQUE,
         to_uid      INTEGER NOT NULL,
         from_uid    INTEGER NOT NULL,
-        create_time INTEGER ,
-        update_time INTEGER ,
-        name        TEXT    ,
-        icon        TEXT    ,
+        create_time TEXT ,
+        update_time TEXT ,
+        name        TEXT ,
+        icon        TEXT ,
         status      INTEGER DEFAULT 0,
         deleted     INTEGER DEFAULT 0,
         pined       INTEGER DEFAULT 0,
-        processed   INTEGER DEFAULT 0
+        processed   INTEGER DEFAULT 0,
+        env         INTEGER DEFAULT 0
     )
     )";
 
@@ -344,8 +374,8 @@ bool DataBase::createOrUpdateConversation(const ConversationItem& conv)
     QSqlQuery query(_db);
     query.prepare(R"(
         INSERT OR REPLACE INTO conversations
-        (uid,to_uid, from_uid, create_time, update_time, name, icon,status,deleted,pined,processed)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (uid,to_uid, from_uid, create_time, update_time, name, icon,status,deleted,pined,processed,env)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     )");
 
     qint64 now = QDateTime::currentSecsSinceEpoch();
@@ -353,14 +383,15 @@ bool DataBase::createOrUpdateConversation(const ConversationItem& conv)
     query.addBindValue(conv.id);
     query.addBindValue(conv.to_uid);
     query.addBindValue(conv.from_uid);
-    query.addBindValue(conv.create_time.toString());
-    query.addBindValue(!conv.update_time.isNull() ? conv.update_time.toString() : QString::number(now));
+    query.addBindValue(conv.create_time.toString("yyyy-MM-dd HH:mm:ss"));
+    query.addBindValue(!conv.update_time.isNull() ? conv.update_time.toString("yyyy-MM-dd HH:mm:ss") : QString::number(now));
     query.addBindValue(conv.name);
     query.addBindValue(conv.icon);
     query.addBindValue(conv.status);
     query.addBindValue(conv.deleted);
     query.addBindValue(conv.pined);
     query.addBindValue(conv.processed?1:0);
+    query.addBindValue(conv.env);
 
     if (!query.exec()) {
         qDebug() << "Failed to create/update conversation:" << query.lastError().text();
@@ -406,26 +437,28 @@ bool DataBase::createOrUpdateConversations(const std::vector<ConversationItem> &
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     )");
 
-    qint64 now = QDateTime::currentSecsSinceEpoch();
+    QDateTime now = QDateTime::currentDateTime();
 
     // 预先绑定所有参数
     QVariantList ids, to_uids, from_uids, create_times, update_times;
-    QVariantList names, icons, statuses, deleteds, pineds,processed;
+    QVariantList names, icons, statuses, deleteds, pineds,processeds,envs;
 
     for (const auto& conv : conversations) {
-        ids << conv.id;
-        to_uids << conv.to_uid;
-        from_uids << conv.from_uid;
-        create_times << conv.create_time;
-        update_times << (!conv.update_time.isNull() ? conv.update_time.toString() : QString::number(now));
-        names << conv.name;
-        icons << conv.icon;
-        statuses << conv.status;
-        deleteds << conv.deleted;
-        pineds << conv.pined;
-        processed << (conv.processed ? 1 : 0);
+        ids                 << conv.id;
+        to_uids             << conv.to_uid;
+        from_uids           << conv.from_uid;
+        create_times        << conv.create_time.toString("yyyy-MM-dd HH:mm:ss");
+        update_times        << (!conv.update_time.isNull() ? conv.update_time.toString("yyyy-MM-dd HH:mm:ss") : now.toString("yyyy-MM-dd HH:mm:ss"));
+        names               << conv.name;
+        icons               << conv.icon;
+        statuses            << conv.status;
+        deleteds            << conv.deleted;
+        pineds              << conv.pined;
+        processeds          << (conv.processed ? 1 : 0);
+        envs                << conv.env;
     }
 
+    qDebug() << "conversations size : " << conversations.size();
     query.addBindValue(ids);
     query.addBindValue(to_uids);
     query.addBindValue(from_uids);
@@ -436,7 +469,8 @@ bool DataBase::createOrUpdateConversations(const std::vector<ConversationItem> &
     query.addBindValue(statuses);
     query.addBindValue(deleteds);
     query.addBindValue(pineds);
-    query.addBindValue(processed);
+    query.addBindValue(processeds);
+    query.addBindValue(envs);
 
     if (!query.execBatch()) {
         qDebug() << "Failed to batch create/update conversations:" << query.lastError().text();
@@ -460,34 +494,37 @@ bool DataBase::createOrUpdateConversations(const std::vector<std::shared_ptr<Con
         return true;
     }
 
+    qDebug() << "createOrUpdateConversations";
+
     _db.transaction();
 
     QSqlQuery query(_db);
     query.prepare(R"(
         INSERT OR REPLACE INTO conversations
-        (uid, to_uid, from_uid, create_time, update_time, name, icon, status, delted, pined,processed)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
+        (uid, to_uid, from_uid, create_time, update_time, name, icon, status, delted, pined,processed,env)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     )");
 
-    qint64 now = QDateTime::currentSecsSinceEpoch();
+    QDateTime now = QDateTime::currentDateTime();
 
     // 预先绑定所有参数
     QVariantList ids, to_uids, from_uids, create_times, update_times;
-    QVariantList names, icons, statuses, deleteds, pineds,processed;
+    QVariantList names, icons, statuses, deleteds, pineds,processeds,envs;
 
     for (const auto& conv_ptr : conversations) {
         const ConversationItem& conv = *conv_ptr;  // 解引用 shared_ptr
-        ids << conv.id;
-        to_uids << conv.to_uid;
-        from_uids << conv.from_uid;
-        create_times << conv.create_time;
-        update_times << (!conv.update_time.isNull() ? conv.update_time.toString() : QString::number(now));
-        names << conv.name;
-        icons << conv.icon;
-        statuses << conv.status;
-        deleteds << conv.deleted;
-        pineds << conv.pined;
-        processed << (conv.processed?1:0);
+        ids                 << conv.id;
+        to_uids             << conv.to_uid;
+        from_uids           << conv.from_uid;
+        create_times        << conv.create_time;
+        update_times        << (!conv.update_time.isNull() ? conv.update_time.toString("yyyy-MM-dd HH:mm:ss") : now.toString("yyyy-MM-dd HH:mm:ss"));
+        names               << conv.name;
+        icons               << conv.icon;
+        statuses            << conv.status;
+        deleteds            << conv.deleted;
+        pineds              << conv.pined;
+        processeds          << (conv.processed?1:0);
+        envs                << conv.env;
     }
 
     query.addBindValue(ids);
@@ -500,7 +537,8 @@ bool DataBase::createOrUpdateConversations(const std::vector<std::shared_ptr<Con
     query.addBindValue(statuses);
     query.addBindValue(deleteds);
     query.addBindValue(pineds);
-    query.addBindValue(processed);
+    query.addBindValue(processeds);
+    query.addBindValue(envs);
 
     if (!query.execBatch()) {
         qDebug() << "Failed to batch create/update conversations (shared_ptr version):" << query.lastError().text();
@@ -524,9 +562,11 @@ std::vector<ConversationItem> DataBase::getConversationList()
     QSqlQuery query(_db);
     query.prepare(R"(
         SELECT * FROM conversations
-        WHERE deleted = 0
-        ORDER BY pined DESC , update_time DESC
+        WHERE deleted = 0 AND from_uid = ?
+        ORDER BY pined desc , update_time desc
     )");
+    query.addBindValue(UserManager::GetInstance()->GetUid());
+
     if (!query.exec()){
         qDebug() << "Failed to get conversations list:" << query.lastError().text();
         return conversations;
@@ -535,7 +575,7 @@ std::vector<ConversationItem> DataBase::getConversationList()
         ConversationItem conv = createConversationFromQuery(query);
         // 补充动态数据
         conv.message = getLastMessage(conv.to_uid);
-        conversations.push_back(conv);
+        conversations.push_back(std::move(conv));
     }
     return conversations;
 }
@@ -547,9 +587,12 @@ std::vector<std::shared_ptr<ConversationItem> > DataBase::getConversationListPtr
     QSqlQuery query(_db);
     query.prepare(R"(
         SELECT * FROM conversations
-        WHERE deleted = 0
-        ORDER BY pined DESC , update_time DESC
+        WHERE deleted = 0 AND from_uid = ?
+        ORDER BY pined desc , update_time desc
     )");
+    qDebug() << "getUid:"<<UserManager::GetInstance()->GetUid();
+    query.addBindValue(UserManager::GetInstance()->GetUid());
+
     if (!query.exec()){
         qDebug() << "Failed to get conversations list:" << query.lastError().text();
         return conversations;
@@ -575,7 +618,7 @@ ConversationItem DataBase::getConversation(int peerUid)
 
     query.addBindValue(peerUid);
     query.addBindValue(UserManager::GetInstance()->GetUid());
-    if (!query.exec()){
+    if (!query.exec() || !query.next()){
         qDebug() << "Failed to get conversation :" << query.lastError().text();
         return conv;
     }
@@ -585,6 +628,13 @@ ConversationItem DataBase::getConversation(int peerUid)
 
 ConversationItem DataBase::createConversationFromQuery(const QSqlQuery &query)
 {
+
+    // 添加有效性检查
+    if (!query.isValid()) {
+        qDebug() << "Warning: createConversationFromQuery called with invalid query";
+        return ConversationItem();
+    }
+
     ConversationItem conv;
     conv.id = query.value("uid").toString();
     conv.from_uid       =     query.value("from_uid").toInt();
@@ -597,6 +647,7 @@ ConversationItem DataBase::createConversationFromQuery(const QSqlQuery &query)
     conv.deleted        =     query.value("deleted").toInt();
     conv.pined          =     query.value("pined").toInt();
     conv.processed      =     query.value("processed").toInt() == 1 ? true: false;
+    conv.env            =     query.value("env").toInt();
 
     return conv;
 }
@@ -610,7 +661,7 @@ QString DataBase::getLastMessage(int peerUid)
     query.prepare(R"(
         SELECT * FROM messages
         WHERE (from_uid = ? AND to_uid = ?) OR (from_uid = ? AND to_uid = ?)
-        ORDER BY timestamp DESC
+        ORDER BY timestamp desc
         LIMIT 1
     )");
 
@@ -620,6 +671,13 @@ QString DataBase::getLastMessage(int peerUid)
     query.addBindValue(myUid);
 
     if (query.exec() && query.next()) {
+
+        // 在访问任何值之前，先检查查询是否在有效记录上
+        if (!query.isValid()) {
+            qDebug() << "Query is not valid in getLastMessage";
+            return "";
+        }
+
         switch(query.value("content_type").toInt())
         {
         case static_cast<int>(MessageType::AudioMessage):
@@ -682,13 +740,17 @@ bool DataBase::createFriendsTable()
 
 std::shared_ptr<UserInfo> DataBase::getFriendInfoPtr(int peerUid)
 {
+    qDebug() << "peerUid:" << peerUid;
     QSqlQuery query(_db);
     query.prepare(R"(
         SELECT * FROM friends
         WHERE to_uid = ?
+        AND from_uid = ?
     )");
-    query.addBindValue(peerUid);
-    if (!query.exec()){
+    query.addBindValue(UserManager::GetInstance()->GetPeerUid());
+    query.addBindValue(UserManager::GetInstance()->GetUid());
+
+    if (!query.exec() || !query.next()){
         qDebug()<< "Failed to get FriendInfo" << query.lastError().text();
         return std::shared_ptr<UserInfo>();
     }
@@ -704,7 +766,7 @@ UserInfo DataBase::getFriendInfo(int peerUid)
         WHERE to_uid = ?
     )");
     query.addBindValue(peerUid);
-    if (!query.exec()){
+    if (!query.exec() || !query.next()){
         qDebug()<< "Failed to get FriendInfo" << query.lastError().text();
         return UserInfo{};
     }
@@ -721,7 +783,7 @@ std::vector<UserInfo> DataBase::getFriends()
         WHERE from_uid = ?
     )");
     query.addBindValue(UserManager::GetInstance()->GetUid());
-    if (!query.exec()){
+    if (!query.exec() || !query.next()){
         qDebug() << "Failed to get Friends list:" << query.lastError().text();
         return friends;
     }
@@ -742,7 +804,7 @@ std::vector<std::shared_ptr<UserInfo>> DataBase::getFriendsPtr()
     )");
 
     query.addBindValue(UserManager::GetInstance()->GetUid());
-    if (!query.exec()){
+    if (!query.exec() || !query.next()){
         qDebug() << "Failed to get Friends list:" << query.lastError().text();
         return friends;
     }
@@ -753,7 +815,8 @@ std::vector<std::shared_ptr<UserInfo>> DataBase::getFriendsPtr()
     return friends;
 }
 
-bool DataBase::storeFriends(const std::vector<std::shared_ptr<UserInfo> > friends)
+
+bool DataBase::storeFriends(const std::vector<std::shared_ptr<UserInfo>> friends)
 {
     if (friends.empty()){
         return false;
@@ -770,18 +833,31 @@ bool DataBase::storeFriends(const std::vector<std::shared_ptr<UserInfo> > friend
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     )");
 
+    // 使用 QVariantList 来批量绑定
+    QVariantList from_uids, to_uids, sexes, statuses, emails, names, avatars, descs, backs;
+
     for (const auto& friend_ptr : friends){
         const UserInfo& info = *friend_ptr;
-        query.addBindValue(UserManager::GetInstance()->GetUid());
-        query.addBindValue(info.id);
-        query.addBindValue(info.sex);
-        query.addBindValue(info.status);
-        query.addBindValue(info.email);
-        query.addBindValue(info.name);
-        query.addBindValue(info.avatar);
-        query.addBindValue(info.desc);  // 映射到 description 字段
-        query.addBindValue(info.back);
+        from_uids << UserManager::GetInstance()->GetUid();
+        to_uids << info.id;
+        sexes << info.sex;
+        statuses << info.status;
+        emails << info.email;
+        names << info.name;
+        avatars << info.avatar;
+        descs << info.desc;
+        backs << info.back;
     }
+
+    query.addBindValue(from_uids);
+    query.addBindValue(to_uids);
+    query.addBindValue(sexes);
+    query.addBindValue(statuses);
+    query.addBindValue(emails);
+    query.addBindValue(names);
+    query.addBindValue(avatars);
+    query.addBindValue(descs);
+    query.addBindValue(backs);
 
     if (!query.execBatch()){
         qDebug() << "ExecBatch Error (shared_ptr friends):" << query.lastError().text();
@@ -798,6 +874,54 @@ bool DataBase::storeFriends(const std::vector<std::shared_ptr<UserInfo> > friend
     qDebug() << "Successfully stored" << friends.size() << "friends (shared_ptr version)";
     return true;
 }
+
+
+// bool DataBase::storeFriends(const std::vector<std::shared_ptr<UserInfo> > friends)
+// {
+//     if (friends.empty()){
+//         return false;
+//     }
+//     if (!_db.transaction()){
+//         qDebug() << "Transaction Start Error : " << _db.lastError().text();
+//         return false;
+//     }
+
+//     QSqlQuery query(_db);
+//     query.prepare(R"(
+//         INSERT OR REPLACE INTO friends
+//         (from_uid, to_uid, sex, status, email, name, avatar, desc, back)
+//         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+//     )");
+
+//     for (const auto& friend_ptr : friends){
+//         const UserInfo& info = *friend_ptr;
+//         query.addBindValue(UserManager::GetInstance()->GetUid());
+//         query.addBindValue(info.id);
+//         query.addBindValue(info.sex);
+//         query.addBindValue(info.status);
+//         query.addBindValue(info.email);
+//         query.addBindValue(info.name);
+//         query.addBindValue(info.avatar);
+//         query.addBindValue(info.desc);  // 映射到 description 字段
+//         query.addBindValue(info.back);
+//     }
+
+//     if (!query.execBatch()){
+//         qDebug() << "ExecBatch Error (shared_ptr friends):" << query.lastError().text();
+//         _db.rollback();
+//         return false;
+//     }
+
+//     if (!_db.commit()){
+//         qDebug() << "Commit Error:" << _db.lastError().text();
+//         _db.rollback();
+//         return false;
+//     }
+
+//     qDebug() << "Successfully stored" << friends.size() << "friends (shared_ptr version)";
+//     return true;
+// }
+
 
 bool DataBase::storeFriends(const std::vector<UserInfo> friends)
 {
@@ -851,7 +975,7 @@ bool DataBase::storeFriend(const UserInfo &info)
     query.prepare(R"(
         INSERT OR REPLACE INTO friends
         (from_uid, to_uid, sex, status, email, name, avatar, desc, back)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     )");
 
     query.addBindValue(UserManager::GetInstance()->GetUid());
@@ -879,7 +1003,7 @@ bool DataBase::storeFriend(const std::shared_ptr<UserInfo> &info)
     query.prepare(R"(
         INSERT OR REPLACE INTO friends
         (from_uid, to_uid, sex, status, email, name, avatar, desc, back)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     )");
 
     query.addBindValue(UserManager::GetInstance()->GetUid());

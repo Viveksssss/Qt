@@ -2487,6 +2487,7 @@ class NotifyFriendOnlineRequest final : public ::google::protobuf::Message
     kNameFieldNumber = 4,
     kMessageFieldNumber = 5,
     kIconFieldNumber = 6,
+    kTimeFieldNumber = 7,
     kFromUidFieldNumber = 1,
     kToUidFieldNumber = 2,
     kTypeFieldNumber = 3,
@@ -2536,6 +2537,21 @@ class NotifyFriendOnlineRequest final : public ::google::protobuf::Message
   ::std::string* PROTOBUF_NONNULL _internal_mutable_icon();
 
   public:
+  // string time = 7;
+  void clear_time() ;
+  const ::std::string& time() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_time(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_time();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_time();
+  void set_allocated_time(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_time() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_time(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_time();
+
+  public:
   // int32 fromUid = 1;
   void clear_fromuid() ;
   ::int32_t fromuid() const;
@@ -2570,8 +2586,8 @@ class NotifyFriendOnlineRequest final : public ::google::protobuf::Message
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<3, 6,
-                                   0, 57,
+  static const ::google::protobuf::internal::TcParseTable<3, 7,
+                                   0, 61,
                                    2>
       _table_;
 
@@ -2595,6 +2611,7 @@ class NotifyFriendOnlineRequest final : public ::google::protobuf::Message
     ::google::protobuf::internal::ArenaStringPtr name_;
     ::google::protobuf::internal::ArenaStringPtr message_;
     ::google::protobuf::internal::ArenaStringPtr icon_;
+    ::google::protobuf::internal::ArenaStringPtr time_;
     ::int32_t fromuid_;
     ::int32_t touid_;
     ::int32_t type_;
@@ -7084,7 +7101,7 @@ inline void NotifyFriendOnlineRequest::clear_fromuid() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.fromuid_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000008U);
+                  0x00000010U);
 }
 inline ::int32_t NotifyFriendOnlineRequest::fromuid() const {
   // @@protoc_insertion_point(field_get:message.NotifyFriendOnlineRequest.fromUid)
@@ -7092,7 +7109,7 @@ inline ::int32_t NotifyFriendOnlineRequest::fromuid() const {
 }
 inline void NotifyFriendOnlineRequest::set_fromuid(::int32_t value) {
   _internal_set_fromuid(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
   // @@protoc_insertion_point(field_set:message.NotifyFriendOnlineRequest.fromUid)
 }
 inline ::int32_t NotifyFriendOnlineRequest::_internal_fromuid() const {
@@ -7109,7 +7126,7 @@ inline void NotifyFriendOnlineRequest::clear_touid() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.touid_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000010U);
+                  0x00000020U);
 }
 inline ::int32_t NotifyFriendOnlineRequest::touid() const {
   // @@protoc_insertion_point(field_get:message.NotifyFriendOnlineRequest.toUid)
@@ -7117,7 +7134,7 @@ inline ::int32_t NotifyFriendOnlineRequest::touid() const {
 }
 inline void NotifyFriendOnlineRequest::set_touid(::int32_t value) {
   _internal_set_touid(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000020U);
   // @@protoc_insertion_point(field_set:message.NotifyFriendOnlineRequest.toUid)
 }
 inline ::int32_t NotifyFriendOnlineRequest::_internal_touid() const {
@@ -7134,7 +7151,7 @@ inline void NotifyFriendOnlineRequest::clear_type() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.type_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000020U);
+                  0x00000040U);
 }
 inline ::int32_t NotifyFriendOnlineRequest::type() const {
   // @@protoc_insertion_point(field_get:message.NotifyFriendOnlineRequest.type)
@@ -7142,7 +7159,7 @@ inline ::int32_t NotifyFriendOnlineRequest::type() const {
 }
 inline void NotifyFriendOnlineRequest::set_type(::int32_t value) {
   _internal_set_type(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000020U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000040U);
   // @@protoc_insertion_point(field_set:message.NotifyFriendOnlineRequest.type)
 }
 inline ::int32_t NotifyFriendOnlineRequest::_internal_type() const {
@@ -7347,6 +7364,71 @@ inline void NotifyFriendOnlineRequest::set_allocated_icon(::std::string* PROTOBU
     _impl_.icon_.Set("", GetArena());
   }
   // @@protoc_insertion_point(field_set_allocated:message.NotifyFriendOnlineRequest.icon)
+}
+
+// string time = 7;
+inline void NotifyFriendOnlineRequest::clear_time() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.time_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000008U);
+}
+inline const ::std::string& NotifyFriendOnlineRequest::time() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:message.NotifyFriendOnlineRequest.time)
+  return _internal_time();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void NotifyFriendOnlineRequest::set_time(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
+  _impl_.time_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:message.NotifyFriendOnlineRequest.time)
+}
+inline ::std::string* PROTOBUF_NONNULL NotifyFriendOnlineRequest::mutable_time()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
+  ::std::string* _s = _internal_mutable_time();
+  // @@protoc_insertion_point(field_mutable:message.NotifyFriendOnlineRequest.time)
+  return _s;
+}
+inline const ::std::string& NotifyFriendOnlineRequest::_internal_time() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.time_.Get();
+}
+inline void NotifyFriendOnlineRequest::_internal_set_time(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.time_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL NotifyFriendOnlineRequest::_internal_mutable_time() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.time_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE NotifyFriendOnlineRequest::release_time() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:message.NotifyFriendOnlineRequest.time)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000008U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000008U);
+  auto* released = _impl_.time_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.time_.Set("", GetArena());
+  }
+  return released;
+}
+inline void NotifyFriendOnlineRequest::set_allocated_time(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000008U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000008U);
+  }
+  _impl_.time_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.time_.IsDefault()) {
+    _impl_.time_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:message.NotifyFriendOnlineRequest.time)
 }
 
 // -------------------------------------------------------------------

@@ -3,6 +3,7 @@
 #include "../../../../usermanager.h"
 #include "../../../../Properties/sourcemanager.h"
 #include "../../../../tcpmanager.h"
+#include "../../../../database.h"
 #include "inputarea.h"
 #include <QPushButton>
 #include <QDir>
@@ -535,7 +536,6 @@ void InputArea::sendAudioMessage(const QByteArray &audioData, int duration)
     content.mimeType = "audio/pcm";
 
     item.content = content;
-    item.from = MessageSource::Me;
     item.env = MessageEnv::Private;
     item.from_id = UserManager::GetInstance()->GetUid();
     item.to_id = UserManager::GetInstance()->GetPeerUid();
@@ -627,6 +627,11 @@ std::optional<QList<MessageItem>> InputArea::parseMessageContent()
     QTextBlock currentBlock = doc->begin();
     QList<MessageItem> item_list;
 
+    int peerUid = UserManager::GetInstance()->GetPeerUid();
+    if (peerUid < 0){
+        return std::nullopt;
+    }
+
     // 用于累积文本内容
     QString accumulatedText;
 
@@ -640,10 +645,10 @@ std::optional<QList<MessageItem>> InputArea::parseMessageContent()
                     // 如果遇到图片，先处理累积的文本（如果有的话）
                     if (!accumulatedText.trimmed().isEmpty()) {
                         MessageItem textItem;
-                        textItem.from = MessageSource::Me;
+                        textItem.timestamp = QDateTime::currentDateTime();
                         textItem.env = UserManager::GetInstance()->GetEnv();
                         textItem.from_id = UserManager::GetInstance()->GetUid();
-                        textItem.to_id = UserManager::GetInstance()->GetPeerUid();
+                        textItem.to_id = peerUid;
                         textItem.content.mimeType = "text/plain";
                         textItem.content.type = MessageType::TextMessage;
                         textItem.content.data = accumulatedText;
@@ -658,10 +663,9 @@ std::optional<QList<MessageItem>> InputArea::parseMessageContent()
                     QMimeType mime = db.mimeTypeForFile(imagePath);
 
                     MessageItem imageItem;
-                    imageItem.from = MessageSource::Me;
                     imageItem.env = UserManager::GetInstance()->GetEnv();
                     imageItem.from_id = UserManager::GetInstance()->GetUid();
-                    imageItem.to_id = UserManager::GetInstance()->GetPeerUid();
+                    imageItem.to_id = peerUid;
                     imageItem.content.mimeType = mime.name();
                     imageItem.content.type = MessageType::ImageMessage;
                     imageItem.content.data = imagePath;
@@ -684,23 +688,23 @@ std::optional<QList<MessageItem>> InputArea::parseMessageContent()
     // 处理最后累积的文本（如果有的话）
     if (!accumulatedText.trimmed().isEmpty()) {
         MessageItem textItem;
-        textItem.from = MessageSource::Me;
         textItem.env = UserManager::GetInstance()->GetEnv();
         textItem.from_id = UserManager::GetInstance()->GetUid();
-        textItem.to_id = UserManager::GetInstance()->GetPeerUid();
+        textItem.to_id = peerUid;
         textItem.content.mimeType = "text/plain";
         textItem.content.type = MessageType::TextMessage;
         textItem.content.data = accumulatedText;
         item_list.append(textItem);
     }
 
-    return item_list.isEmpty() ? std::nullopt : std::make_optional(item_list);
+    return item_list.size() == 0 ? std::nullopt : std::make_optional(item_list);
 }
 
 void InputArea::do_send_clicked()
 {
     std::optional<QList<MessageItem>> list = parseMessageContent();
-    if ( list.has_value()) {
+    qDebug() << list.has_value();
+    if (list.has_value()) {
         for(const auto&item:list.value()){
             if (item.content.type == MessageType::TextMessage){
                 if (item.content.data.toString().size() > 2048){
@@ -914,6 +918,8 @@ void InputArea::do_message_sent(const MessageItem &item)
     std::string pb_str = pb.SerializeAsString();
     qDebug() << pb_str;
     QByteArray ba(pb_str.data(),pb_str.size());
+
+    DataBase::GetInstance().storeMessage(item);
     TcpManager::GetInstance()->do_send_data(RequestType::ID_TEXT_CHAT_MSG_REQ,ba);
 }
 

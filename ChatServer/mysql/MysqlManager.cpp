@@ -92,9 +92,9 @@ bool MysqlManager::AddMessage(const std::string&uid,int from_uid, int to_uid, co
     return _dao.AddMessage(uid,from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, fid, status);
 }
 
-bool MysqlManager::AddConversation(const std::string& uid, int from_uid, int to_uid, const std::string& create_time, const std::string& update_time, const std::string& name, const std::string& icon, int staus, int deleted, int pined)
+bool MysqlManager::AddConversation(const std::string& uid, int from_uid, int to_uid, const std::string& create_time, const std::string& update_time, const std::string& name, const std::string& icon, int staus, int deleted, int pined,bool processed = false)
 {
-    return _dao.AddConversation(uid, from_uid, to_uid, create_time, update_time, name, icon, staus, deleted, pined);
+    return _dao.AddConversation(uid, from_uid, to_uid, create_time, update_time, name, icon, staus, deleted, pined,processed);
 }
 
 bool MysqlManager::GetSeessionList(const std::string& uid, std::vector<std::shared_ptr<SessionInfo>>& sessionList)

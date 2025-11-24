@@ -30,16 +30,14 @@ QVariant MessageModel::data(const QModelIndex &index, int role) const
         return message.timestamp;
     case ContentsRole:
         return QVariant::fromValue(message.content);
-    case SourceRole:
-        return static_cast<int>(message.from);
     case SelectedRole:
         return message.isSelected;
     case DisplayTimeRole:
         return message.timestamp.toString("hh:mm");
     case BubbleColorRole:
-        return message.from == MessageSource::Me?"#95EC69":"#57feff";
+        return (message.from_id == UserManager::GetInstance()->GetUid())?"#95EC69":"#57feff";
     case AlignmentRole:
-        return message.from == MessageSource::Me? Qt::AlignRight : Qt::AlignLeft;
+        return message.from_id == UserManager::GetInstance()->GetUid()? Qt::AlignRight : Qt::AlignLeft;
     case MessageEnvRole:
         return static_cast<int>(message.env);
     default:
@@ -95,11 +93,6 @@ bool MessageModel::setData(const QModelIndex &index, const QVariant &value, int 
         }
         break;
 
-    case SourceRole:
-        message.from = static_cast<MessageSource>(value.toInt());
-        changed = true;
-        break;
-
     case MessageEnvRole:
         message.env = static_cast<MessageEnv>(value.toInt());
         changed = true;
@@ -147,7 +140,6 @@ QHash<int, QByteArray> MessageModel::roleNames() const
         {SenderRole,"senderid"},
         {TimestampRole,"timestamp"},
         {ContentsRole,"contents"},
-        {SourceRole,"from"},
         {SelectedRole,"isSelected"},
         {DisplayTimeRole,"displayTime"},
         {BubbleColorRole,"bubbleColor"},

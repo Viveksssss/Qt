@@ -576,7 +576,7 @@ bool AnimatedSearchBox::eventFilter(QObject *obj, QEvent *event)
 
         // 获取全局鼠标位置
         QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
-        QPoint globalPos = mouseEvent->globalPos();
+        QPoint globalPos = mouseEvent->globalPosition().toPoint();
 
         // 检查点击是否在resultList区域内
         QRect resultListRect = resultList->geometry();
@@ -871,7 +871,6 @@ void FriendsItem::setupConnections()
         }
 
         obj["toUid"] = this->_uid; // 对方的uid
-        qDebug() << "fromUid" << obj["fromUid"] << "\t" << "toUid" << this->_uid;
 
         QJsonDocument doc;
         doc.setObject(obj);

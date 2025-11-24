@@ -112,6 +112,7 @@ Status ChatGrpcServer::NotifyFriendOnline(grpc::ServerContext* context, const No
     j["type"] = request->type();
     j["icon"] = request->icon();
     j["message"] = request->message();
+    j["time"] =request->time();
 
     session->Send(j.dump(), static_cast<int>(MsgId::ID_NOTIFY));
 

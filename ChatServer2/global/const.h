@@ -42,6 +42,9 @@ enum class MsgId {
     ID_HEART_BEAT_REQ = 1023, // 心跳请求
     ID_HEARTBEAT_RSP = 1024, // 心跳回复
     ID_NOTIFY = 1025, // 通知
+    ID_GET_MESSAGES_OF_FRIEND_REQ = 1026, // 获取与某个好友的信息请求
+    ID_GET_MESSAGES_OF_FRIEND_RSP = 1027, // 获取消息回包
+    ID_SYNC_CONVERSATIONS_REQ = 1028, // 同步会话请求
 };
 
 enum class ErrorCodes {

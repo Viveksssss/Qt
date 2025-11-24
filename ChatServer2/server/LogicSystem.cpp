@@ -190,9 +190,9 @@ void LogicSystem::RegisterCallBacks()
                             json j;
                             j["error"] = ErrorCodes::SUCCESS;
                             j["uid"] = uid;
-                            j["message"] = "😁好友" + self_name + "上线了😄";
+                            j["message"] = "😁好友" + user_info->name + "上线了😄";
                             j["type"] = static_cast<int>(NotificationCodes::ID_NOTIFY_FRIEND_ONLINE);
-
+                            j["status"] = 1;
                             // 当前时间
                             auto now = std::chrono::system_clock::now();
                             auto time_t = std::chrono::system_clock::to_time_t(now);
@@ -209,8 +209,14 @@ void LogicSystem::RegisterCallBacks()
                         request.set_touid(friend_uid);
                         request.set_name(user_info->name);
                         request.set_type(static_cast<int>(NotificationCodes::ID_NOTIFY_FRIEND_ONLINE));
-                        request.set_message("😁好友" + self_name + "上线了😄");
+                        request.set_message("😁好友" + user_info->name + "上线了😄");
                         request.set_icon(user_info->icon);
+                        // 当前时间
+                        auto now = std::chrono::system_clock::now();
+                        auto time_t = std::chrono::system_clock::to_time_t(now);
+                        std::stringstream ss;
+                        ss << std::put_time(std::localtime(&time_t), "%Y-%m-%d %H:%M:%S");
+                        request.set_time(ss.str());
 
                         ChatGrpcClient::GetInstance()->NotifyFriendOnline(ip_value, request);
                     }
@@ -372,7 +378,6 @@ void LogicSystem::RegisterCallBacks()
         j["error"] = ErrorCodes::SUCCESS;
         j["ok"] = false; // 标记失败
 
-
         if (j.contains("reply")) {
             bool b = j["reply"].get<bool>();
             if (b) {
@@ -499,12 +504,9 @@ void LogicSystem::RegisterCallBacks()
         std::string to_ip_value;
         bool b_ip = RedisManager::GetInstance()->Get(to_key, to_ip_value);
 
-        Defer defer_send([this, &pb, to_ip_value] {
-            // 最后一定要留存信息入库
-            bool ok = MysqlManager::GetInstance()->AddMessage(pb.id(),pb.from_id(), pb.to_id(), pb.timestamp(), pb.env(), pb.content().type(), pb.content().data(), pb.content().mime_type(), pb.content().fid());
-        });
         if (!b_ip) {
             // 当前不在线
+            bool ok = MysqlManager::GetInstance()->AddMessage(pb.id(), pb.from_id(), pb.to_id(), pb.timestamp(), pb.env(), pb.content().type(), pb.content().data(), pb.content().mime_type(), pb.content().fid(), 0);
             return;
         } else {
             if (to_ip_value == self_name) {
@@ -513,6 +515,7 @@ void LogicSystem::RegisterCallBacks()
                     SPDLOG_INFO("FROM UID:{},to:{}", pb.from_id(), to_uid);
                     SPDLOG_INFO("FROM SESSION:{},to:{}", session->GetSessionId(), session2->GetSessionId());
                     session2->Send(msg, static_cast<int>(MsgId::ID_TEXT_CHAT_MSG_REQ));
+                    bool ok = MysqlManager::GetInstance()->AddMessage(pb.id(), pb.from_id(), pb.to_id(), pb.timestamp(), pb.env(), pb.content().type(), pb.content().data(), pb.content().mime_type(), pb.content().fid(), 1);
                 }
             } else {
                 TextChatMessageRequest req;
@@ -520,6 +523,57 @@ void LogicSystem::RegisterCallBacks()
                 req.set_touid(pb.to_id());
                 req.set_data(msg);
                 ChatGrpcClient::GetInstance()->NotifyTextChatMessage(to_ip_value, req);
+            }
+        }
+    };
+
+    _function_callbacks[MsgId::ID_SYNC_CONVERSATIONS_REQ] = [this](std::shared_ptr<Session> session, uint16_t msg_id, const std::string& msg) {
+        json j;
+        try {
+            j = json::parse(msg);
+        } catch (const std::exception& e) {
+            SPDLOG_WARN("SyncConversations parse error: {}", e.what());
+            json err;
+            err["error"] = ErrorCodes::ERROR_JSON;
+            return;
+        }
+
+        if (!j.contains("conversations") || !j["conversations"].is_array()) {
+            SPDLOG_WARN("SyncConversations missing conversations array");
+            return;
+        }
+
+        // 所属用户 uid（客户端会发送）
+        int owner_uid = j.value("uid", 0);
+        std::string owner_uid_str = std::to_string(owner_uid);
+
+        for (const auto& item : j["conversations"]) {
+            try {
+                auto conv = std::make_shared<SessionInfo>();
+                conv->uid = item.value("uid", 0);
+                conv->from_uid = item.value("from_uid", 0);
+                conv->to_uid = item.value("to_uid", 0);
+                conv->create_time = item.value("create_time", std::string());
+                conv->update_time = item.value("update_time", std::string());
+                conv->name = item.value("name", std::string());
+                conv->icon = item.value("icon", std::string());
+                conv->status = item.value("status", 0);
+                conv->deleted = item.value("deleted", 0);
+                conv->pined = item.value("pined", 0);
+                conv->processed = item.value("processed", false);
+                // 客户端可能携带本地 processed 字段，用于 UI，本段不用写入 DB
+
+                // 将会话写入数据库
+                // 假定 MysqlManager 提供 AddConversation(owner_uid, std::shared_ptr<SessionInfo>)
+                // 如果项目中签名不同，请根据实际签名调整此处调用。
+                bool ok = MysqlManager::GetInstance()->AddConversation(conv->uid, conv->from_uid, conv->to_uid, conv->create_time, conv->update_time, conv->name, conv->icon, conv->status, conv->deleted, conv->pined, conv->processed);
+                if (!ok) {
+                    SPDLOG_WARN("AddConversation failed owner:{} conv_uid:{}", owner_uid, conv->uid);
+                    // 不中断，继续处理剩余会话
+                }
+            } catch (const std::exception& e) {
+                SPDLOG_WARN("Exception when processing conversation item: {}", e.what());
+                // 继续处理下一个
             }
         }
     };

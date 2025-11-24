@@ -174,7 +174,7 @@ public:
      * @return true
      * @return false
      */
-    bool AddConversation(const std::string& uid, int from_uid, int to_uid, const std::string& create_time, const std::string& update_time, const std::string& name, const std::string& icon, int staus, int deleted, int pined);
+    bool AddConversation(const std::string& uid, int from_uid, int to_uid, const std::string& create_time, const std::string& update_time, const std::string& name, const std::string& icon, int staus, int deleted, int pined,bool processed);
     /**
      * @brief 获取会话列表
      *

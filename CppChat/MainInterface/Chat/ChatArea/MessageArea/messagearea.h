@@ -1,6 +1,7 @@
 #ifndef MESSAGEAREA_H
 #define MESSAGEAREA_H
 
+#include <QLabel>
 #include <QWidget>
 
 class MessageDelegate;
@@ -15,19 +16,22 @@ public:
     void setupUI();
     void setupConnections();
     MessageModel*getModel();
+    void showToast(const QString& message, int duration = 100);
 signals:
     void on_load_more_message();
 public slots:
     void do_area_to_bottom(); // from InputArea::on_message_sent
     void do_change_peer(int);    // from SignalRoute::on_change_peer;
-    void do_change_chat_history(std::vector<std::shared_ptr<MessageItem>>); // from TcpManager::on_change_chat_history;
-    void do_change_chat_history(std::vector<MessageItem>); // from TcpManager::on_change_chat_history;
+    void do_change_chat_history(std::vector<std::shared_ptr<MessageItem>>,bool _delete = false); // from TcpManager::on_change_chat_history;
+    void do_change_chat_history(std::vector<MessageItem>,bool _delete = false); // from TcpManager::on_change_chat_history;
     void do_load_more_message();            // fron this::on_load_more_message
     void do_add_new_message(const MessageItem&item);    // from MessageListPart::do_get_message->SignalRouter::on_add_new_message
 public:
     QListView *list;
     MessageDelegate*delegate;
     MessageModel*model;
+
+    QLabel *toastLabel;
 
     bool isLoading = false;
 

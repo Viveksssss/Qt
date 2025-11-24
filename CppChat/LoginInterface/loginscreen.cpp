@@ -144,11 +144,11 @@ void LoginScreen::setupUI()
 void LoginScreen::setupConnections()
 {
     // 跳转注册
-    connect(registerBtn, &QPushButton::clicked, this, [=](){
+    connect(registerBtn, &QPushButton::clicked, this, [=,this](){
         emit goRegsiter();
     });
     // 跳转忘记
-    connect(forgotLabel, &QPushButton::clicked, this, [=](){
+    connect(forgotLabel, &QPushButton::clicked, this, [=,this](){
         emit goForgotPassword();
     });
     // 点击登陆
@@ -320,19 +320,19 @@ AuthStack::AuthStack(QWidget *parent)
     closeBtn->setFixedSize(20,20);
     closeBtn->setGeometry(sizeHint().width()-70,15,15,15);
 
-    connect(loginScreen,&LoginScreen::goRegsiter,this,[=](){
+    connect(loginScreen,&LoginScreen::goRegsiter,this,[=,this](){
         stackWidget->setCurrentIndex(1);
     });
-    connect(loginScreen,&LoginScreen::goForgotPassword,this,[=](){
+    connect(loginScreen,&LoginScreen::goForgotPassword,this,[=,this](){
         stackWidget->setCurrentIndex(2);
     });
-    connect(registerScreen,&RegisterScreen::goLogin,this,[=](){
+    connect(registerScreen,&RegisterScreen::goLogin,this,[=,this](){
         stackWidget->setCurrentIndex(0);
     });
-    connect(forgotScreen,&ForgotScreen::goLogin,this,[=](){
+    connect(forgotScreen,&ForgotScreen::goLogin,this,[=,this](){
         stackWidget->setCurrentIndex(0);
     });
-    connect(this,&AuthStack::closeWindow,this,[=](){
+    connect(this,&AuthStack::closeWindow,this,[=,this](){
         qApp->closeAllWindows();
     });
 }

@@ -174,7 +174,7 @@ bool FriendItemDelegate::editorEvent(QEvent *event, QAbstractItemModel *model, c
     if (event->type() == QEvent::MouseButtonPress) {
         QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
         if (mouseEvent->button() == Qt::RightButton){
-            showContextMenu(mouseEvent->globalPos(), index);
+            showContextMenu(mouseEvent->globalPosition().toPoint(), index);
             return true;
         }
     }else if(event->type() == QEvent::MouseButtonDblClick){
@@ -185,7 +185,6 @@ bool FriendItemDelegate::editorEvent(QEvent *event, QAbstractItemModel *model, c
             QString avatar = index.data(FriendsModel::FriendRole::AvatarRole).toString();
             int status = index.data(FriendsModel::FriendRole::StatusRole).toInt();
             QString desc = index.data(FriendsModel::FriendRole::DescRole).toString();
-            qDebug() <<id << "\t" << name;
             emit on_open_friend_info(id,name,avatar,status,desc);
         }
     }
@@ -225,7 +224,6 @@ void FriendItemDelegate::showContextMenu(const QPoint &globalPos, const QModelIn
     }else if(selectedAction == selectAction){
         auto *p= list->getList();
         if(p){
-            qDebug() <<"yes";
             p->setCurrentIndex(index);
         }
     }else if(selectedAction == deleteAction){

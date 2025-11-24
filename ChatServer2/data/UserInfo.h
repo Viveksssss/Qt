@@ -63,5 +63,6 @@ struct SessionInfo {
     int status;
     int deleted;
     int pined;
+    bool processed;
     SessionInfo() { }
 };

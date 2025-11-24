@@ -22,6 +22,8 @@ public:
     QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const;
     QListView*getList();
 
+    void change_info(const QModelIndex &index);
+
 private:
     QPixmap getStatusPximap(const QString &status)const;
     void showContextMenu(const QPoint &globalPos, const QModelIndex &index);

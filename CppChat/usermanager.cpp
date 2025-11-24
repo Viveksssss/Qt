@@ -244,14 +244,46 @@ bool UserManager::IsLoadMessagesFinished()
     return _messages_loaded>=_messages.size()?true:false;
 }
 
-QDateTime UserManager::GetHistoryTimestamp(int peerUid)
+void UserManager::ResetLoadFriends()
 {
-    return _timestamp[peerUid];
+    this->_friends_loaded = 0;
 }
 
-bool UserManager::HasHistory(int peerUid) const
+void UserManager::ResetLoadMessages()
 {
-    return _timestamp.find(peerUid)!=_timestamp.end();
+    this->_messages_loaded = 0;
+}
+
+bool UserManager::IsLoadMessagesFinished(int peerUid)
+{
+    auto it = _messages_finished.find(peerUid);
+    if (it == _messages_finished.end()){
+        _messages_finished[peerUid] = false;
+        return _messages_finished[peerUid];
+    }else{
+        return it->second;
+    }
+}
+
+void UserManager::setMessagesFinished(int peerUid)
+{
+    _messages_finished[peerUid] = true;
+}
+
+QDateTime UserManager::GetHistoryTimestamp(int peerUid)
+{
+    auto it =_timestamp.find(peerUid);
+    if (it == _timestamp.end()){
+        _timestamp[peerUid] = QDateTime::currentDateTime();
+        return _timestamp[peerUid];
+    }else{
+        return it->second;
+    }
+}
+
+void UserManager::setHistoryTimestamp(int peerUid, QDateTime time)
+{
+    _timestamp[peerUid] = time;
 }
 
 UserManager::UserManager()
@@ -260,7 +292,10 @@ UserManager::UserManager()
     , _uid(0)
     , _messages_loaded(0)
     , _friends_loaded(0)
-{}
+    , _env(MessageEnv::Private)
+{
+    setupConnections();
+}
 
 void UserManager::do_change_last_time(int uid, QDateTime time)
 {

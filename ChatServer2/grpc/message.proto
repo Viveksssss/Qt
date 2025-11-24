@@ -131,6 +131,7 @@ message NotifyFriendOnlineRequest{
     string name = 4;
     string message = 5;
     string icon = 6;
+    string time = 7;
 }
 message NotifyFriendOnlineResponse{
     int32 error=1;

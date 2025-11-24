@@ -24,6 +24,7 @@ private:
     void paintUserName(QPainter*painter,const QRect&rect,const QString&name,bool isMe)const;
     void paintButtleBackground(QPainter *painter, const QRect &rect,const QColor &color)const;
     QSize calculateMessageSize(const MessageContent&contents,const QStyleOptionViewItem &option)const;
+    bool containsManyEmojis(const QString& text) const;
     void showContextMenu(const QPoint &globalPos, const QModelIndex &index);
     int textAvailWidth(const QStyleOptionViewItem &option,bool showAvatar) const;
 
