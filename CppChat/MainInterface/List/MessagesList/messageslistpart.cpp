@@ -608,6 +608,18 @@ void MessagesListPart::do_change_peer(int peerUid)
     }
 }
 
+void MessagesListPart::do_get_messages(const std::vector<std::shared_ptr<MessageItem> > &list)
+{
+
+    for (auto &message:list){
+        do_get_message(*message);
+    }
+
+    // 刷新视图
+    // messagesList->update();
+    // messagesList->viewport()->update();
+}
+
 void MessagesListPart::do_get_message(const MessageItem &message)
 {
     int peerUid = message.from_id;

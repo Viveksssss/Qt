@@ -1,5 +1,6 @@
 #include "MysqlDao.h"
 #include "../data/UserInfo.h"
+#include "../data/im.pb.h"
 #include "../global/ConfigManager.h"
 #include "../global/const.h"
 #include <exception>
@@ -701,7 +702,7 @@ bool MysqlDao::GetFriendList(const std::string& uid, std::vector<std::shared_ptr
     try {
         mysqlpp::Query query = conn->query();
         // 使用显式JOIN，更清晰
-        query << "SELECT u.uid, u.name, u.icon, u.email, u.sex, u.desc"
+        query << "SELECT u.uid, u.name, u.icon, u.email, u.sex, u.desc,u.back"
               << " FROM user u"
               << " INNER JOIN friends f ON u.uid = f.friend_id"
               << " WHERE f.self_id = %0q"
@@ -719,6 +720,7 @@ bool MysqlDao::GetFriendList(const std::string& uid, std::vector<std::shared_ptr
                 user_info->icon = ValueOrEmpty(std::string(res[i]["icon"]));
                 user_info->email = ValueOrEmpty(std::string(res[i]["email"]));
                 user_info->desc = ValueOrEmpty(std::string(res[i]["desc"]));
+                user_info->back = ValueOrEmpty(std::string(res[i]["back"]));
                 friendList.push_back(user_info);
             }
             return true;
@@ -747,9 +749,6 @@ bool MysqlDao::AddMessage(const std::string& uid, int from_uid, int to_uid, cons
         mysqlpp::Query query = conn->query();
         query << "INSERT INTO messages (uid,from_uid,to_uid,timestamp,env,content_type,content_data,content_mime_type,content_fid,status) VALUES(%0q,%1q,%2q,%3q,%4q,%5q,%6q,%7q,%8q,%9q)";
         query.parse();
-        if (env < 0 || env > 255){
-            env = 0;
-        }
         mysqlpp::SimpleResult res = query.execute(uid, from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, content_fid, status);
         if (res) {
             int affected_rows = res.rows();
@@ -843,6 +842,50 @@ bool MysqlDao::GetSeessionList(const std::string& uid, std::vector<std::shared_p
                 session_info->pined = res[i]["pined"];
                 session_info->processed = res[i]["processed"];
                 sessionList.push_back(session_info);
+            }
+            return true;
+        }
+        return false;
+    } catch (const mysqlpp::Exception& e) {
+        SPDLOG_ERROR("MySQL++ exception: {}", e.what());
+        return false;
+    } catch (const std::exception& e) {
+        SPDLOG_ERROR("Exception: {}", e.what());
+        return false;
+    }
+}
+
+bool MysqlDao::GetUnreadMessages(const std::string& uid, std::vector<std::shared_ptr<im::MessageItem>>& unreadMessages)
+{
+    auto conn = _pool->GetConnection();
+    if (!conn) {
+        SPDLOG_ERROR("Failed to get connection from pool");
+        return false;
+    }
+    Defer defer([this, &conn]() {
+        _pool->ReturnConnection(std::move(conn));
+    });
+    try {
+        mysqlpp::Query query = conn->query();
+        query << "SELECT * FROM messages"
+              << " WHERE to_uid = %0q AND status = 0";
+        query.parse();
+        mysqlpp::StoreQueryResult res = query.store(std::stoi(uid));
+        int count = res.num_rows();
+        if (res && res.num_rows() > 0) {
+            unreadMessages.reserve(res.num_rows()); // 预分配内存
+            for (size_t i = 0; i < res.num_rows(); ++i) {
+                auto message_item = std::make_shared<im::MessageItem>();
+                message_item->set_id(res[i]["uid"].c_str());
+                message_item->set_from_id(res[i]["from_uid"]);
+                message_item->set_to_id(res[i]["to_uid"]);
+                message_item->set_timestamp(res[i]["timestamp"].c_str());
+                message_item->set_env(res[i]["env"]);
+                message_item->mutable_content()->set_type(res[i]["content_type"]);
+                message_item->mutable_content()->set_data(res[i]["content_data"].c_str());
+                message_item->mutable_content()->set_mime_type(res[i]["content_mime_type"].c_str());
+                message_item->mutable_content()->set_fid(res[i]["content_fid"].c_str());
+                unreadMessages.push_back(message_item);
             }
             return true;
         }

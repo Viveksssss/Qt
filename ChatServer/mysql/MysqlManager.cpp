@@ -1,5 +1,10 @@
 #include "MysqlManager.h"
 #include "MysqlDao.h"
+
+namespace im {
+class MessageItem;
+}
+
 MysqlManager::~MysqlManager()
 {
 }
@@ -87,17 +92,22 @@ bool MysqlManager::GetFriendList(const std::string& uid, std::vector<std::shared
     return _dao.GetFriendList(uid, friendList);
 }
 
-bool MysqlManager::AddMessage(const std::string&uid,int from_uid, int to_uid, const std::string& timestamp, int env, int content_type, const std::string& content_data, const std::string& content_mime_type, const std::string& fid, int status)
+bool MysqlManager::AddMessage(const std::string& uid, int from_uid, int to_uid, const std::string& timestamp, int env, int content_type, const std::string& content_data, const std::string& content_mime_type, const std::string& fid, int status)
 {
-    return _dao.AddMessage(uid,from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, fid, status);
+    return _dao.AddMessage(uid, from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, fid, status);
 }
 
-bool MysqlManager::AddConversation(const std::string& uid, int from_uid, int to_uid, const std::string& create_time, const std::string& update_time, const std::string& name, const std::string& icon, int staus, int deleted, int pined,bool processed = false)
+bool MysqlManager::AddConversation(const std::string& uid, int from_uid, int to_uid, const std::string& create_time, const std::string& update_time, const std::string& name, const std::string& icon, int staus, int deleted, int pined, bool processed = false)
 {
-    return _dao.AddConversation(uid, from_uid, to_uid, create_time, update_time, name, icon, staus, deleted, pined,processed);
+    return _dao.AddConversation(uid, from_uid, to_uid, create_time, update_time, name, icon, staus, deleted, pined, processed);
 }
 
 bool MysqlManager::GetSeessionList(const std::string& uid, std::vector<std::shared_ptr<SessionInfo>>& sessionList)
 {
     return _dao.GetSeessionList(uid, sessionList);
+}
+
+bool MysqlManager::GetUnreadMessages(const std::string& uid, std::vector<std::shared_ptr<im::MessageItem>>& unreadMessages)
+{
+    return _dao.GetUnreadMessages(uid, unreadMessages);
 }

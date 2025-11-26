@@ -716,7 +716,7 @@ bool DataBase::createFriendsTable()
         "email       TEXT,"
         "name        TEXT    NOT NULL,"
         "avatar      TEXT,"
-        "desc        TEXT,"  // 使用 description 而不是 desc，因为 desc 是 SQL 关键字
+        "desc        TEXT,"
         "back        TEXT"   // 备用字段
         ")";
     if (!query.exec(sql_str)){

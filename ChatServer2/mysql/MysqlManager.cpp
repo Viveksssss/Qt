@@ -1,5 +1,10 @@
 #include "MysqlManager.h"
 #include "MysqlDao.h"
+
+namespace im {
+class MessageItem;
+}
+
 MysqlManager::~MysqlManager()
 {
 }
@@ -100,4 +105,9 @@ bool MysqlManager::AddConversation(const std::string& uid, int from_uid, int to_
 bool MysqlManager::GetSeessionList(const std::string& uid, std::vector<std::shared_ptr<SessionInfo>>& sessionList)
 {
     return _dao.GetSeessionList(uid, sessionList);
+}
+
+bool MysqlManager::GetUnreadMessages(const std::string& uid, std::vector<std::shared_ptr<im::MessageItem>>& unreadMessages)
+{
+    return _dao.GetUnreadMessages(uid, unreadMessages);
 }

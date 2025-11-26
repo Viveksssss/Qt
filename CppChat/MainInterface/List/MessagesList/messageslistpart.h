@@ -47,6 +47,7 @@ public slots:
     void do_add_messages_to_list(const std::span<std::shared_ptr<ConversationItem>>&list); // from TcpManager::on_add_messages_to_list;
     void do_change_message_status(int,int);  // from MessagesNewsItem->SignalRouter::on_change_message_status;
     void do_change_peer(int);
+    void do_get_messages(const std::vector<std::shared_ptr<MessageItem>>&list); // from TcpManager::on_get_messages
     void do_get_message(const MessageItem&);    // from TcpManager::on_get_message
     void do_change_message_status(int peerUid,bool);  // from
     void do_data_ready(const std::span<std::shared_ptr<ConversationItem>> &list);

@@ -224,6 +224,27 @@ void LogicSystem::RegisterCallBacks()
             }
         }
 
+        // 获取未读消息
+        std::vector<std::shared_ptr<im::MessageItem>> unread_messages;
+        bool b_unread = MysqlManager::GetInstance()->GetUnreadMessages(uid_str, unread_messages);
+        if (b_unread && unread_messages.size() > 0) {
+            json messages = json::array();
+            for (auto& message : unread_messages) {
+                json message_item;
+                message_item["id"] = message->id();
+                message_item["from_id"] = message->from_id();
+                message_item["to_id"] = message->to_id();
+                message_item["timestamp"] = message->timestamp();
+                message_item["env"] = message->env();
+                message_item["content_type"] = message->content().type();
+                message_item["content_data"] = message->content().data();
+                message_item["content_mime_type"] = message->content().mime_type();
+                message_item["content_fid"] = message->content().fid();
+                messages.push_back(message_item);
+            }
+            jj["unread_messages"] = messages;
+        }
+
         // 更新登陆数量
         auto server_name = ConfigManager::GetInstance()["SelfServer"]["name"];
         auto count_str = RedisManager::GetInstance()->HGet(LOGIN_COUNT_PREFIX, server_name);

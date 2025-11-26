@@ -32,6 +32,10 @@
  *
  */
 
+namespace im {
+class MessageItem;
+}
+
 struct UserInfo;
 struct SessionInfo;
 class MysqlPool {
@@ -79,6 +83,7 @@ public:
     bool AddMessage(const std::string& uid, int from_uid, int to_uid, const std::string& timestamp, int env, int content_type, const std::string& content_data, const std::string& content_mime_type, const std::string& fid, int status);
     bool AddConversation(const std::string& uid, int from_uid, int to_uid, const std::string& create_time, const std::string& update_time, const std::string& name, const std::string& icon, int staus, int deleted, int pined, bool processed);
     bool GetSeessionList(const std::string& uid, std::vector<std::shared_ptr<SessionInfo>>& sessionList);
+    bool GetUnreadMessages(const std::string& uid, std::vector<std::shared_ptr<im::MessageItem>>& unreadMessages);
 
     std::string ValueOrEmpty(std::string value);
 

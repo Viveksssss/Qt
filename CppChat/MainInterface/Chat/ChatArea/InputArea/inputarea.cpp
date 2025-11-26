@@ -652,6 +652,7 @@ std::optional<QList<MessageItem>> InputArea::parseMessageContent()
                         textItem.content.mimeType = "text/plain";
                         textItem.content.type = MessageType::TextMessage;
                         textItem.content.data = accumulatedText;
+                        textItem.status = 0;
                         item_list.append(textItem);
                         accumulatedText.clear(); // 清空累积的文本
                     }
@@ -666,6 +667,7 @@ std::optional<QList<MessageItem>> InputArea::parseMessageContent()
                     imageItem.env = UserManager::GetInstance()->GetEnv();
                     imageItem.from_id = UserManager::GetInstance()->GetUid();
                     imageItem.to_id = peerUid;
+                    imageItem.status = 0;
                     imageItem.content.mimeType = mime.name();
                     imageItem.content.type = MessageType::ImageMessage;
                     imageItem.content.data = imagePath;
@@ -691,6 +693,7 @@ std::optional<QList<MessageItem>> InputArea::parseMessageContent()
         textItem.env = UserManager::GetInstance()->GetEnv();
         textItem.from_id = UserManager::GetInstance()->GetUid();
         textItem.to_id = peerUid;
+        textItem.status = 0;
         textItem.content.mimeType = "text/plain";
         textItem.content.type = MessageType::TextMessage;
         textItem.content.data = accumulatedText;

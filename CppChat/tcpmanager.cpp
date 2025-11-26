@@ -170,6 +170,27 @@ void TcpManager::initHandlers()
                 });
             }
         }
+
+        // 解析消息列表
+        if (jsonObj.contains("unread_messages")){
+            const QJsonArray&unread_messages = jsonObj["unread_messages"].toArray();
+            std::vector<std::shared_ptr<MessageItem>>lists;
+            for (const QJsonValue&value:unread_messages){
+                QJsonObject obj = value.toObject();
+                auto message = std::make_shared<MessageItem>();
+                message->id = obj.value("id").toVariant().toString();
+                message->from_id = obj.value("from_id").toInt();
+                message->to_id = obj.value("to_id").toInt();
+                message->timestamp =QDateTime::fromString( obj.value("timestamp").toString());
+                message->env = MessageEnv(obj.value("env").toInt());
+                message->content.type = MessageType(obj.value("content_type").toInt());
+                message->content.data = obj.value("content_data").toString();
+                message->content.mimeType = obj.value("content_mime_type").toString();
+                message->content.fid = obj.value("content_fid").toString();
+                lists.push_back(message);
+            }
+            emit on_get_messages(lists);
+        }
         // 发出信号跳转到主页面
         emit on_switch_interface();
     };
@@ -415,7 +436,7 @@ void TcpManager::initHandlers()
      * @brief 发送消息回包
     */
     _handlers[RequestType::ID_TEXT_CHAT_MSG_RSP] = [this](RequestType requestType,int len,QByteArray data){
-        // qDebug() << "暂时不处理";
+        //TODO: qDebug() << "暂时不处理";
     };
 
     /**
