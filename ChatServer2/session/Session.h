@@ -15,12 +15,13 @@ class Session : public std::enable_shared_from_this<Session> {
     friend class LogicSystem;
 
 public:
-    Session(boost::asio::io_context& ioc, Server* server);
+    Session(boost::asio::io_context& ioc, std::shared_ptr<Server> server);
     ~Session();
     void Start();
     void Close();
     void Send(const char* msg, int max_length, uint16_t msg_id);
     void Send(std::string msg, uint16_t msg_id);
+    void NotifyOffline(int uid);
     void HandleWrite(boost::system::error_code ec, std::shared_ptr<Session> self);
     net::ip::tcp::socket& GetSocket() noexcept;
     std::queue<std::shared_ptr<SendNode>>& GetSendQueue() noexcept;
@@ -46,7 +47,7 @@ private:
     std::string _session_id;
     int _uid;
 
-    Server* _server;
+    std::shared_ptr<Server> _server;
     bool _stop;
     bool _head_parse;
 };

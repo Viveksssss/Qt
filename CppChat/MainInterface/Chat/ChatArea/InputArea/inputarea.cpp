@@ -210,8 +210,15 @@ void InputArea::setupEmojiMenu()
 
             QPushButton *emojiBtn = new QPushButton(emoji);
             emojiBtn->setFixedSize(30, 30);
-            emojiBtn->setStyleSheet("background:transparent;");
             emojiBtn->setFont(QFont("Segoe UI Emoji", 12));
+            emojiBtn->setStyleSheet("QPushButton{"
+                                    "background:#eceeb4;"
+                                    "border:1px;"
+                                    "}"
+                                    "QPushButton:hover{"
+                                    "background:#caeeb4;"
+                                    "}");
+
             connect(emojiBtn, &QPushButton::clicked, [this, emoji]() {
                 insertEmoji(emoji);
             });

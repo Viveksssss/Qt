@@ -6,6 +6,7 @@
 #include <exception>
 #include <mysql++/connection.h>
 #include <mysql++/exceptions.h>
+#include <mysql++/query.h>
 #include <mysql++/result.h>
 #include <spdlog/spdlog.h>
 
@@ -866,13 +867,19 @@ bool MysqlDao::GetUnreadMessages(const std::string& uid, std::vector<std::shared
         _pool->ReturnConnection(std::move(conn));
     });
     try {
+        mysqlpp::Transaction trans(*conn);
         mysqlpp::Query query = conn->query();
+        mysqlpp::Query query2 = conn->query();
+
         query << "SELECT * FROM messages"
               << " WHERE to_uid = %0q AND status = 0";
+        query2<<"UPDATE messages SET status = 1 WHERE to_uid = %0q AND status = 0";
         query.parse();
+        query2.parse();
         mysqlpp::StoreQueryResult res = query.store(std::stoi(uid));
+        mysqlpp::SimpleResult res2 = query2.execute(std::stoi(uid));
         int count = res.num_rows();
-        if (res && res.num_rows() > 0) {
+        if (res && res.num_rows() > 0 && res2) {
             unreadMessages.reserve(res.num_rows()); // 预分配内存
             for (size_t i = 0; i < res.num_rows(); ++i) {
                 auto message_item = std::make_shared<im::MessageItem>();
@@ -887,8 +894,10 @@ bool MysqlDao::GetUnreadMessages(const std::string& uid, std::vector<std::shared
                 message_item->mutable_content()->set_fid(res[i]["content_fid"].c_str());
                 unreadMessages.push_back(message_item);
             }
+            trans.commit();
             return true;
         }
+        trans.rollback();
         return false;
     } catch (const mysqlpp::Exception& e) {
         SPDLOG_ERROR("MySQL++ exception: {}", e.what());

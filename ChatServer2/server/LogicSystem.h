@@ -1,6 +1,7 @@
 #include "../global/Singleton.h"
 #include "../global/const.h"
 #include "../session/Session.h"
+#include "./Server.h"
 #include <condition_variable>
 #include <functional>
 #include <mutex>
@@ -14,10 +15,13 @@
 typedef std::function<void(std::shared_ptr<Session>, uint16_t msg_id, const std::string& msg)> FuncBack;
 
 struct UserInfo;
+class Server;
 class LogicSystem : public Singleton<LogicSystem> {
     friend class Singleton<LogicSystem>;
 
 public:
+    // 设置Server
+    void SetServer(std::shared_ptr<Server> server) noexcept;
     // 完成任务提交
     void PostMsgToQueue(std::shared_ptr<LogicNode> msg);
     // 注册回调
@@ -30,7 +34,6 @@ public:
     // 搜索用户
     bool IsPureDigit(const std::string& str);
     void GetSearchedUsers(const std::string& uid, json& j, bool only_digit);
-    // 添加好友请求
 
 public:
     LogicSystem(std::size_t size = std::thread::hardware_concurrency());
@@ -44,4 +47,5 @@ private:
     std::size_t _size;
     bool _stop;
     std::unordered_map<MsgId, FuncBack> _function_callbacks;
+    std::shared_ptr<Server>_server;
 };

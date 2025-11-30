@@ -1,7 +1,10 @@
-#include "RedisManager.h"
-#include "../global/ConfigManager.h"
 #include <spdlog/spdlog.h>
 #include <string>
+
+#include "../global/ConfigManager.h"
+#include "../global/const.h"
+#include "DistributedLock.h"
+#include "RedisManager.h"
 
 RedisManager::~RedisManager()
 {
@@ -248,6 +251,34 @@ void RedisManager::Close()
         _isConnected = false;
         _pool.reset();
     }
+}
+
+std::string RedisManager::AcquireLock(const std::string& key, int timeout, int acquireTimeout)
+{
+    auto connection = _pool->GetConnection();
+    if (connection == nullptr) {
+        return "";
+    }
+    Defer defer([&connection, this] {
+        _pool->ReturnConnection(connection);
+    });
+
+    return DistributedLock::GetInstance().AcquireLock(connection, key, timeout, acquireTimeout);
+}
+
+bool RedisManager::ReleaseLock(const std::string& key, const std::string& identifier)
+{
+    if (identifier.empty()) {
+        return false;
+    }
+    auto connection = _pool->GetConnection();
+    if (connection == nullptr) {
+        return false;
+    }
+    Defer defer([&connection, this] {
+        _pool->ReturnConnection(connection);
+    });
+    return DistributedLock::GetInstance().ReleaseLock(connection, key, identifier);
 }
 
 RedisPool::RedisPool(std::size_t size, const std::string& host, int port, const std::string& password)

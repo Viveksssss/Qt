@@ -24,7 +24,7 @@ MainWindow::MainWindow(QWidget *parent)
     setCentralWidget(stack);
     // QTimer::singleShot(50,this,[this](){
     //     emit TcpManager::GetInstance()->on_switch_interface();
-    // });f
+    // });
 }
 
 void MainWindow::setupUI()
@@ -62,14 +62,16 @@ void MainWindow::setConnections()
         // 居中显示
         move(screenGeometry.width()/2 - width/2,
              screenGeometry.height()/2 - height/2);
-
-        // qDebug() << DataBase::GetInstance().getFriendsPtr().size();
-        // qDebug() << DataBase::GetInstance().getConversationListPtr().size();
-        // UserManager::GetInstance()->SetPeerUid(1);
-        // UserManager::GetInstance()->GetFriends() = DataBase::GetInstance().getFriendsPtr();
-        // UserManager::GetInstance()->GetMessages() = DataBase::GetInstance().getConversationListPtr();
-        // emit TcpManager::GetInstance()->on_add_friends_to_list(UserManager::GetInstance()->GetFriendsPerPage());
-        // emit TcpManager::GetInstance()->on_add_messages_to_list(UserManager::GetInstance()->GetMessagesPerPage());
+    });
+    // 登陆界面跳转登陆界面
+    connect(TcpManager::GetInstance().get(),&TcpManager::on_switch_login,this,[this](){
+        setupUI();
+        stack = new AuthStack(this);
+        stack->show();
+        setCentralWidget(stack);
+        show();
+        raise();
+        activateWindow();
     });
 }
 

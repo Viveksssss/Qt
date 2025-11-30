@@ -450,9 +450,10 @@ void MessagesListPart::setupConnections()
         }
     });
     // 切换列表
-    connect(&SignalRouter::GetInstance(),&SignalRouter::on_message_item,this,&MessagesListPart::do_change_peer);
+    connect(&SignalRouter::GetInstance(),&SignalRouter::on_change_peer,this,&MessagesListPart::do_change_peer);
     // 有新消息来临
     connect(TcpManager::GetInstance().get(),&TcpManager::on_get_message,this,&MessagesListPart::do_get_message);
+    connect(TcpManager::GetInstance().get(),&TcpManager::on_get_messages,this,&MessagesListPart::do_get_messages);
     // 数据就绪信号
     connect(TcpManager::GetInstance().get(), &TcpManager::on_add_messages_to_list,
             this, &MessagesListPart::do_data_ready);
@@ -591,6 +592,7 @@ void MessagesListPart::do_change_peer(int peerUid)
         messagesModel->setData(index,true,MessagesModel::MessageRole::RedDotRole);
         messagesList->setCurrentIndex(index);   // 切换列表索引至当前好友
         DataBase::GetInstance().updateMessagesStatus(peerUid,1);
+        // emit SignalRouter::GetInstance().on_change_peer(peerUid);
     }else{
         ConversationItem conv;
         conv.to_uid = peerUid;
@@ -600,12 +602,19 @@ void MessagesListPart::do_change_peer(int peerUid)
         conv.icon = UserManager::GetInstance()->GetPeerIcon();
         conv.env = static_cast<int>(UserManager::GetInstance()->GetEnv());
         conv.status = 1;
+        conv.create_time = QDateTime::currentDateTime();
+        conv.update_time = QDateTime::currentDateTime();
         conv.processed = true;
+        conv.deleted = 0;
+        conv.pined = 0;
         messagesModel->addPreMessage(conv);
         messagesList->setCurrentIndex(messagesModel->index(0, 0));
         DataBase::GetInstance().createOrUpdateConversation(conv);
         UserManager::GetInstance()->GetMessages().push_back(std::make_shared<ConversationItem>(std::move(conv)));
+        UserManager::GetInstance()->ResetLoadMessages();
+        // emit SignalRouter::GetInstance().
     }
+    messagesList->update();
 }
 
 void MessagesListPart::do_get_messages(const std::vector<std::shared_ptr<MessageItem> > &list)
@@ -639,13 +648,10 @@ void MessagesListPart::do_get_message(const MessageItem &message)
             // 红点
             do_change_message_status(peerUid, false);
             DataBase::GetInstance().storeMessage(message);
-            UserManager::GetInstance()->setHistoryTimestamp(peerUid,QDateTime::currentDateTime());
         }
     }else{
         DataBase::GetInstance().storeMessage(message);
         // 不存在会话，那就创建插入会话
-        UserManager::GetInstance()->SetPeerUid(message.from_id);
-        UserManager::GetInstance()->SetEnv(MessageEnv(message.env));
         std::shared_ptr<UserInfo> info = DataBase::GetInstance().getFriendInfoPtr(peerUid);
         ConversationItem conv;
         // 这里故意反过来，对于自己来说所有的好友都是to,自己是from
@@ -668,7 +674,7 @@ void MessagesListPart::do_get_message(const MessageItem &message)
         conv.processed = false;
         conv.env = static_cast<int>(UserManager::GetInstance()->GetEnv());
         messagesModel->addPreMessage(conv);
-        UserManager::GetInstance()->setHistoryTimestamp(conv.from_uid, QDateTime::currentDateTime());
+        messagesList->update();
         // 存放数据库中
         DataBase::GetInstance().createOrUpdateConversation(conv);
         UserManager::GetInstance()->GetMessages().push_back(std::make_shared<ConversationItem>(std::move(conv)));

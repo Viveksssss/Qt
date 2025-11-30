@@ -49,6 +49,7 @@ public slots:
     void do_tcp_connect(ServerInfo); // from LoginScreen::on_tcp_connect
     void do_send_data(RequestType requestType,QByteArray data); // from TcpManager::to_send_data
 signals:
+    void on_switch_login();         //  to MainWindow::
     void on_connect_success(bool success); // to LoginScreen::do_connect_success
     void on_send_data(RequestType requestType,QByteArray data); // to TcpManager::do_send_data
     void on_switch_interface(); // to MainWindow::[](){}

@@ -23,6 +23,7 @@ signals:
     void on_message_item(int);                 // from MessageArea::do_change_peer
     void on_add_new_message(const MessageItem&item);    // from MessageListPart::on_get_message
     void on_change_message_status(const MessageItem&item);  // from MessageListPart::on_get_message
+    void on_eliminate_status();                 // from ListPart::do_change_list -> to SideBarPart::do_eliminate_status();
 public slots:
 
 };

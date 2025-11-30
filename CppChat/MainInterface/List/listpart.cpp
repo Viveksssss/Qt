@@ -41,4 +41,5 @@ void ListPart::do_change_list(int index)
         return;
     }
     stack->setCurrentIndex(index);
+    emit SignalRouter::GetInstance().on_eliminate_status();
 }

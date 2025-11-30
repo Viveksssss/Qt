@@ -166,7 +166,6 @@ void FriendsListPart::do_loading_users()
         return;
     }
 
-
     isLoading = true;
     // 动态获取信息
     for(auto&info:UserManager::GetInstance()->GetFriendsPerPage()){
@@ -181,6 +180,7 @@ void FriendsListPart::do_loading_users()
 void FriendsListPart::do_add_friend_to_list(std::shared_ptr<UserInfo>info)
 {
     friendsModel->addFriend(FriendItem(info->id, info->status,info->sex,info->name,info->avatar,info->desc ));
+    // UserManager::GetInstance()->ResetLoadFriends();
     do_loading_users();
 }
 

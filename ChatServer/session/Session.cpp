@@ -9,7 +9,7 @@
 #include "Session.h"
 #include <spdlog/spdlog.h>
 
-Session::Session(boost::asio::io_context& ioc, Server* server)
+Session::Session(boost::asio::io_context& ioc, std::shared_ptr<Server> server)
     : _socket(ioc)
     , _server(server)
     , _stop(false)
@@ -32,6 +32,8 @@ void Session::Start()
 
 void Session::Close()
 {
+    // 我们把分布式的锁的操作等都放在了这一个close中，防止多处代码重复
+
     if (_stop) {
         return;
     }
@@ -55,16 +57,48 @@ void Session::Close()
     }
     SPDLOG_INFO("Session {} disconnected!", _session_id);
 
+    auto uid_str = std::to_string(_uid);
+    auto lock_key = LOCK_PREFIX + uid_str;
+    auto identifier = RedisManager::GetInstance()->AcquireLock(lock_key, LOCK_TIMEOUT, ACQUIRE_LOCK_TIMEOUT);
+
+    Defer defer([identifier, lock_key, this]() {
+        _server->ClearSession(_session_id);
+        RedisManager::GetInstance()->ReleaseLock(lock_key, identifier);
+    });
+
+    if (identifier.empty()) {
+        return;
+    }
+
+    std::string redis_session_id = "";
+    bool b_session = RedisManager::GetInstance()->Get(USER_SESSION_PREFIX + uid_str, redis_session_id);
+    if (!b_session) {
+        // 没有查询到，说明没有登陆信息
+        return;
+    }
+    if (redis_session_id != _session_id) {
+        // 说明有客户在其他的服务器异地登录了
+        // 这时候不需要修改/删除信息，这时候已经是新登陆的信息了
+        return;
+    }
+
     // 减少登录计数
     RedisManager::GetInstance()->Decr(LOGIN_COUNT_PREFIX + _server->GetServerName());
     // 删除用户服务器信息
     RedisManager::GetInstance()->Del(USERIP_PREFIX + std::to_string(_uid));
-    // 删除用户基本信息
-    RedisManager::GetInstance()->Del(USER_BASE_INFO_PREFIX + std::to_string(_uid));
     // 删除用户token
     RedisManager::GetInstance()->Del(USER_TOKEN_PREFIX + std::to_string(_uid));
-    // 删除用户的状态
-    RedisManager::GetInstance()->Del(USER_STATUS_PREFIX + std::to_string(_uid));
+    // 修改用户的状态
+    RedisManager::GetInstance()->Set(USER_STATUS_PREFIX + std::to_string(_uid), std::to_string(0));
+}
+
+void Session::NotifyOffline(int uid)
+{
+    json j;
+    j["error"] = ErrorCodes ::SUCCESS;
+    j["uid"] = uid;
+    Send(j.dump(), static_cast<uint16_t>(MsgId::ID_NOTIFY_OFF_LINE_REQ));
+    return;
 }
 
 void Session::Send(const char* msg, int max_length, uint16_t msg_id)
@@ -94,7 +128,6 @@ void Session::HandleWrite(boost::system::error_code ec, std::shared_ptr<Session>
         if (ec) {
             SPDLOG_WARN("Handle Write Filed,Errir is {}", ec.what());
             Close();
-            _server->ClearSession(_session_id);
         }
         std::lock_guard<std::mutex> lock(_send_lock);
         _send_queue.pop();
@@ -107,7 +140,6 @@ void Session::HandleWrite(boost::system::error_code ec, std::shared_ptr<Session>
     } catch (std::exception& e) {
         SPDLOG_WARN("Exception code:{}", e.what());
         Close();
-        _server->ClearSession(_session_id);
     }
 }
 
@@ -150,19 +182,16 @@ void Session::AsyncHead(std::size_t len)
             } else {
                 SPDLOG_WARN("Error Reading header:{},bytes transferred:{}", error.message(), bytes_transferred);
             }
-            _server->ClearSession(_session_id);
             Close();
             return;
         }
         if (bytes_transferred < HEAD_TOTAL_LEN) {
             SPDLOG_WARN("Read Length not matched");
-            _server->ClearSession(_session_id);
             Close();
             return;
         }
         if (!_server->CheckValid(_session_id)) {
             SPDLOG_WARN("Invalid SessionId");
-            _server->ClearSession(_session_id);
             Close();
             return;
         }
@@ -188,19 +217,16 @@ void Session::AsyncBody(std::size_t len)
             } else {
                 SPDLOG_WARN("Error Reading Body:{},bytes transferred:{}", error.message(), bytes_transferred);
             }
-            _server->ClearSession(_session_id);
             Close();
             return;
         }
         if (bytes_transferred < HEAD_TOTAL_LEN) {
             SPDLOG_WARN("Read Length not matched");
-            _server->ClearSession(_session_id);
             Close();
             return;
         }
         if (!_server->CheckValid(_session_id)) {
             SPDLOG_WARN("Invalid SessionId");
-            _server->ClearSession(_session_id);
             Close();
             return;
         }

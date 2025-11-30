@@ -45,6 +45,7 @@ void SideBarPart::setupConnections()
         buttonGroup->setExclusive(false);  // 先取消互斥
         buttonGroup->setExclusive(true);   // 再恢复互斥，这样会清除选中状态
     });
+    connect(&SignalRouter::GetInstance(),&SignalRouter::on_eliminate_status,this,&SideBarPart::do_eliminate_status);
 }
 
 
@@ -106,6 +107,16 @@ void SideBarPart::createButton(const SideBarItem &item,bool showText)
 
     buttons[item.id] = btn;
 
+}
+
+void SideBarPart::do_eliminate_status()
+{
+    buttonGroup->setExclusive(false);
+    // buttonGroup->checkedButton()->setChecked(false);
+    for (auto* button : buttonGroup->buttons()) {
+        button->setChecked(false);
+    }
+    buttonGroup->setExclusive(true);
 }
 
 bool SideBarPart::eventFilter(QObject *watched, QEvent *event)

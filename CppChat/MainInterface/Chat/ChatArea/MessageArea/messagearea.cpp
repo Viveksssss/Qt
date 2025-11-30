@@ -46,6 +46,9 @@ void MessageArea::setupUI()
     list->setFocusPolicy(Qt::ClickFocus);
 
     list->viewport()->installEventFilter(this);
+
+    // 在 setupUI() 中添加：
+    list->setFrameStyle(QFrame::NoFrame); // 移除边框
 }
 
 void MessageArea::setupConnections()
@@ -67,48 +70,17 @@ void MessageArea::do_area_to_bottom()
 
 void MessageArea::do_change_peer(int uid)
 {
-    if (uid == UserManager::GetInstance()->GetPeerUid()){
-        return;
-    }
-
-    auto&friends = UserManager::GetInstance()-> GetFriends();
-
-    // Is Friend
-    auto it = std::find_if(friends.begin(),friends.end(),[uid](std::shared_ptr<UserInfo> info){
-        return info->id == uid;
-    });
-
     model->clearMessage();
 
-    if (it!=friends.end()){
-        // Private
-        // 首先点击了好友的列表，我们需要切换对方信息，同时发送请求获取和对方的聊天信息。
-        UserManager::GetInstance()->SetPeerEmail((*it)->email);
-        UserManager::GetInstance()->SetPeerDesc((*it)->desc);
-        UserManager::GetInstance()->SetPeerSex((*it)->sex);
-        UserManager::GetInstance()->SetPeerStatus((*it)->status);
-        UserManager::GetInstance()->SetEnv(MessageEnv::Private);
-        UserManager::GetInstance()->GetTimestamp().erase(UserManager::GetInstance()->GetPeerUid());
-        UserManager::GetInstance()->SetPeerName((*it)->name);
-        UserManager::GetInstance()->SetPeerUid(uid);
-        UserManager::GetInstance()->SetPeerIcon((*it)->avatar);
+    const auto&historys = DataBase::GetInstance().getMessages(uid,QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss"));
+    do_change_chat_history(historys,true);
+    qDebug() << "获取到的消息数量:" << historys.size();  // 添加调试输出
 
-        // UserManager::GetInstance()->SetEnv();
-        const auto&historys = DataBase::GetInstance().getMessages((*it)->id,QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss"));
-        do_change_chat_history(historys,true);
-
-        emit SignalRouter::GetInstance().on_message_item(uid);
-
-        do_area_to_bottom();
-    }else{
-        // Group
-        // UserManager::GetInstance()->SetEnv(MessageEnv::Private);
-        // UserManager::GetInstance()->GetTimestamp().erase(UserManager::GetInstance()->GetPeerUid());
-        // UserManager::GetInstance()->SetPeerName((*it)->name);
-        // UserManager::GetInstance()->SetPeerUid(uid);
-        // UserManager::GetInstance()->SetPeerIcon((*it)->avatar);
-    }
-
+    // emit SignalRouter::GetInstance().on_message_item(uid);
+    do_area_to_bottom();
+    list->update();
+    list->repaint();  // 添加这个
+    list->viewport()->update();  // 还有这个
 
     // QJsonObject j ;
     // j["from_uid"] = UserManager::GetInstance()->GetUid();
@@ -150,7 +122,7 @@ void MessageArea::do_load_more_message()
     const auto&historys = DataBase::GetInstance().getMessages(UserManager::GetInstance()->GetPeerUid(),timestamp);
     do_change_chat_history(historys,false);
     if (historys.size()>0){
-        showToast("loading...");
+        showToast(QString("loading..."));
     }
 
 

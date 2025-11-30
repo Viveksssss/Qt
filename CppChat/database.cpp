@@ -90,6 +90,7 @@ bool DataBase::storeMessage(const MessageItem &message)
     query.addBindValue(message.from_id);
     query.addBindValue(message.to_id);
     query.addBindValue(message.timestamp.toString("yyyy-MM-dd HH:mm:ss"));
+    qDebug() <<"------------timestamp:"<< message.timestamp.toString("yyyy-MM-dd HH:mm:ss");
     query.addBindValue(static_cast<int>(message.env));
     query.addBindValue(static_cast<int>(message.content.type));
     query.addBindValue(message.content.data);
@@ -322,7 +323,7 @@ MessageItem DataBase::createMessageFromQuery(const QSqlQuery &query)
     msg.content.data = query.value("content_data").toString();
     msg.content.mimeType = query.value("content_mime_type").toString();
     msg.content.fid = query.value("content_fid").toString();
-
+    qDebug() << msg.content.data;
     return msg;
 }
 
@@ -618,11 +619,13 @@ ConversationItem DataBase::getConversation(int peerUid)
 
     query.addBindValue(peerUid);
     query.addBindValue(UserManager::GetInstance()->GetUid());
-    if (!query.exec() || !query.next()){
+    if (!query.exec() ){
         qDebug() << "Failed to get conversation :" << query.lastError().text();
         return conv;
     }
-    conv = createConversationFromQuery(query);
+    if (query.next()){
+        conv = createConversationFromQuery(query);
+    }
     return conv;
 }
 
@@ -747,14 +750,19 @@ std::shared_ptr<UserInfo> DataBase::getFriendInfoPtr(int peerUid)
         WHERE to_uid = ?
         AND from_uid = ?
     )");
-    query.addBindValue(UserManager::GetInstance()->GetPeerUid());
+    query.addBindValue(peerUid);
     query.addBindValue(UserManager::GetInstance()->GetUid());
+    qDebug() << "myUid :" << UserManager::GetInstance()->GetUid() << "\tPeerUid:" << peerUid;
 
-    if (!query.exec() || !query.next()){
+    if (!query.exec()){
         qDebug()<< "Failed to get FriendInfo" << query.lastError().text();
         return std::shared_ptr<UserInfo>();
     }
-    std::shared_ptr<UserInfo> info = std::make_shared<UserInfo>(createFriendInfoFromQuery(query));
+    // query.next();
+    std::shared_ptr<UserInfo>info = nullptr;
+    if (query.next()){
+        info = std::make_shared<UserInfo>(createFriendInfoFromQuery(query));
+    }
     return info;
 }
 
@@ -766,7 +774,7 @@ UserInfo DataBase::getFriendInfo(int peerUid)
         WHERE to_uid = ?
     )");
     query.addBindValue(peerUid);
-    if (!query.exec() || !query.next()){
+    if (!query.exec()){
         qDebug()<< "Failed to get FriendInfo" << query.lastError().text();
         return UserInfo{};
     }
@@ -783,7 +791,7 @@ std::vector<UserInfo> DataBase::getFriends()
         WHERE from_uid = ?
     )");
     query.addBindValue(UserManager::GetInstance()->GetUid());
-    if (!query.exec() || !query.next()){
+    if (!query.exec()){
         qDebug() << "Failed to get Friends list:" << query.lastError().text();
         return friends;
     }
@@ -804,7 +812,7 @@ std::vector<std::shared_ptr<UserInfo>> DataBase::getFriendsPtr()
     )");
 
     query.addBindValue(UserManager::GetInstance()->GetUid());
-    if (!query.exec() || !query.next()){
+    if (!query.exec()){
         qDebug() << "Failed to get Friends list:" << query.lastError().text();
         return friends;
     }
@@ -1027,10 +1035,14 @@ bool DataBase::storeFriend(const std::shared_ptr<UserInfo> &info)
 UserInfo DataBase::createFriendInfoFromQuery(const QSqlQuery &query)
 {
     UserInfo info;
+
     info.id = query.value("to_uid").toInt();
+    qDebug() <<"to_id:"<<info.id;
     info.name = query.value("name").toString();
     info.avatar = query.value("avatar").toString();
+    info.email = query.value("email").toString();
     info.sex = query.value("sex").toInt();
     info.desc = query.value("desc").toString();
+    info.back = query.value("back").toString();
     return info;
 }

@@ -1,4 +1,5 @@
 #include "LogicSystem.h"
+#include "Server.h"
 #include "../data/UserInfo.h"
 #include "../data/im.pb.h"
 #include "../global/ConfigManager.h"
@@ -12,6 +13,11 @@
 #include <cstdint>
 #include <spdlog/spdlog.h>
 #include <string>
+
+void LogicSystem::SetServer(std::shared_ptr<Server> server) noexcept
+{
+    this->_server = server;
+}
 
 std::string thread_id_to_string(std::thread::id id)
 {
@@ -69,9 +75,6 @@ void LogicSystem::RegisterCallBacks()
 
         jj["error"] = ErrorCodes::SUCCESS;
 
-        // 将登陆人的状态信息改变为1
-        std::string key = USER_STATUS_PREFIX + uid_str;
-        RedisManager::GetInstance()->Set(key, "1");
 
         jj["uid"] = uid;
         jj["name"] = user_info->name;
@@ -172,6 +175,58 @@ void LogicSystem::RegisterCallBacks()
             jj["friends"] = friends;
         }
 
+        // 获取未读消息
+        std::vector<std::shared_ptr<im::MessageItem>> unread_messages;
+        bool b_unread = MysqlManager::GetInstance()->GetUnreadMessages(uid_str, unread_messages);
+        if (b_unread && unread_messages.size() > 0) {
+            json messages = json::array();
+            for (auto& message : unread_messages) {
+                json message_item;
+                message_item["id"] = message->id();
+                message_item["from_id"] = message->from_id();
+                message_item["to_id"] = message->to_id();
+                message_item["timestamp"] = message->timestamp();
+                message_item["env"] = message->env();
+                message_item["content_type"] = message->content().type();
+                message_item["content_data"] = message->content().data();
+                SPDLOG_INFO("data:{}", message->content().data());
+                message_item["content_mime_type"] = message->content().mime_type();
+                message_item["content_fid"] = message->content().fid();
+                messages.push_back(message_item);
+            }
+            jj["unread_messages"] = messages;
+        }
+
+        auto lock_key = LOCK_PREFIX + uid_str;
+        auto identifier = RedisManager::GetInstance()->AcquireLock(lock_key, LOCK_TIMEOUT, ACQUIRE_LOCK_TIMEOUT);
+        Defer defer2([this,identifier,lock_key]{
+            RedisManager::GetInstance()->ReleaseLock(lock_key, identifier);
+        });
+
+        std::string uid_ip_value = "";
+        std::string uid_ip_key = USERIP_PREFIX + uid_str;
+        bool b_ip = RedisManager::GetInstance()->GetInstance()->Get(uid_ip_key, uid_ip_value);
+        if (b_ip){
+            // 查询到了ip地址，说明用户已经在线了。
+            auto&cfg = ConfigManager::GetInstance();
+            auto self_name = cfg["SelfServer"]["name"];
+            if (uid_ip_value == self_name) {
+                // 如果是当前服务器，直接踢掉
+                auto old_session = UserManager::GetInstance()->GetSession(uid);
+                if (old_session){
+                    old_session->NotifyOffline(uid);
+                    _server->ClearSession(uid_str);
+                }
+            }
+            else{
+                // 不在本服务器，grpc通知剔除
+            }
+        }
+
+        // 将登陆人的状态信息改变为1
+        std::string key = USER_STATUS_PREFIX + uid_str;
+        RedisManager::GetInstance()->Set(key, "1");
+
         // 登陆成功，通知所有在线好友
         // 上面得到了好友列表，这里通知所有在线好友
         for (std::size_t i = 0; i < friend_list.size(); i++) {
@@ -222,27 +277,6 @@ void LogicSystem::RegisterCallBacks()
                     }
                 }
             }
-        }
-
-        // 获取未读消息
-        std::vector<std::shared_ptr<im::MessageItem>> unread_messages;
-        bool b_unread = MysqlManager::GetInstance()->GetUnreadMessages(uid_str, unread_messages);
-        if (b_unread && unread_messages.size() > 0) {
-            json messages = json::array();
-            for (auto& message : unread_messages) {
-                json message_item;
-                message_item["id"] = message->id();
-                message_item["from_id"] = message->from_id();
-                message_item["to_id"] = message->to_id();
-                message_item["timestamp"] = message->timestamp();
-                message_item["env"] = message->env();
-                message_item["content_type"] = message->content().type();
-                message_item["content_data"] = message->content().data();
-                message_item["content_mime_type"] = message->content().mime_type();
-                message_item["content_fid"] = message->content().fid();
-                messages.push_back(message_item);
-            }
-            jj["unread_messages"] = messages;
         }
 
         // 更新登陆数量
@@ -535,7 +569,7 @@ void LogicSystem::RegisterCallBacks()
                 if (session2) {
                     SPDLOG_INFO("FROM UID:{},to:{}", pb.from_id(), to_uid);
                     SPDLOG_INFO("FROM SESSION:{},to:{}", session->GetSessionId(), session2->GetSessionId());
-                    session2->Send(msg, static_cast<int>(MsgId::ID_TEXT_CHAT_MSG_REQ));
+                    session2->Send(msg, static_cast<int>(MsgId::ID_NOTIFY_TEXT_CHAT_MSG_REQ));
                     bool ok = MysqlManager::GetInstance()->AddMessage(pb.id(), pb.from_id(), pb.to_id(), pb.timestamp(), pb.env(), pb.content().type(), pb.content().data(), pb.content().mime_type(), pb.content().fid(), 1);
                 }
             } else {

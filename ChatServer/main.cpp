@@ -3,6 +3,7 @@
 #include "grpc/ChatGrpcServer.h"
 #include "redis/RedisManager.h"
 #include "server/AsioPool.h"
+#include "server/LogicSystem.h"
 #include "server/Server.h"
 
 #include <boost/asio.hpp>
@@ -51,7 +52,9 @@ int main()
         });
 
         auto port = cfg["SelfServer"]["port"];
-        std::make_shared<Server>(ioc, std::stoi(port))->Start();
+        auto server_ptr = std::make_shared<Server>(ioc, std::stoi(port));
+        server_ptr->Start();
+        LogicSystem::GetInstance()->SetServer(server_ptr);
         ioc.run();
 
         RedisManager::GetInstance()->HDel(LOGIN_COUNT_PREFIX, server_name);

@@ -234,6 +234,29 @@ std::span<std::shared_ptr<ConversationItem>>  UserManager::GetMessagesPerPage(in
     return std::span<std::shared_ptr<ConversationItem>>(_messages).subspan(begin,count);
 }
 
+bool UserManager::ChangeUserInfo(int peerUid)
+{
+    auto&friends = this->_friends;
+    // Is Friend
+    auto it = std::find_if(friends.begin(),friends.end(),[peerUid](std::shared_ptr<UserInfo> info){
+        return info->id == peerUid;
+    });
+
+    if (it!=friends.end()){
+        UserManager::GetInstance()->SetPeerEmail((*it)->email);
+        UserManager::GetInstance()->SetPeerDesc((*it)->desc);
+        UserManager::GetInstance()->SetPeerSex((*it)->sex);
+        UserManager::GetInstance()->SetPeerStatus((*it)->status);
+        UserManager::GetInstance()->SetEnv(MessageEnv::Private);
+        UserManager::GetInstance()->GetTimestamp().erase(UserManager::GetInstance()->GetPeerUid());
+        UserManager::GetInstance()->SetPeerName((*it)->name);
+        UserManager::GetInstance()->SetPeerUid(peerUid);
+        UserManager::GetInstance()->SetPeerIcon((*it)->avatar);
+        return true;
+    }
+    return false;
+}
+
 bool UserManager::IsLoadFriendsFinished()
 {
     return _friends_loaded>=_friends.size() ? true:false;
@@ -268,6 +291,11 @@ bool UserManager::IsLoadMessagesFinished(int peerUid)
 void UserManager::setMessagesFinished(int peerUid)
 {
     _messages_finished[peerUid] = true;
+}
+
+void UserManager::addMessagesLoaded(int size)
+{
+    this->_messages_loaded++;
 }
 
 QDateTime UserManager::GetHistoryTimestamp(int peerUid)

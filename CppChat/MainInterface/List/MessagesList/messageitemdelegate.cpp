@@ -226,7 +226,14 @@ void MessageItemDelegate::change_info(const QModelIndex &index)
     // UserManager::GetInstance()->SetPeerUid(peerUid);
     list->do_change_message_status(peerUid,true);
 
-    emit SignalRouter::GetInstance().on_change_peer(index.data(MessagesModel::ToUidRole).toInt());
+    int peerUU = UserManager::GetInstance()->GetPeerUid();
+    if (peerUid == UserManager::GetInstance()->GetPeerUid()){
+        return;
+    }
+
+    UserManager::GetInstance()->ChangeUserInfo(peerUid);
+
+    emit SignalRouter::GetInstance().on_change_peer(peerUid);
 }
 
 QPixmap MessageItemDelegate::getStatusPximap(const QString &status) const

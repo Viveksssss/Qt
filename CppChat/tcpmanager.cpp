@@ -181,7 +181,8 @@ void TcpManager::initHandlers()
                 message->id = obj.value("id").toVariant().toString();
                 message->from_id = obj.value("from_id").toInt();
                 message->to_id = obj.value("to_id").toInt();
-                message->timestamp =QDateTime::fromString( obj.value("timestamp").toString());
+                message->timestamp =QDateTime::fromString(obj.value("timestamp").toString(),"yyyy-MM-dd hh:mm:ss");
+                qDebug() << "***********time:" << message->timestamp.toString();
                 message->env = MessageEnv(obj.value("env").toInt());
                 message->content.type = MessageType(obj.value("content_type").toInt());
                 message->content.data = obj.value("content_data").toString();
@@ -445,6 +446,35 @@ void TcpManager::initHandlers()
     _handlers[RequestType::ID_GET_MESSAGES_OF_FRIEND_RSP] = [this](RequestType requestType,int len,QByteArray data){
         // TODO:获取与某人的聊天记录列表
     };
+    /**
+     * @brief 通知下线了
+     */
+    _handlers[RequestType::ID_NOTIFY_OFF_LINE_REQ] = [this](RequestType requestType,int len,QByteArray data){
+        QJsonDocument jsonDoc = QJsonDocument::fromJson(data);
+        if (jsonDoc.isNull()){
+            return;
+        }
+        QJsonObject jsonObj = jsonDoc.object();
+        if (!jsonObj.contains("error") || jsonObj["error"].toInt()!=static_cast<int>(ErrorCodes::SUCCESS)){
+            return;
+        }
+
+        if (jsonObj["uid"].toInt() == UserManager::GetInstance()->GetUid()){
+            _socket.disconnectFromHost();
+
+            // 弹出对话框提示
+            QMessageBox msgBox;
+            msgBox.setWindowTitle("连接提示");
+            msgBox.setText("您的账号在另一台设备登录，当前连接将被断开。");
+            msgBox.setIcon(QMessageBox::Information);
+            msgBox.setStandardButtons(QMessageBox::Ok);
+
+            // 显示对话框并等待用户确认
+            msgBox.exec();
+
+            emit on_switch_login();
+        }
+    };
 
 }
 
@@ -456,31 +486,70 @@ void TcpManager::connections()
         emit on_connect_success(true);
     });
     // 读取数据
-    connect(&_socket,&QTcpSocket::readyRead,[&](){
+    // connect(&_socket,&QTcpSocket::readyRead,[&](){
+    //     _buffer.append(_socket.readAll());
+    //     QDataStream stream(&_buffer,QIODevice::ReadOnly);
+    //     stream.setByteOrder(QDataStream::BigEndian);
+    //     forever{
+    //         if (!_recv_pending){
+    //             if (_buffer.size() < static_cast<int>(sizeof(qint16)*2)){
+    //                 return;
+    //             }
+    //             stream >> _msg_id >> _msg_len;
+    //         }
+    //         if (_buffer.size() < _msg_len){
+    //             _recv_pending = true;
+    //             return;
+    //         }
+    //         _recv_pending = false;
+    //         QByteArray msgBody = _buffer.mid(4,_msg_len);
+    //         _buffer.remove(0,4+_msg_len);
+    //         // _buffer.clear(); //会丢失之后的所有信息
+    //         // 在TLV解析的最开始添加
+    //         // qDebug() << "=== 收到TLV消息 ===";
+    //         // qDebug() << "Type:" << static_cast<int>(_msg_id);
+    //         // qDebug() << "Length:" << _msg_len;
+    //         // qDebug() << "Data:" << msgBody;
+    //         // qDebug() << "===================";
+    //         handleMessage(RequestType(_msg_id),_msg_len,msgBody);
+    //     }
+    // });
+
+
+    connect(&_socket, &QTcpSocket::readyRead, [&]() {
         _buffer.append(_socket.readAll());
-        QDataStream stream(&_buffer,QIODevice::ReadOnly);
+        QDataStream stream(&_buffer, QIODevice::ReadOnly);
         stream.setByteOrder(QDataStream::BigEndian);
-        forever{
-            if (!_recv_pending){
-                if (_buffer.size() < static_cast<int>(sizeof(qint16)*2)){
-                    return;
-                }
-                stream >> _msg_id >> _msg_len;
-            }
-            if (_buffer.size() < _msg_len){
-                _recv_pending = true;
+
+
+        while (_buffer.size() >= sizeof(qint16) * 2) {
+            // 直接读取消息头
+            QDataStream stream(_buffer);
+            stream.setByteOrder(QDataStream::BigEndian);
+            qint16 msg_id, msg_len;
+            stream >> msg_id >> msg_len;
+            int total_size = sizeof(qint16) * 2 + msg_len;
+
+            // 检查消息长度有效性
+            if (msg_len < 0) {
+                qCritical() << "无效的消息长度:" << msg_len << "，清空缓冲区";
+                _buffer.clear();
                 return;
             }
-            _recv_pending = false;
-            QByteArray msgBody = _buffer.mid(4,_msg_len);
-            _buffer.remove(0,4+_msg_len);
-            // 在TLV解析的最开始添加
-            // qDebug() << "=== 收到TLV消息 ===";
-            // qDebug() << "Type:" << static_cast<int>(_msg_id);
-            // qDebug() << "Length:" << _msg_len;
-            // qDebug() << "Data:" << msgBody;
-            // qDebug() << "===================";
-            handleMessage(RequestType(_msg_id),_msg_len,msgBody);
+
+            // 检查是否有完整消息
+            if (_buffer.size() < total_size) {
+                break;
+            }
+
+            // 读取消息体
+            QByteArray msgBody = _buffer.mid(sizeof(qint16) * 2, msg_len);
+
+            // 处理消息
+            handleMessage(RequestType(msg_id), msg_len, msgBody);
+
+            // 移除已处理数据
+            _buffer.remove(0, total_size);
         }
     });
     // 错误

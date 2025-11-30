@@ -89,12 +89,15 @@ public:
     std::span<std::shared_ptr<UserInfo>>GetFriendsPerPage(int size = 20);
     std::span<std::shared_ptr<ConversationItem>>GetMessagesPerPage(int size = 20);
 
+    bool ChangeUserInfo(int peerUid);
+
     bool IsLoadFriendsFinished();
     bool IsLoadMessagesFinished();
     void ResetLoadFriends();
     void ResetLoadMessages();
     bool IsLoadMessagesFinished(int peerUid); // history
     void setMessagesFinished(int peerUid);
+    void addMessagesLoaded(int size);
     QDateTime GetHistoryTimestamp(int);
     void setHistoryTimestamp(int,QDateTime);
 private:
@@ -107,9 +110,9 @@ private:
     QPixmap _avatar;
     QString _desc;
     QString _icon;  // base64
-    int _uid;
-    int _sex;
-    int _status;
+    int _uid = -1;
+    int _sex = -1;
+    int _status = -1;
     MessageEnv _env ;
 
     QString _peer_token;

@@ -65,7 +65,7 @@ void MainScreen::setupUI()
     // 分割线2，friends和chat
     QFrame *sep2 = new QFrame;
     sep2->setFrameShape(QFrame::VLine);
-    sep2->setMaximumWidth(1);
+    sep2->setMaximumWidth(10);
     sep2->setStyleSheet("color: #c0c0c0;");
     sep2->setContentsMargins(0,20,0,20);
     bar_friends_hlay->addWidget(sep2);

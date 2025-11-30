@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.10.0)
 project(ChatServer VERSION 0.1.0 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 20)
-# Set runtime output directory globally to avoid referencing the target before it's created
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR})
@@ -42,6 +41,7 @@ add_executable(ChatServer
     redis/RedisManager.cpp
     mysql/MysqlManager.cpp
     mysql/MysqlDao.cpp
+    redis/DistributedLock.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE Boost::headers)

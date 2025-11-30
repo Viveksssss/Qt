@@ -9,6 +9,7 @@
 class Server : public std::enable_shared_from_this<Server> {
 public:
     Server(net::io_context& ioc, uint16_t port);
+    ~Server();
     void Start();
     void ClearSession(const std::string& session_id);
     bool CheckValid(const std::string& session_id);

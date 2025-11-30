@@ -38,6 +38,8 @@ private:
     void createButton(const SideBarItem&item,bool showText = false);
 signals:
     void on_sidebar_btn_clicked(const QString&); // to FriendsList or mainScreen
+private slots:
+    void do_eliminate_status();
 private:
     QVBoxLayout *layout;
     QMap<QString,QPushButton*>buttons;

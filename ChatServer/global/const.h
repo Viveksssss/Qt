@@ -7,6 +7,8 @@
 #define MAX_LENGTH 65535
 #define MAX_SEND_SIZE 5000
 #define MAX_RECV_SIZE 10000
+#define LOCK_TIMEOUT 5
+#define ACQUIRE_LOCK_TIMEOUT 5
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
@@ -88,5 +90,7 @@ extern ConfigManager cfgMgr;
 #define USER_BASE_INFO_PREFIX "user_base_info_"
 #define USER_BASE_INFOS_PREFIX "user_base_infos_"
 #define IP_COUNT_PREFIX "ip_count_"
+#define LOCK_PREFIX "lock_"
+#define USER_SESSION_PREFIX "usession_"
 
 #endif // CONST_H

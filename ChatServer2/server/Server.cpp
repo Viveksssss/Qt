@@ -3,6 +3,7 @@
 #include "../global/UserManager.h"
 #include "../session/Session.h"
 #include "AsioPool.h"
+#include "LogicSystem.h"
 #include <spdlog/spdlog.h>
 
 Server::Server(net::io_context& ioc, uint16_t port)
@@ -13,12 +14,18 @@ Server::Server(net::io_context& ioc, uint16_t port)
     SPDLOG_INFO("Server Start Success,Listen on port:{}", _port);
     auto& cfg = ConfigManager::GetInstance();
     _server_name = cfg["SelfServer"]["name"];
+
+    
+}
+Server::~Server()
+{
+    _sessions.clear();
 }
 
 void Server::Start()
 {
     auto& io_context = AsioPool::GetInstance()->GetIOService();
-    std::shared_ptr<Session> conn = std::make_shared<Session>(io_context, this);
+    std::shared_ptr<Session> conn = std::make_shared<Session>(io_context, shared_from_this());
     _acceptor.async_accept(conn->GetSocket(), [this, conn, self = shared_from_this()](const boost::system::error_code& ec) {
         try {
             if (ec) {

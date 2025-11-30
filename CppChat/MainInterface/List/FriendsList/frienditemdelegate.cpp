@@ -362,21 +362,30 @@ void FriendItemDelegate::do_open_friend_info(int uid, const QString &name, const
 
     // 连接按钮信
     connect(messageBtn, &QPushButton::clicked, infoDialog, [this, uid,infoDialog]() {
-        emit SignalRouter::GetInstance().on_change_list(0);
-        emit SignalRouter::GetInstance().on_change_peer(uid);
+        bool b_change = UserManager::GetInstance()->ChangeUserInfo(uid);
+        if (b_change){
+            emit SignalRouter::GetInstance().on_change_peer(uid);
+            emit SignalRouter::GetInstance().on_change_list(0);
+        }
         infoDialog->accept();
     });
 
     connect(voiceBtn, &QPushButton::clicked, infoDialog, [this, uid,infoDialog]() {
-        emit SignalRouter::GetInstance().on_change_list(0);
-        emit SignalRouter::GetInstance().on_change_peer(uid);
+        bool b_change = UserManager::GetInstance()->ChangeUserInfo(uid);
+        if (b_change){
+            emit SignalRouter::GetInstance().on_change_peer(uid);
+            emit SignalRouter::GetInstance().on_change_list(0);
+        }
         //TODO:视频聊天
         infoDialog->accept();
     });
 
     connect(videoBtn, &QPushButton::clicked, infoDialog, [this, uid,infoDialog]() {
-        emit SignalRouter::GetInstance().on_change_list(0);
-        emit SignalRouter::GetInstance().on_change_peer(uid);
+        bool b_change = UserManager::GetInstance()->ChangeUserInfo(uid);
+        if (b_change){
+            emit SignalRouter::GetInstance().on_change_peer(uid);
+            emit SignalRouter::GetInstance().on_change_list(0);
+        }
         //TODO:音频聊天
         infoDialog->accept();
     });
