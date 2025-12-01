@@ -20,7 +20,7 @@ MainWindow::MainWindow(QWidget *parent)
     setConnections();
     stack = new AuthStack(this);
     DataBase::GetInstance().initialization();
-    mainScreen = new MainScreen;
+    mainScreen = new MainScreen(this);
     setCentralWidget(stack);
     // QTimer::singleShot(50,this,[this](){
     //     emit TcpManager::GetInstance()->on_switch_interface();
@@ -43,8 +43,16 @@ void MainWindow::setConnections()
 {
     // 登陆界面跳转主页面
     connect(TcpManager::GetInstance().get(),&TcpManager::on_switch_interface,this,[this](){
-        mainScreen->setParent(this);
+        // mainScreen;
+        // mainScreen->setParent(this);
+
+        QWidget *old = centralWidget();
+        if (old) {
+            old->setParent(nullptr);  // 脱离 QMainWindow，避免被 delete
+            old->hide();              // 可选：隐藏
+        }
         setCentralWidget(mainScreen);
+        mainScreen->show();
         QScreen *screen = QGuiApplication::primaryScreen();
         QRect screenGeometry = screen->geometry();
 
@@ -65,9 +73,17 @@ void MainWindow::setConnections()
     });
     // 登陆界面跳转登陆界面
     connect(TcpManager::GetInstance().get(),&TcpManager::on_switch_login,this,[this](){
-        setupUI();
-        stack = new AuthStack(this);
+
+        QWidget *old = centralWidget();
+        if (old) {
+            old->setParent(nullptr);  // 脱离 QMainWindow，避免被 delete
+            old->hide();              // 可选：隐藏
+        }
+        setCentralWidget(stack);
         stack->show();
+
+
+        setupUI();
         setCentralWidget(stack);
         show();
         raise();

@@ -26,7 +26,12 @@ int main()
     SPDLOG_INFO("开始创建 ChatGrpcServer 实例...");
 
     {
-        RedisManager::GetInstance()->HSet(LOGIN_COUNT_PREFIX, server_name, "0");
+        RedisManager::GetInstance()->InitCount(server_name);
+        Defer defer([server_name] {
+            RedisManager::GetInstance()->DelCount(server_name);
+            RedisManager::GetInstance()->Close();
+        });
+
         std::string server_address = cfg["SelfServer"]["host"] + ":" + cfg["SelfServer"]["RPCPort"];
         SPDLOG_INFO("开始创建 ChatGrpcServer 实例...");
         ChatGrpcServer service;
@@ -44,6 +49,12 @@ int main()
 
         auto pool = AsioPool::GetInstance();
         boost::asio::io_context ioc;
+
+        auto port = cfg["SelfServer"]["port"];
+        auto server_ptr = std::make_shared<Server>(ioc, std::stoi(port));
+        LogicSystem::GetInstance()->SetServer(server_ptr);
+        service.SetServer(server_ptr);
+
         boost::asio::signal_set signals(ioc, SIGINT, SIGTERM);
         signals.async_wait([&ioc, pool, &server](const boost::system::error_code& /*error*/, int /*signal_number*/) {
             pool->Stop();
@@ -51,14 +62,8 @@ int main()
             server->Shutdown();
         });
 
-        auto port = cfg["SelfServer"]["port"];
-        auto server_ptr = std::make_shared<Server>(ioc, std::stoi(port));
         server_ptr->Start();
-        LogicSystem::GetInstance()->SetServer(server_ptr);
         ioc.run();
-
-        RedisManager::GetInstance()->HDel(LOGIN_COUNT_PREFIX, server_name);
-        RedisManager::GetInstance()->Close();
         grpc_server.join();
     }
     return 0;

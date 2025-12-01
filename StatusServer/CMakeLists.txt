@@ -16,6 +16,7 @@ add_executable(StatusServer main.cpp
     redis/RedisManager.cpp
     mysql/MysqlManager.cpp
     mysql/MysqlDao.cpp
+    redis/DistributedLock.cpp
 )
 
 

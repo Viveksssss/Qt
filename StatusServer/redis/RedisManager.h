@@ -12,7 +12,9 @@
 
 class RedisPool {
 public:
-    RedisPool(std::size_t size = std::thread::hardware_concurrency(), const std::string& host = "127.0.0.1", int port = 6379, const std::string& password = "");
+    RedisPool(std::size_t size = std::thread::hardware_concurrency(),
+        const std::string& host = "127.0.0.1", int port = 6379,
+        const std::string& password = "");
     ~RedisPool();
     redisContext* CreateConnection();
     redisContext* GetConnection();
@@ -42,13 +44,21 @@ public:
     bool LPop(const std::string& key, std::string& value);
     bool RPush(const std::string& key, const std::string& value);
     bool RPop(const std::string& key, std::string& value);
-    bool HSet(const std::string& key, const std::string& hkey, const std::string& value);
-    bool HSet(const char* key, const char* hkey, const char* hvalue, size_t hvaluelen);
+    bool HSet(const std::string& key, const std::string& hkey,
+        const std::string& value);
+    bool HSet(const char* key, const char* hkey, const char* hvalue,
+        size_t hvaluelen);
+    bool HDel(const std::string& key, const std::string& field);
     std::string HGet(const std::string& key, const std::string& hkey);
     bool Del(const std::string& key);
+    bool Decr(const std::string& key, int amount = 1);
+    bool Incr(const std::string& key, int amount = 1);
     bool ExistsKey(const std::string& key);
     void Close();
     inline bool isConnected() const { return _isConnected; }
+    std::string AcquireLock(const std::string& key, int timeout = 5,
+        int acquireTimeout = 5);
+    bool ReleaseLock(const std::string& key, const std::string& identifier);
 
 private:
     RedisManager();

@@ -59,6 +59,8 @@ public:
     std::string AcquireLock(const std::string& key, int timeout = 5,
         int acquireTimeout = 5);
     bool ReleaseLock(const std::string& key, const std::string& identifier);
+    void InitCount(const std::string& server_name);
+    void DelCount(const std::string& server_name);
 
 private:
     RedisManager();

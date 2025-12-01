@@ -159,3 +159,31 @@ NotifyFriendOnlineResponse ChatGrpcClient::NotifyFriendOnline(std::string server
     }
     return rsp;
 }
+
+KickUserRsp ChatGrpcClient::NotifyKickUser(std::string server_ip, const KickUserReq &req)
+{
+    KickUserRsp rsp;
+    rsp.set_error(static_cast<int>(ErrorCodes::RPCFAILED));
+    Defer defer([&rsp, &req]() {
+        rsp.set_uid(req.uid());
+    });
+
+    auto it = _pool.find(server_ip);
+    if (it == _pool.end()) {
+        return rsp;
+    }
+
+    auto& pool = it->second;
+    grpc::ClientContext context;
+    auto stub = pool->GetConnection();
+    Defer defer2([&pool, &stub]() {
+        pool->ReturnConnection(std::move(stub));
+    });
+
+    Status status = stub->NotifyKickUser(&context, req, &rsp);
+    if (!status.ok()) {
+        return rsp;
+    }
+    rsp.set_error(static_cast<int>(ErrorCodes::SUCCESS));
+    return rsp;
+}

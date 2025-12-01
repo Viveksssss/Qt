@@ -131,10 +131,21 @@ struct UserInfo{
         , desc(desc)
     {}
 };
+
+class Defer {
+public:
+    Defer(std::function<void()> func);
+    ~Defer();
+
+private:
+    std::function<void()> m_func;
+};
+
 extern QString gate_url_prefix;
 
 extern std::function<QString(QString)>cryptoString;
 
 extern void showToolTip(QWidget *widget,const QString&str,int yOffset = 0);
+
 
 #endif // GLOBAL_H

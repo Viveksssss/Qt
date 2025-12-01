@@ -5,6 +5,7 @@
 #include "../httpmanager.h"
 #include "../tcpmanager.h"
 #include "../usermanager.h"
+#include "../Properties/global.h"
 
 #include <QApplication>
 #include <QScreen>
@@ -190,7 +191,7 @@ void LoginScreen::initHandlers()
     };
 }
 
-void LoginScreen:: do_login_clicked()
+void LoginScreen::do_login_clicked()
 {
     QString accountStr = accountEdit->text().trimmed();
     QString passwordStr = passwordEdit->text().trimmed();
@@ -238,20 +239,21 @@ void LoginScreen:: do_login_clicked()
 
 void LoginScreen::do_login_finished(RequestType requestType,const QString&res,ErrorCodes errorCode)
 {
+
+    Defer defer([this]{
+        loginBtn->setEnabled(true);
+    });
     if (errorCode != ErrorCodes::SUCCESS){
         showToolTip(loginBtn,"网络请求错误");
-        loginBtn->setEnabled(false);
         return;
     }
     QJsonDocument doc = QJsonDocument::fromJson(res.toUtf8());
     if (doc.isNull()){
         showToolTip(loginBtn,"解析错误");
-        loginBtn->setEnabled(false);
         return;
     }
     if (!doc.isObject()){
         showToolTip(loginBtn,"解析错误");
-        loginBtn->setEnabled(false);
         return;
     }
     // _handlers[requestType](doc.object());
@@ -259,7 +261,6 @@ void LoginScreen::do_login_finished(RequestType requestType,const QString&res,Er
     auto it = _handlers.find(requestType);
     if (it == _handlers.end()) {
         showToolTip(loginBtn, "未知的请求类型");
-        loginBtn->setEnabled(false);
         return;
     }
     it.value()(doc.object());

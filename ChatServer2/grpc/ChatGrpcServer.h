@@ -11,6 +11,9 @@
 #include <grpcpp/support/status.h>
 #include <nlohmann/json.hpp>
 
+class Server;
+
+
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
@@ -35,66 +38,95 @@ using message::NotifyMakeFriendsResponse;
 using message::NotifyFriendOnlineRequest;
 using message::NotifyFriendOnlineResponse;
 
+using message::KickUserReq;
+using message::KickUserRsp;
+
 class ChatGrpcServer final : public message::ChatServer::Service {
 public:
     ChatGrpcServer();
 
     /**
-     * @brief 用户基本信息回包
-     *
-     * @param base_key
-     * @param uid
-     * @param userinfo
-     * @return true
-     * @return false
+     * @brief 设置服务器
+     * @param server
      */
-    bool GetBaseInfo(std::string base_key, int uid, std::shared_ptr<UserInfo>& userinfo);
+    void SetServer(std::shared_ptr<Server>server);
     /**
-     * @brief 好友请求回包
-     *
-     * @param context
-     * @param request
-     * @param response
-     * @return Status
-     */
-    Status NotifyAddFriend(grpc::ServerContext* context, const AddFriendRequest* request, AddFriendResponse* response) override;
+    * @brief 用户基本信息回包
+    *
+    * @param base_key
+    * @param uid
+    * @param userinfo
+    * @return true
+    * @return false
+    */
+    bool GetBaseInfo(std::string base_key, int uid,
+                    std::shared_ptr<UserInfo> &userinfo);
     /**
-     * @brief 好友验证回包
-     *
-     * @param context
-     * @param request
-     * @param response
-     * @return Status
-     */
-    Status NotifyAuthFriend(grpc::ServerContext* context, const AuthFriendRequest* request, AuthFriendResponse* response) override;
+    * @brief 好友请求回包
+    *
+    * @param context
+    * @param request
+    * @param response
+    * @return Status
+    */
+    Status NotifyAddFriend(grpc::ServerContext *context,
+                            const AddFriendRequest *request,
+                            AddFriendResponse *response) override;
     /**
-     * @brief 聊天消息回包
-     *
-     * @param context
-     * @param request
-     * @param response
-     * @return Status
-     */
-    Status NotifyTextChatMessage(grpc::ServerContext* context, const TextChatMessageRequest* request, TextChatMessageResponse* response) override;
+    * @brief 好友验证回包
+    *
+    * @param context
+    * @param request
+    * @param response
+    * @return Status
+    */
+    Status NotifyAuthFriend(grpc::ServerContext *context,
+                            const AuthFriendRequest *request,
+                            AuthFriendResponse *response) override;
     /**
-     * @brief 通知好友已经建立好友关系
-     *
-     * @param server_ip
-     * @param req
-     * @return NotifyMakeFriendsResponse
-     */
-    Status NotifyMakeFriends(grpc::ServerContext* context, const NotifyMakeFriendsRequest* request, NotifyMakeFriendsResponse* response) override;
+    * @brief 聊天消息回包
+    *
+    * @param context
+    * @param request
+    * @param response
+    * @return Status
+    */
+    Status NotifyTextChatMessage(grpc::ServerContext *context,
+                                const TextChatMessageRequest *request,
+                                TextChatMessageResponse *response) override;
     /**
-     * @brief 通知好友上线
-     *
-     * @param context
-     * @param request
-     * @param response
-     * @return Status
-     */
-    Status NotifyFriendOnline(grpc::ServerContext* context, const NotifyFriendOnlineRequest* request, NotifyFriendOnlineResponse* response) override;
+    * @brief 通知好友已经建立好友关系
+    *
+    * @param server_ip
+    * @param req
+    * @return NotifyMakeFriendsResponse
+    */
+    Status NotifyMakeFriends(grpc::ServerContext *context,
+                            const NotifyMakeFriendsRequest *request,
+                            NotifyMakeFriendsResponse *response) override;
+    /**
+    * @brief 通知好友上线
+    *
+    * @param context
+    * @param request
+    * @param response
+    * @return Status
+    */
+    Status NotifyFriendOnline(grpc::ServerContext *context,
+                                const NotifyFriendOnlineRequest *request,
+                                NotifyFriendOnlineResponse *response) override;
+    /**
+    * @brief 通知踢人
+    *
+    * @param context
+    * @param request
+    * @param response
+    * @return Status
+    */
+    Status NotifyKickUser(grpc::ServerContext*context,const KickUserReq*request,KickUserRsp*response) override;
 
 private:
+    std::shared_ptr<Server>_server;
 };
 
 #endif

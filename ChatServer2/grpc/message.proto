@@ -137,6 +137,15 @@ message NotifyFriendOnlineResponse{
     int32 error=1;
 }
 
+message KickUserReq{
+    int32 uid = 1;
+}
+
+message KickUserRsp{
+    int32 error = 1;
+    int32 uid = 2;
+}
+
 
 service ChatServer{
     // 通知消息
@@ -145,8 +154,14 @@ service ChatServer{
     rpc NotifyFriendOnline(NotifyFriendOnlineRequest)returns(NotifyFriendOnlineResponse){}
     // 后端调用，通知另一个服务器消息。
     rpc NotifyAddFriend(AddFriendRequest)returns(AddFriendResponse){}
+    // 添加好友回包
     rpc ReplyAddFriend(ReplyFriendRequest)returns(ReplyFriendResponse){}
+    // 发送文本消息
     rpc SendChatMessage(SendChatMessageRequest)returns(SendChatMessageResponse){}
+    // 通知好友添加请求
     rpc NotifyAuthFriend(AuthFriendRequest)returns(AuthFriendResponse){}
+    // 通知文本消息
     rpc NotifyTextChatMessage(TextChatMessageRequest)returns(TextChatMessageResponse){}
+    // 通知踢人
+    rpc NotifyKickUser(KickUserReq)returns(KickUserRsp){}
 }

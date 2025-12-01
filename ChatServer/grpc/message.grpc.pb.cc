@@ -194,6 +194,7 @@ static const char* ChatServer_method_names[] = {
   "/message.ChatServer/SendChatMessage",
   "/message.ChatServer/NotifyAuthFriend",
   "/message.ChatServer/NotifyTextChatMessage",
+  "/message.ChatServer/NotifyKickUser",
 };
 
 std::unique_ptr< ChatServer::Stub> ChatServer::NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options) {
@@ -210,6 +211,7 @@ ChatServer::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel
   , rpcmethod_SendChatMessage_(ChatServer_method_names[4], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   , rpcmethod_NotifyAuthFriend_(ChatServer_method_names[5], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   , rpcmethod_NotifyTextChatMessage_(ChatServer_method_names[6], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_NotifyKickUser_(ChatServer_method_names[7], options.suffix_for_stats(),::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   {}
 
 ::grpc::Status ChatServer::Stub::NotifyMakeFriends(::grpc::ClientContext* context, const ::message::NotifyMakeFriendsRequest& request, ::message::NotifyMakeFriendsResponse* response) {
@@ -373,6 +375,29 @@ void ChatServer::Stub::async::NotifyTextChatMessage(::grpc::ClientContext* conte
   return result;
 }
 
+::grpc::Status ChatServer::Stub::NotifyKickUser(::grpc::ClientContext* context, const ::message::KickUserReq& request, ::message::KickUserRsp* response) {
+  return ::grpc::internal::BlockingUnaryCall< ::message::KickUserReq, ::message::KickUserRsp, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), rpcmethod_NotifyKickUser_, context, request, response);
+}
+
+void ChatServer::Stub::async::NotifyKickUser(::grpc::ClientContext* context, const ::message::KickUserReq* request, ::message::KickUserRsp* response, std::function<void(::grpc::Status)> f) {
+  ::grpc::internal::CallbackUnaryCall< ::message::KickUserReq, ::message::KickUserRsp, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_NotifyKickUser_, context, request, response, std::move(f));
+}
+
+void ChatServer::Stub::async::NotifyKickUser(::grpc::ClientContext* context, const ::message::KickUserReq* request, ::message::KickUserRsp* response, ::grpc::ClientUnaryReactor* reactor) {
+  ::grpc::internal::ClientCallbackUnaryFactory::Create< ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(stub_->channel_.get(), stub_->rpcmethod_NotifyKickUser_, context, request, response, reactor);
+}
+
+::grpc::ClientAsyncResponseReader< ::message::KickUserRsp>* ChatServer::Stub::PrepareAsyncNotifyKickUserRaw(::grpc::ClientContext* context, const ::message::KickUserReq& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderHelper::Create< ::message::KickUserRsp, ::message::KickUserReq, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(channel_.get(), cq, rpcmethod_NotifyKickUser_, context, request);
+}
+
+::grpc::ClientAsyncResponseReader< ::message::KickUserRsp>* ChatServer::Stub::AsyncNotifyKickUserRaw(::grpc::ClientContext* context, const ::message::KickUserReq& request, ::grpc::CompletionQueue* cq) {
+  auto* result =
+    this->PrepareAsyncNotifyKickUserRaw(context, request, cq);
+  result->StartCall();
+  return result;
+}
+
 ChatServer::Service::Service() {
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       ChatServer_method_names[0],
@@ -444,6 +469,16 @@ ChatServer::Service::Service() {
              ::message::TextChatMessageResponse* resp) {
                return service->NotifyTextChatMessage(ctx, req, resp);
              }, this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      ChatServer_method_names[7],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< ChatServer::Service, ::message::KickUserReq, ::message::KickUserRsp, ::grpc::protobuf::MessageLite, ::grpc::protobuf::MessageLite>(
+          [](ChatServer::Service* service,
+             ::grpc::ServerContext* ctx,
+             const ::message::KickUserReq* req,
+             ::message::KickUserRsp* resp) {
+               return service->NotifyKickUser(ctx, req, resp);
+             }, this)));
 }
 
 ChatServer::Service::~Service() {
@@ -492,6 +527,13 @@ ChatServer::Service::~Service() {
 }
 
 ::grpc::Status ChatServer::Service::NotifyTextChatMessage(::grpc::ServerContext* context, const ::message::TextChatMessageRequest* request, ::message::TextChatMessageResponse* response) {
+  (void) context;
+  (void) request;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+::grpc::Status ChatServer::Service::NotifyKickUser(::grpc::ServerContext* context, const ::message::KickUserReq* request, ::message::KickUserRsp* response) {
   (void) context;
   (void) request;
   (void) response;

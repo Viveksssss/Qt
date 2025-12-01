@@ -1,9 +1,15 @@
-#include "ChatGrpcServer.h"
 #include "../global/UserManager.h"
+#include "../server/Server.h"
+#include "ChatGrpcServer.h"
 #include <spdlog/spdlog.h>
 ChatGrpcServer::ChatGrpcServer()
 {
 }
+void ChatGrpcServer::SetServer(std::shared_ptr<Server>server)
+{
+    this->_server = server;
+}
+
 Status ChatGrpcServer::NotifyAddFriend(grpc::ServerContext* context, const AddFriendRequest* request, AddFriendResponse* response)
 {
     SPDLOG_INFO("Add Friend Request From {}", request->fromuid());
@@ -115,6 +121,26 @@ Status ChatGrpcServer::NotifyFriendOnline(grpc::ServerContext* context, const No
     j["time"] =request->time();
 
     session->Send(j.dump(), static_cast<int>(MsgId::ID_NOTIFY));
+
+    return Status::OK;
+}
+
+
+Status ChatGrpcServer::NotifyKickUser(grpc::ServerContext*context,const KickUserReq*request,KickUserRsp*response)
+{
+    auto uid = request->uid();
+    auto session = UserManager::GetInstance()->GetSession(uid);
+    Defer defer([response]() {
+        response->set_error(static_cast<int>(ErrorCodes::SUCCESS));
+    });
+
+    // 不在内存中
+    if (session == nullptr) {
+        return Status::OK;
+    }
+
+    session->NotifyOffline(uid);
+    _server->ClearSession(session->GetSessionId());
 
     return Status::OK;
 }
