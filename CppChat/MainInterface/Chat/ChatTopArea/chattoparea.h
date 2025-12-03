@@ -27,6 +27,7 @@ class AnimatedSearchBox;
 class ClearAvatarLabel;
 class FriendAddDialog;
 class SideNews;
+class ProfilePopup;
 class ChatTopArea : public QWidget
 {
     Q_OBJECT
@@ -41,6 +42,7 @@ public slots:
     void do_show_news();
     void do_show_red_dot();
     void do_unshow_red_dot();
+    void do_profile_out();
 
 private:
     // 变量声明顺序和ui顺序相同
@@ -54,11 +56,52 @@ private:
     FriendAddDialog *friendAddDialog;
     QList<std::shared_ptr<FriendInfo>>userLists;
 
-    NotificationPanel *newsPanel;
+    ProfilePopup *profilePopup;
+    QTimer *hoverTimer;
 
+    NotificationPanel *newsPanel;
     bool padding = false;   // 防止多次发送查询请求
 protected:
-    void keyPressEvent(QKeyEvent *event);
+    void keyPressEvent(QKeyEvent *event)override;
+    bool eventFilter(QObject *watched, QEvent *event) override;
+};
+
+class ProfilePopup: public QWidget
+{
+    Q_OBJECT
+private:
+    // 控件
+    QLabel *avatarLabel;
+    QLabel *nameLabel;
+    QLabel *genderLabel;     // 性别图标
+    QLabel *userIdLabel;
+    QLabel *statusLabel;
+    QLabel *signatureLabel;
+    QLabel *emailLabel;
+    QPushButton *editButton;
+    // 分隔线
+    QFrame *separatorLine;
+
+    // 设置信息的接口
+    void setAvatar(const QPixmap &avatar);
+    void setName(const QString &name);
+    void setGenderMale();    // 设置男性
+    void setGenderFemale();  // 设置女性
+    void setUserId(const QString &id);
+    void setOnline(bool online);  // 设置在线状态
+    void setSignature(const QString &signature);
+    void setEmail(const QString &email);
+
+    void setupUI();
+    void setupConnections();
+
+signals:
+    void on_profile_clicked();  // 编辑资料按钮点击信号
+public:
+  explicit ProfilePopup(QWidget*parent = nullptr);
+
+protected:
+  void paintEvent(QPaintEvent *event) override;
 };
 
 
@@ -163,7 +206,7 @@ private:
 private:
     QHBoxLayout *layout;
     QLineEdit *searchEdit;
-    QToolButton *searchButton;
+    QPushButton *searchButton;
     QPropertyAnimation *animation;
     QAction *clearAction;
     QGraphicsOpacityEffect *opacityEffect;
@@ -176,60 +219,17 @@ private:
 public:
     bool eventFilter(QObject *watched, QEvent *event);
 
-
 };
 
 
 
 class ClearAvatarLabel : public QLabel {
 public:
-    explicit ClearAvatarLabel(QWidget* parent = nullptr) : QLabel(parent) {
-        setFixedSize(30, 30);
-    }
+    explicit ClearAvatarLabel(QWidget* parent = nullptr);
 
 protected:
-    void paintEvent(QPaintEvent* event) override {
-        QPainter painter(this);
-        painter.setRenderHint(QPainter::Antialiasing, true);
-        painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
-
-        // 绘制头像
-        if (!pixmap().isNull()) {
-            // 获取高质量图片并缩放到合适尺寸
-            QPixmap originalPixmap = getHighQualityPixmap();
-            QPixmap scaledPixmap = originalPixmap.scaled(size(), Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
-
-            // 圆形裁剪
-            QPainterPath path;
-            path.addEllipse(rect());
-            painter.setClipPath(path);
-
-            // 计算居中位置
-            int x = (scaledPixmap.width() - width()) / 2;
-            int y = (scaledPixmap.height() - height()) / 2;
-
-            // 绘制图片（居中裁剪）
-            painter.drawPixmap(rect(), scaledPixmap, QRect(x, y, width(), height()));
-        }
-
-        // 绘制边框
-        painter.setClipping(false);
-        painter.setPen(QPen(QColor("#3b3b3b"), 1));
-        painter.drawEllipse(rect().adjusted(1, 1, -1, -1));
-    }
-
-private:
-    QPixmap getHighQualityPixmap() {
-        QPixmap original = pixmap();
-        if (original.isNull()) return original;
-
-        // 高质量缩放
-        return original.scaled(size() * 2, Qt::KeepAspectRatio, Qt::SmoothTransformation)
-            .scaled(size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
-    }
+    void paintEvent(QPaintEvent* event) override;
 };
-
-
 
 
 class FriendAddDialog : public QDialog

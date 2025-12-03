@@ -712,7 +712,7 @@ void LogicSystem::RegisterCallBacks()
             auto uid = j["fromuid"].get<int>();
             j["error"] = ErrorCodes::SUCCESS;
             session->Send(j.dump(), static_cast<int>(MsgId::ID_HEARTBEAT_RSP));
-        };
+    };
 }
 
 void LogicSystem::DealMsg()

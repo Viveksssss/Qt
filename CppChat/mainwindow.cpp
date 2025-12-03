@@ -1,10 +1,9 @@
 #include "mainwindow.h"
 #include "tcpmanager.h"
-#include "LoginInterface/loginscreen.h"
-#include "MainInterface/mainscreen.h"
-#include "MainInterface/Chat/ChatArea/MessageArea/messagetypes.h"
 #include "usermanager.h"
 #include "../database.h"
+#include "LoginInterface/loginscreen.h"
+#include "MainInterface/mainscreen.h"
 
 #include <QDir>
 #include <QGuiApplication>
@@ -25,6 +24,9 @@ MainWindow::MainWindow(QWidget *parent)
     DataBase::GetInstance().initialization();
     mainScreen = new MainScreen(this);
     setCentralWidget(stack);
+    QTimer::singleShot(50,[](){
+        emit TcpManager::GetInstance()->on_switch_interface();
+    });
 }
 
 void MainWindow::setupUI()

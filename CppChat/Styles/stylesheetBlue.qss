@@ -574,16 +574,16 @@ QScrollBar::sub-line:vertical {
 
 #searchButton{
   background:transparent;
-  border:none;
-  border-radius:15px;
+  border-radius:5px;
 }
 
+
 #searchButton:hover{
-  background：#bbdefb;
+  background:#f4d4f7;
 }
 
 #searchButton:pressed{
-  background: #bbdefb;
+  background:#f4d4f7;
 }
 
 #resultList {
