@@ -11,6 +11,8 @@
 #include <QMessageBox>
 #include <future>
 
+
+
 TcpManager::~TcpManager() = default;
 
 TcpManager::TcpManager()
@@ -19,9 +21,11 @@ TcpManager::TcpManager()
     , _recv_pending(false)
     , _msg_id(0)
     , _msg_len(0)
+
 {
     initHandlers();
     connections();
+
 }
 
 void TcpManager::initHandlers()
@@ -476,6 +480,21 @@ void TcpManager::initHandlers()
         }
     };
 
+    /**
+     * @brief 心跳回包
+     */
+    _handlers[RequestType::ID_HEARTBEAT_RSP] = [this](RequestType requestType,int len,QByteArray data){
+        QJsonDocument jsonDoc = QJsonDocument::fromJson(data);
+        if (jsonDoc.isNull()){
+            return;
+        }
+        QJsonObject jsonObj = jsonDoc.object();
+        if (!jsonObj.contains("error") || jsonObj["error"].toInt()!=static_cast<int>(ErrorCodes::SUCCESS)){
+            return;
+        }
+        qDebug() << "Received Heartbeat from Server";
+    };
+
 }
 
 void TcpManager::connections()
@@ -485,36 +504,6 @@ void TcpManager::connections()
         qDebug() << "Connected to Server " << _socket.peerAddress().toString() << ":" << _socket.peerPort();
         emit on_connect_success(true);
     });
-    // 读取数据
-    // connect(&_socket,&QTcpSocket::readyRead,[&](){
-    //     _buffer.append(_socket.readAll());
-    //     QDataStream stream(&_buffer,QIODevice::ReadOnly);
-    //     stream.setByteOrder(QDataStream::BigEndian);
-    //     forever{
-    //         if (!_recv_pending){
-    //             if (_buffer.size() < static_cast<int>(sizeof(qint16)*2)){
-    //                 return;
-    //             }
-    //             stream >> _msg_id >> _msg_len;
-    //         }
-    //         if (_buffer.size() < _msg_len){
-    //             _recv_pending = true;
-    //             return;
-    //         }
-    //         _recv_pending = false;
-    //         QByteArray msgBody = _buffer.mid(4,_msg_len);
-    //         _buffer.remove(0,4+_msg_len);
-    //         // _buffer.clear(); //会丢失之后的所有信息
-    //         // 在TLV解析的最开始添加
-    //         // qDebug() << "=== 收到TLV消息 ===";
-    //         // qDebug() << "Type:" << static_cast<int>(_msg_id);
-    //         // qDebug() << "Length:" << _msg_len;
-    //         // qDebug() << "Data:" << msgBody;
-    //         // qDebug() << "===================";
-    //         handleMessage(RequestType(_msg_id),_msg_len,msgBody);
-    //     }
-    // });
-
 
     connect(&_socket, &QTcpSocket::readyRead, [&]() {
         _buffer.append(_socket.readAll());
@@ -569,6 +558,7 @@ void TcpManager::connections()
     // 断开连接
     connect(&_socket,&QTcpSocket::disconnected,[&](){
         qDebug() << "Disconnected from server - " << _socket.peerAddress().toString() <<":"<<_socket.peerPort();
+        emit on_connection_closed();
     });
     // 发送数据
     connect(this,&TcpManager::on_send_data,this,&TcpManager::do_send_data);

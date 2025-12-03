@@ -8,6 +8,8 @@
 
 #include <QDir>
 #include <QGuiApplication>
+#include <QJsonObject>
+#include <QMessageBox>
 #include <QPainter>
 #include <QPainterPath>
 #include <QScreen>
@@ -15,6 +17,7 @@
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow{parent}
+    , _timer(new QTimer(this))
 {
     setupUI();
     setConnections();
@@ -22,9 +25,6 @@ MainWindow::MainWindow(QWidget *parent)
     DataBase::GetInstance().initialization();
     mainScreen = new MainScreen(this);
     setCentralWidget(stack);
-    // QTimer::singleShot(50,this,[this](){
-    //     emit TcpManager::GetInstance()->on_switch_interface();
-    // });
 }
 
 void MainWindow::setupUI()
@@ -70,24 +70,22 @@ void MainWindow::setConnections()
         // 居中显示
         move(screenGeometry.width()/2 - width/2,
              screenGeometry.height()/2 - height/2);
+
+        _timer->start(10000);
     });
     // 登陆界面跳转登陆界面
-    connect(TcpManager::GetInstance().get(),&TcpManager::on_switch_login,this,[this](){
+    connect(TcpManager::GetInstance().get(),&TcpManager::on_switch_login,this,&MainWindow::offLine);
 
-        QWidget *old = centralWidget();
-        if (old) {
-            old->setParent(nullptr);  // 脱离 QMainWindow，避免被 delete
-            old->hide();              // 可选：隐藏
-        }
-        setCentralWidget(stack);
-        stack->show();
+    connect(TcpManager::GetInstance().get(),&TcpManager::on_connection_closed,this,[this](){
+        QMessageBox::information(this,"下线提示","心跳超时或网络异常，下线！");
+        offLine();
+    });
 
-
-        setupUI();
-        setCentralWidget(stack);
-        show();
-        raise();
-        activateWindow();
+    connect(_timer,&QTimer::timeout,this,[this]{
+        QJsonObject j;
+        j["fromuid"] = UserManager::GetInstance()->GetUid();
+        QJsonDocument doc(j);
+        emit TcpManager::GetInstance()->on_send_data(RequestType::ID_HEART_BEAT_REQ,doc.toJson(QJsonDocument::Compact));
     });
 }
 
@@ -107,6 +105,25 @@ void MainWindow::filesClean()
     for (const QFileInfo &file : files) {
         QFile::remove(file.absoluteFilePath());
     }
+}
+
+void MainWindow::offLine()
+{
+    _timer->stop();
+    QWidget *old = centralWidget();
+    if (old) {
+        old->setParent(nullptr);  // 脱离 QMainWindow，避免被 delete
+        old->hide();              // 可选：隐藏
+    }
+    setCentralWidget(stack);
+    stack->show();
+
+
+    setupUI();
+    setCentralWidget(stack);
+    show();
+    raise();
+    activateWindow();
 }
 
 MainWindow::~MainWindow()

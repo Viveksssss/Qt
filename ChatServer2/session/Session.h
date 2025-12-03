@@ -31,6 +31,10 @@ public:
     std::string GetSessionId() const noexcept;
     void SetSessionId(const std::string& session_id) noexcept;
 
+    void UpdateHeartbeat(); // 更新心跳时间
+    bool IsHeartbeatExpired(std::time_t& now); // 是否过期
+    std::time_t _last_heartbeat = 0;
+
 private:
     void AsyncHead(std::size_t len);
     void AsyncBody(std::size_t len);

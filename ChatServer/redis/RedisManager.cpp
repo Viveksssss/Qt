@@ -400,22 +400,21 @@ void RedisPool::Close()
 void RedisManager::InitCount(const std::string& server_name)
 {
     auto lock_key = LOCK_COUNT;
-    auto identifier = RedisManager::GetInstance()->AcquireLock(lock_key,LOCK_TIMEOUT,ACQUIRE_LOCK_TIMEOUT);
+    auto identifier = RedisManager::GetInstance()->AcquireLock(lock_key, LOCK_TIMEOUT, ACQUIRE_LOCK_TIMEOUT);
 
-    Defer defer([identifier]{
+    Defer defer([identifier] {
         RedisManager::GetInstance()->ReleaseLock(LOCK_COUNT, identifier);
     });
 
     RedisManager::GetInstance()->HSet(LOGIN_COUNT_PREFIX, server_name, "0");
 }
 
-
 void RedisManager::DelCount(const std::string& server_name)
 {
     auto lock_key = LOCK_COUNT;
-    auto identifier = RedisManager::GetInstance()->AcquireLock(lock_key,LOCK_TIMEOUT,ACQUIRE_LOCK_TIMEOUT);
+    auto identifier = RedisManager::GetInstance()->AcquireLock(lock_key, LOCK_TIMEOUT, ACQUIRE_LOCK_TIMEOUT);
 
-    Defer defer([identifier]{
+    Defer defer([identifier] {
         RedisManager::GetInstance()->ReleaseLock(LOCK_COUNT, identifier);
     });
 

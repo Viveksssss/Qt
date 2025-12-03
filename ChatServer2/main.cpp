@@ -27,7 +27,7 @@ int main()
 
     {
         RedisManager::GetInstance()->InitCount(server_name);
-        Defer defer([server_name] {
+        Defer defer([server_name]{
             RedisManager::GetInstance()->DelCount(server_name);
             RedisManager::GetInstance()->Close();
         });

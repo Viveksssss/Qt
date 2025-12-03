@@ -7,6 +7,8 @@
 #include <boost/uuid/uuid_io.hpp>
 
 #include "Session.h"
+#include <chrono>
+#include <ctime>
 #include <spdlog/spdlog.h>
 
 Session::Session(boost::asio::io_context& ioc, std::shared_ptr<Server> server)
@@ -15,6 +17,7 @@ Session::Session(boost::asio::io_context& ioc, std::shared_ptr<Server> server)
     , _stop(false)
     , _head_parse(false)
     , _uid(0)
+    , _last_heartbeat(std::time(nullptr))
 {
     _session_id = boost::uuids::to_string(boost::uuids::random_generator()());
     _recv_head_node = std::make_shared<MsgNode>(HEAD_TOTAL_LEN);
@@ -27,12 +30,12 @@ Session::~Session()
 
 void Session::Start()
 {
+    _last_heartbeat = std::time(nullptr);
     AsyncHead(HEAD_TOTAL_LEN);
 }
 
 void Session::Close()
 {
-    // 我们把分布式的锁的操作等都放在了这一个close中，防止多处代码重复
 
     if (_stop) {
         return;
@@ -82,6 +85,8 @@ void Session::Close()
         return;
     }
 
+    // 删除session
+    RedisManager::GetInstance()->Del(USER_SESSION_PREFIX + uid_str);
     // 减少登录计数
     RedisManager::GetInstance()->Decr(LOGIN_COUNT_PREFIX + _server->GetServerName());
     // 删除用户服务器信息
@@ -196,6 +201,9 @@ void Session::AsyncHead(std::size_t len)
             return;
         }
 
+        // 更新心跳
+        UpdateHeartbeat();
+
         uint16_t msg_id = 0;
         memcpy(&msg_id, _recv_head_node->_data, HEAD_ID_LEN);
         msg_id = boost::asio::detail::socket_ops::network_to_host_short(msg_id);
@@ -230,6 +238,8 @@ void Session::AsyncBody(std::size_t len)
             Close();
             return;
         }
+        // 更新心跳
+        UpdateHeartbeat();
 
         memcpy(_recv_msg_node->_data, _data, bytes_transferred);
         _recv_msg_node->_cur_len += bytes_transferred;
@@ -240,6 +250,22 @@ void Session::AsyncBody(std::size_t len)
         /* 继续接受head->body->head->body... */
         AsyncHead(HEAD_TOTAL_LEN);
     });
+}
+
+void Session::UpdateHeartbeat()
+{
+    auto now = std::chrono::system_clock::now();
+    std::time_t now_t = std::chrono::system_clock::to_time_t(now);
+    this->_last_heartbeat = now_t;
+}
+bool Session::IsHeartbeatExpired(std::time_t& now)
+{
+    double diff_sec = std::difftime(now, _last_heartbeat);
+    if (diff_sec > 20) {
+        SPDLOG_WARN("Heartbeat expired of {}", this->_session_id);
+        return true;
+    }
+    return false;
 }
 
 LogicNode::LogicNode(std::shared_ptr<Session> session, std::shared_ptr<RecvNode> recv_node)

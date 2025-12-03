@@ -15,12 +15,16 @@ public:
     void setConnections();
 
     void filesClean();
+    void offLine();
+
     ~MainWindow();
+
 signals:
 
 private:
     AuthStack *stack;
     MainScreen *mainScreen;
+    QTimer *_timer;
 
     // QWidget interface
 protected:

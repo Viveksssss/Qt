@@ -8,6 +8,7 @@
 #include <QHash>
 #include <functional>
 
+class QTimer;
 struct ConversationItem;
 struct MessageItem;
 class TcpManager
@@ -45,6 +46,7 @@ private:
     quint16 _msg_len;
     // 存放请求和对应的回调函数
     QHash<RequestType,std::function<void(RequestType,int,QByteArray)>>_handlers;
+
 public slots:
     void do_tcp_connect(ServerInfo); // from LoginScreen::on_tcp_connect
     void do_send_data(RequestType requestType,QByteArray data); // from TcpManager::to_send_data
@@ -68,6 +70,7 @@ signals:
     void on_change_chat_history(std::vector<std::shared_ptr<MessageItem>>); // to ChatArea::do_change_chat_history;
     void on_get_message(const MessageItem&);// to MessageListPart::do_get_message
     void on_get_messages(const std::vector<std::shared_ptr<MessageItem>>&lists);    // to MessageListPart::do_get_messages
+    void on_connection_closed();
 };
 
 #endif // TCPMANAGER_H
