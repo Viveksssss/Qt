@@ -117,9 +117,9 @@ void MessageArea::do_load_more_message()
     }
     isLoading = true;
 
-
     QString timestamp =UserManager::GetInstance()->GetHistoryTimestamp(UserManager::GetInstance()->GetPeerUid()).toString("yyyy-MM-dd HH:mm:ss");
     const auto&historys = DataBase::GetInstance().getMessages(UserManager::GetInstance()->GetPeerUid(),timestamp);
+    qDebug() << historys.size();
     do_change_chat_history(historys,false);
     if (historys.size()>0){
         showToast(QString("loading..."));
@@ -145,18 +145,40 @@ void MessageArea::showToast(const QString& message, int duration)
             );
         toastLabel->setAttribute(Qt::WA_TransparentForMouseEvents);
         toastLabel->hide();
+
+        // 关键：创建一个覆盖层布局
+        QVBoxLayout* overlayLayout = new QVBoxLayout(this);
+        overlayLayout->setContentsMargins(0, 0, 0, 0);
+        overlayLayout->addWidget(toastLabel, 0, Qt::AlignCenter);
+
+        // 确保主布局存在
+        if (!layout()) {
+            setLayout(overlayLayout);
+        } else {
+            // 如果已有布局，添加一个覆盖层
+            QWidget* overlay = new QWidget(this);
+            overlay->setLayout(overlayLayout);
+            overlay->setAttribute(Qt::WA_TransparentForMouseEvents);
+            overlay->setStyleSheet("background: transparent;");
+            overlay->show();
+        }
     }
 
     toastLabel->setText(message);
     toastLabel->adjustSize();
 
-    // 居中显示
-    QPoint center = rect().center();
-    toastLabel->move(center.x() - toastLabel->width()/2,
-                     center.y() - toastLabel->height()/2);
+    // 强制更新几何
+    updateGeometry();
+
+    // 使用 QMetaObject 延迟调用，确保几何已更新
+    QMetaObject::invokeMethod(this, [this]() {
+        if (toastLabel && toastLabel->isVisible()) {
+            toastLabel->raise();  // 确保在最上层
+        }
+    }, Qt::QueuedConnection);
+
     toastLabel->show();
 
-    // 自动隐藏
     QTimer::singleShot(duration, toastLabel, &QLabel::hide);
 }
 

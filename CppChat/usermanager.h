@@ -15,7 +15,7 @@ class UserManager
 {
     Q_OBJECT
     friend class Singleton<UserManager>;
-public:
+  public:
     void setupConnections();
 
     QString pixmapToBase64(const QPixmap& pixmap, const QString& format = "PNG");
@@ -32,6 +32,7 @@ public:
     void SetAvatar(const QPixmap&)noexcept;
     void SetDesc(const QString&)noexcept;
     void SetEnv(const MessageEnv&)noexcept;
+    void SetBaseInfo(std::shared_ptr<UserInfo>)noexcept;
 
     template <typename T>
     void SetIcon(T &&icon) noexcept
@@ -39,6 +40,10 @@ public:
         using Decayed = std::decay_t<T>;
         static_assert(std::is_same_v<Decayed, QString>,"SetIcon() only accepts QString (or QString&& / const QString&)");
         _icon = std::forward<T>(icon);   // 右值→移动，左值→拷贝
+
+        QPixmap pix;
+        pix.loadFromData(QByteArray::fromBase64(icon.toUtf8()));
+        this->_avatar = std::move(pix);
     }
 
     int GetUid()noexcept;
@@ -51,8 +56,9 @@ public:
     QString GetDesc()noexcept;
     QString GetIcon()noexcept;
     MessageEnv GetEnv()noexcept;
+    std::shared_ptr<UserInfo> GetUserInfo();
 
-    // peer
+           // peer
     void SetPeerUid(int)noexcept;
     void SetPeerSex(int sex)noexcept;
     void SetPeerStatus(int status = 1)noexcept;
@@ -80,6 +86,7 @@ public:
     QPixmap GetPeerAvatar()noexcept;
     QString GetPeerDesc()noexcept;
     QString GetPeerIcon()noexcept;
+    std::shared_ptr<UserInfo> GetPeerUserInfo();
 
 
     std::vector<std::shared_ptr<UserInfo>>&GetFriends();
@@ -100,10 +107,10 @@ public:
     void addMessagesLoaded(int size);
     QDateTime GetHistoryTimestamp(int);
     void setHistoryTimestamp(int,QDateTime);
-private:
+  private:
     UserManager();
 
-private:
+  private:
     QString _token;
     QString _name;
     QString _email;
@@ -134,7 +141,7 @@ private:
     std::unordered_map<int,bool>_messages_finished;
 
 
-public slots:
+  public slots:
     void do_change_last_time(int,QDateTime);         // from SignalRouter::on_change_last_time
 };
 

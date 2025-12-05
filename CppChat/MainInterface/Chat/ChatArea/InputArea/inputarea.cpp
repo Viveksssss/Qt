@@ -789,7 +789,7 @@ void InputArea::do_image_clicked()
         "选择图片",
         QStandardPaths::writableLocation(QStandardPaths::PicturesLocation),
         "图片文件 (*.png *.jpg *.jpeg *.gif *.bmp)"
-        );
+    );
 
     if (!imagePath.isEmpty()) {
         // 创建消息项并发送
@@ -923,14 +923,64 @@ void InputArea::do_capture_clicked()
 
 void InputArea::do_message_sent(const MessageItem &item)
 {
+    if (!TcpManager::GetInstance()->isConnected()){
+        QMessageBox msgBox;
+        msgBox.setWindowTitle("Network Issue");
+        msgBox.setText("No Connection to Server");
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.setStandardButtons(QMessageBox::Ok);
+
+               // macOS 风格样式表
+        msgBox.setStyleSheet(R"(
+            QMessageBox {
+                background-color: #f5f5f7;
+                border: 1px solid #d0d0d0;
+                border-radius: 10px;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            }
+            QMessageBox QLabel {
+                color: #1d1d1f;
+                font-size: 14px;
+                font-weight: 400;
+                padding: 15px;
+            }
+            QMessageBox QLabel#qt_msgbox_label {
+                min-width: 300px;
+            }
+            QMessageBox QPushButton {
+                background-color: #007aff;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 8px 24px;
+                font-size: 13px;
+                font-weight: 500;
+                min-width: 80px;
+                margin: 5px;
+            }
+            QMessageBox QPushButton:hover {
+                background-color: #0056d6;
+            }
+            QMessageBox QPushButton:pressed {
+                background-color: #0040a8;
+            }
+            QMessageBox QPushButton:focus {
+                outline: 2px solid #007aff;
+                outline-offset: 2px;
+            }
+        )");
+
+        msgBox.exec();
+        return;
+    }
     m_model->addMessage(item);
     auto pb = toPb(item);
     std::string pb_str = pb.SerializeAsString();
     qDebug() << pb_str;
     QByteArray ba(pb_str.data(),pb_str.size());
 
-    DataBase::GetInstance().storeMessage(item);
     TcpManager::GetInstance()->do_send_data(RequestType::ID_TEXT_CHAT_MSG_REQ,ba);
+    DataBase::GetInstance().storeMessage(item);
 }
 
 QString InputArea::getText() const

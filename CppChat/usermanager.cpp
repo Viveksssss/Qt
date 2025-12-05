@@ -50,6 +50,17 @@ void UserManager::SetEnv(const MessageEnv &env) noexcept
     this->_env = env;
 }
 
+void UserManager::SetBaseInfo(std::shared_ptr<UserInfo>info) noexcept
+{
+    // this->_uid = info->id;
+    this->_email = info->email;
+    this->_desc = info->desc;
+    this->_sex = info->status;
+    this->_name = info->name;
+    this->_icon = info->avatar;
+    SetIcon(info->avatar);
+}
+
 
 int UserManager::GetUid() noexcept
 {
@@ -99,6 +110,19 @@ QString UserManager::GetIcon() noexcept
 MessageEnv UserManager::GetEnv() noexcept
 {
     return this->_env;
+}
+
+std::shared_ptr<UserInfo> UserManager::GetUserInfo()
+{
+    auto info = std::make_shared<UserInfo>();
+    // info->avatar = _icon;
+    info->id = _uid;
+    info->name = _name;
+    info->desc = _desc;
+    info->sex = _sex;
+    info->status = _status;
+    info->avatar = _icon;
+    return info;
 }
 
 void UserManager::SetPeerName(const QString &name) noexcept
@@ -189,6 +213,18 @@ QString UserManager::GetPeerDesc() noexcept
 QString UserManager::GetPeerIcon() noexcept
 {
     return this->_peer_icon;
+}
+
+std::shared_ptr<UserInfo> UserManager::GetPeerUserInfo()
+{
+    auto info = std::make_shared<UserInfo>();
+    info->avatar = _peer_icon;
+    info->id = _peer_uid;
+    info->name = _peer_name;
+    info->desc = _peer_desc;
+    info->sex = _peer_sex;
+    info->status = _peer_status;
+    return info;
 }
 
 
@@ -317,7 +353,7 @@ void UserManager::setHistoryTimestamp(int peerUid, QDateTime time)
 UserManager::UserManager()
     : _name("")
     , _token("")
-    , _uid(0)
+    , _uid(-1)
     , _messages_loaded(0)
     , _friends_loaded(0)
     , _env(MessageEnv::Private)
@@ -344,14 +380,13 @@ QString UserManager::pixmapToBase64(const QPixmap& pixmap, const QString& format
     QBuffer buffer(&byteArray);
     buffer.open(QIODevice::WriteOnly);
 
-    // 保存图片数据到 buffer
+           // 保存图片数据到 buffer
     bool success = pixmap.save(&buffer, format.toUtf8().constData());
     if (!success) {
         return "";
     }
 
-    // 转换为 Base64
+           // 转换为 Base64
     QString base64 = QString::fromLatin1(byteArray.toBase64());
     return base64;
 }
-

@@ -24,6 +24,7 @@ signals:
     void on_add_new_message(const MessageItem&item);    // from MessageListPart::on_get_message
     void on_change_message_status(const MessageItem&item);  // from MessageListPart::on_get_message
     void on_eliminate_status();                 // from ListPart::do_change_list -> to SideBarPart::do_eliminate_status();
+    void on_update_avatar(const QString&avatar);    // from ChatTopArea::clicked    -> to ClearAvatarLabel::do_update_avatar();
 public slots:
 
 };

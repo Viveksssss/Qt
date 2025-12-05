@@ -2,8 +2,8 @@
 #include "frienditemdelegate.h"
 #include "friendsmodel.h"
 #include "frienditem.h"
-#include "../../../../Properties/global.h"
-#include "../../../../Properties/signalrouter.h"
+#include "../../../Properties/global.h"
+#include "../../../Properties/signalrouter.h"
 #include "../../../../tcpmanager.h"
 #include "../../../../usermanager.h"
 

@@ -15,6 +15,11 @@
 
 TcpManager::~TcpManager() = default;
 
+bool TcpManager::isConnected()
+{
+    return _socket.state() == QAbstractSocket::ConnectedState;
+}
+
 TcpManager::TcpManager()
     : _host("")
     , _port(0)
@@ -592,7 +597,7 @@ void TcpManager::do_send_data(RequestType requestType, QByteArray data)
         msgBox.setIcon(QMessageBox::Warning);
         msgBox.setStandardButtons(QMessageBox::Ok);
 
-        // macOS 风格样式表
+               // macOS 风格样式表
         msgBox.setStyleSheet(R"(
             QMessageBox {
                 background-color: #f5f5f7;
@@ -635,6 +640,7 @@ void TcpManager::do_send_data(RequestType requestType, QByteArray data)
         msgBox.exec();
         return;
     }
+
     auto id =static_cast<uint16_t>(requestType);
 
     quint16 len = static_cast<quint16>(data.size());

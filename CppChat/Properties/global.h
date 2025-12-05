@@ -34,6 +34,7 @@ enum class RequestType{
     ID_GET_MESSAGES_OF_FRIEND_REQ = 1026, // 获取与某个好友的信息请求
     ID_GET_MESSAGES_OF_FRIEND_RSP = 1027, // 获取消息回包
     ID_SYNC_CONVERSATIONS_REQ = 1028,          // 同步会话
+    ID_SYNC_PERSONAL_INFORMATION_REQ = 1029,    // 更新个人信息
 };
 
 enum class Modules{

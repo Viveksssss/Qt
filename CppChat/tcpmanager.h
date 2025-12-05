@@ -20,6 +20,7 @@ class TcpManager
     friend class Singleton<TcpManager>;
 public:
     ~TcpManager();
+  bool isConnected();
 
 private:
     TcpManager();

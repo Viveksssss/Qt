@@ -1,6 +1,7 @@
 #include "chattoparea.h"
 #include "../../../usermanager.h"
 #include "../../../tcpmanager.h"
+#include "../../../Properties/imagecropperdialog.h"
 #include <QPushButton>
 #include <QLabel>
 #include <QHBoxLayout>
@@ -21,6 +22,29 @@
 #include <QTextEdit>
 #include <QScrollBar>
 #include <QApplication>
+#include <QFileDialog>
+#include <QButtonGroup>
+#include <QBuffer>
+#include <../../../../Properties/signalrouter.h>
+
+QString pixmapToBase64(const QPixmap &pixmap)
+{
+    if (pixmap.isNull()) {
+        return QString();
+    }
+
+    QByteArray byteArray;
+    QBuffer buffer(&byteArray);
+    buffer.open(QIODevice::WriteOnly);
+
+           // 保存为 PNG 格式（可以改为 JPEG）
+    pixmap.save(&buffer, "PNG");
+
+           // 转换为 Base64
+    QString base64 = QString::fromLatin1(byteArray.toBase64());
+
+    return base64;
+}
 
 ChatTopArea::ChatTopArea(QWidget *parent)
     : QWidget{parent}
@@ -89,6 +113,8 @@ void ChatTopArea::setupUI()
     hoverTimer->setSingleShot(true);
     hoverTimer->setInterval(500);
     profilePopup = new ProfilePopup(this);
+    profilePopup->setUserInfo(UserManager::GetInstance()->GetUserInfo());
+
 
     qApp->installEventFilter(this);
 }
@@ -106,7 +132,10 @@ void ChatTopArea::setupConnections()
 
     connect(hoverTimer,&QTimer::timeout,this,&ChatTopArea::do_profile_out);
 
-    // 在按钮点击的槽函数中
+    connect(profilePopup,&ProfilePopup::on_profile_clicked,this,&ChatTopArea::do_edit_profile_out);
+
+
+           // 在按钮点击的槽函数中
     connect(statusLabel, &StatusLabel::clicked, this, [this]() {
         // 创建菜单
         QMenu *menu = new QMenu(this);
@@ -128,12 +157,12 @@ void ChatTopArea::setupConnections()
             "}"
             );
 
-        // 添加状态选项
+               // 添加状态选项
         QAction *onlineAction = menu->addAction("🟢 在线");
         QAction *busyAction = menu->addAction("🔴 忙碌");
         QAction *offlineAction = menu->addAction("⚫ 离线");
 
-        // 连接菜单项点击信号
+               // 连接菜单项点击信号
         connect(onlineAction, &QAction::triggered, this, [this]() {
             statusLabel->setStatus("在线");
         });
@@ -144,11 +173,11 @@ void ChatTopArea::setupConnections()
             statusLabel->setStatus("离线");
         });
 
-        // 在按钮下方显示菜单
+               // 在按钮下方显示菜单
         QPoint pos = statusLabel->mapToGlobal(QPoint(0, statusLabel->height()));
         menu->exec(pos);
 
-        // 菜单关闭后自动删除
+               // 菜单关闭后自动删除
         menu->setAttribute(Qt::WA_DeleteOnClose);
     });
 }
@@ -183,7 +212,7 @@ void ChatTopArea::do_profile_out()
     int popupX = globalPos.x() + (headerLabelFromChat->pixmap().width() - profilePopup->width());
     int popupY = globalPos.y() + (headerLabelFromChat->height() + 5);
 
-    // 防止超出屏幕
+           // 防止超出屏幕
     QRect screen = QGuiApplication::primaryScreen()->availableGeometry();
     if (popupX + profilePopup->width() > screen.right()) {
         popupX = screen.right() - profilePopup->width();
@@ -195,6 +224,16 @@ void ChatTopArea::do_profile_out()
     profilePopup->move(popupX,popupY);
     profilePopup->show();
     profilePopup->raise();
+}
+
+void ChatTopArea::do_edit_profile_out()
+{
+    std::shared_ptr<EditProfileDialog> dialog = std::make_shared<EditProfileDialog>(this,profilePopup);
+    dialog->setUserInfo(UserManager::GetInstance()->GetUserInfo());
+
+    if (dialog->exec() == QDialog::Accepted) {
+        QMessageBox::information(this, "成功", "个人资料已更新！");
+    }
 }
 
 void ChatTopArea::keyPressEvent(QKeyEvent *event)
@@ -321,14 +360,14 @@ void StatusLabel::paintEvent(QPaintEvent *event)
         color = QColor("#f4d4f7");
     }
 
-    // 1. 圆角矩形
+           // 1. 圆角矩形
     if (showBorder){
         painter.setPen(QPen(dotColor,3));
         painter.setBrush(QBrush(color));
         painter.drawRoundedRect(rect.adjusted(2,2,-2,-2),10,10);
     }
 
-    // 2. 绘制左侧圆点
+           // 2. 绘制左侧圆点
     int dotSize = 8;
     int dotMargin = 8;
     QRect dotRect(dotMargin,
@@ -339,7 +378,7 @@ void StatusLabel::paintEvent(QPaintEvent *event)
     painter.setBrush(dotColor);
     painter.drawEllipse(dotRect);
 
-    // 3. 绘制右侧文字
+           // 3. 绘制右侧文字
     painter.setPen(Qt::black); // 黑色文字
     QFont font = painter.font();
     font.setPointSize(9);
@@ -462,7 +501,7 @@ void AnimatedSearchBox::setupUI()
 
     main_vlay->addLayout(searchLayout);
 
-    // 动画
+           // 动画
     animation = new QPropertyAnimation(this,"searchWidth");
     animation->setDuration(300);
     animation->setEasingCurve(QEasingCurve::OutCurve);
@@ -548,9 +587,9 @@ void AnimatedSearchBox::showResults()
     resultList->show();
     resultList->raise();
 
-    // 强制更新
-    // resultList->update();
-    // resultList->repaint();
+           // 强制更新
+           // resultList->update();
+           // resultList->repaint();
 }
 
 void AnimatedSearchBox::updateResults(){
@@ -631,24 +670,24 @@ bool AnimatedSearchBox::eventFilter(QObject *obj, QEvent *event)
             return QWidget::eventFilter(obj, event);
         }
 
-        // 获取全局鼠标位置
+               // 获取全局鼠标位置
         QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
         QPoint globalPos = mouseEvent->globalPosition().toPoint();
 
-        // 检查点击是否在resultList区域内
+               // 检查点击是否在resultList区域内
         QRect resultListRect = resultList->geometry();
         if (resultListRect.contains(globalPos)) {
             return QWidget::eventFilter(obj, event);
         }
 
-        // 检查点击是否在searchEdit区域内
-        // QRect searchEditRect = searchEdit->geometry();
-        // searchEditRect.moveTopLeft(searchEdit->mapToGlobal(QPoint(0, 0)));
-        // if (searchEditRect.contains(globalPos)) {
-        //     return QWidget::eventFilter(obj, event);
-        // }
+               // 检查点击是否在searchEdit区域内
+               // QRect searchEditRect = searchEdit->geometry();
+               // searchEditRect.moveTopLeft(searchEdit->mapToGlobal(QPoint(0, 0)));
+               // if (searchEditRect.contains(globalPos)) {
+               //     return QWidget::eventFilter(obj, event);
+               // }
 
-        // 如果都不在，隐藏结果
+               // 如果都不在，隐藏结果
         hideResults();
     }else if(event->type() == QEvent::Wheel && obj == resultList->viewport()){
         QWheelEvent*wheelEvent = static_cast<QWheelEvent*>(event);
@@ -687,24 +726,24 @@ void FriendAddDialog::setupUI()
     // 默认头像
     userAvatar = ":/Resources/main/header.png";
 
-    // 设置对话框属性 - 只调用一次
+           // 设置对话框属性 - 只调用一次
     setWindowFlags(Qt::Dialog | Qt::WindowCloseButtonHint);
     setObjectName("friendAddDialog");
     setFixedSize(320, 320); // 增加高度以适应备注框
     // 移除了重复的 setWindowFlags
 
-    // 主布局
+           // 主布局
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->setSpacing(5); // 减少间距
     mainLayout->setContentsMargins(10,0,10,10); // 调整边距
 
-    // 标题
+           // 标题
     titleLabel = new QLabel("添加好友");
     titleLabel->setObjectName("titleLabel");
     titleLabel->setAlignment(Qt::AlignCenter);
     mainLayout->addWidget(titleLabel);
 
-    // 用户信息区域（圆角框）
+           // 用户信息区域（圆角框）
     QFrame *userInfoFrame = new QFrame();
     userInfoFrame->setObjectName("userInfoFrame");
     userInfoFrame->setFixedHeight(80);
@@ -713,7 +752,7 @@ void FriendAddDialog::setupUI()
     userLayout->setContentsMargins(15, 10, 15, 10);
     userLayout->setSpacing(15);
 
-    // 头像 - 设置图片
+           // 头像 - 设置图片
     avatarLabel = new QLabel();
     avatarLabel->setObjectName("avatarLabel");
     avatarLabel->setFixedSize(50, 50);
@@ -725,7 +764,7 @@ void FriendAddDialog::setupUI()
         avatarLabel->setStyleSheet("background-color: #dee2e6; border-radius: 8px;");
     }
 
-    // 姓名和UID区域 - 使用占位文本
+           // 姓名和UID区域 - 使用占位文本
     QVBoxLayout *infoLayout = new QVBoxLayout();
     infoLayout->setSpacing(5);
     infoLayout->setAlignment(Qt::AlignVCenter);
@@ -745,7 +784,7 @@ void FriendAddDialog::setupUI()
 
     mainLayout->addWidget(userInfoFrame);
 
-    // 备注输入区域
+           // 备注输入区域
     QLabel *remarkLabel = new QLabel("备注");
     remarkLabel->setObjectName("remarkLabel");
     mainLayout->addWidget(remarkLabel);
@@ -756,7 +795,7 @@ void FriendAddDialog::setupUI()
     remarkEdit->setPlaceholderText("请输入备注信息（可选）");
     mainLayout->addWidget(remarkEdit);
 
-    // 按钮区域
+           // 按钮区域
     QHBoxLayout *buttonLayout = new QHBoxLayout();
     buttonLayout->setSpacing(10); // 减少按钮间距
 
@@ -775,7 +814,7 @@ void FriendAddDialog::setupUI()
 
     mainLayout->addLayout(buttonLayout);
 
-    // 连接信号槽
+           // 连接信号槽
     connect(cancelButton, &QPushButton::clicked, this, &FriendAddDialog::reject);
     connect(addButton, &QPushButton::clicked, this, &FriendAddDialog::accept);
 }
@@ -825,7 +864,7 @@ void FriendsItem::setupUI()
     _avatar->setFixedSize(44, 44);  // 与finalPixmap尺寸一致
     _avatar->setAlignment(Qt::AlignCenter);  // 关键：内容居中
 
-    // 使用原来的数据加载逻辑
+           // 使用原来的数据加载逻辑
     QPixmap originalPixmap;
     // 创建带边框的圆形图片
     if (_icon.startsWith(":/")){
@@ -835,7 +874,7 @@ void FriendsItem::setupUI()
         originalPixmap.loadFromData(imageData);
     }
 
-    // 使用原来的绘制逻辑，改小尺寸
+           // 使用原来的绘制逻辑，改小尺寸
     QPixmap finalPixmap(36, 36);
     finalPixmap.fill(Qt::transparent);
 
@@ -843,23 +882,23 @@ void FriendsItem::setupUI()
     painter.setRenderHint(QPainter::Antialiasing);
     painter.setRenderHint(QPainter::SmoothPixmapTransform);
 
-    // 1. 先绘制边框
+           // 1. 先绘制边框
     QColor borderColor = (_sex == 1) ? QColor("#00F5FF") : QColor("#FF69B4");
     painter.setBrush(borderColor);
     painter.setPen(Qt::NoPen);
     painter.drawEllipse(0, 0, 36, 36);
 
-    // 2. 绘制背景
+           // 2. 绘制背景
     painter.setBrush(QColor("#E3F2FD"));
     painter.drawEllipse(2, 2, 32, 32);  // 边框内部
 
-    // 3. 裁剪并绘制头像
+           // 3. 裁剪并绘制头像
     QPainterPath clipPath;
     clipPath.addEllipse(2, 2, 32, 32);  // 头像区域
     painter.setClipPath(clipPath);
     painter.drawPixmap(2, 2, 32, 32, originalPixmap.scaled(32, 32, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation));
 
-    // 设置最终的头像图片
+           // 设置最终的头像图片
     _avatar->setPixmap(finalPixmap);
     _avatar->setAlignment(Qt::AlignCenter);  // 关键：内容居中
 
@@ -967,7 +1006,7 @@ void ProfilePopup::setupUI()
     )");
 
 
-    // 头像标签（左侧）
+           // 头像标签（左侧）
     avatarLabel = new QLabel(this);
     avatarLabel->setFixedSize(70, 70);
     avatarLabel->setStyleSheet(R"(
@@ -978,33 +1017,33 @@ void ProfilePopup::setupUI()
         }
     )");
 
-    // 姓名标签
+           // 姓名标签
     nameLabel = new QLabel("未设置", this);
     QFont nameFont = nameLabel->font();
     nameFont.setPointSize(16);
     nameFont.setBold(true);
     nameLabel->setFont(nameFont);
 
-    // 性别标签（使用emoji或图标）
-    genderLabel = new QLabel(this);
+           // 性别标签（使用emoji或图标）
+    genderLabel = new QLabel("♂",this);
     genderLabel->setFixedSize(24, 24);
-    genderLabel->setStyleSheet("background: transparent;");
+    genderLabel->setStyleSheet("background: transparent;color: #666666; font-size: 12px;");
 
-    // ID标签
+           // ID标签
     userIdLabel = new QLabel("ID: 100001", this);
     userIdLabel->setStyleSheet("color: #666666; font-size: 12px;");
 
-    // 在线状态标签
+           // 在线状态标签
     statusLabel = new QLabel("🟢 在线", this);
     statusLabel->setStyleSheet("color: #07C160; font-size: 12px;");
 
-    // 分隔线
+           // 分隔线
     separatorLine = new QFrame(this);
     separatorLine->setObjectName("line");
     separatorLine->setFixedHeight(1);
     separatorLine->setFrameShape(QFrame::HLine);
 
-    // 个性签名标签
+           // 个性签名标签
     signatureLabel = new QLabel("这个人很懒，什么都没有留下~", this);
     signatureLabel->setStyleSheet(R"(
         QLabel {
@@ -1019,7 +1058,7 @@ void ProfilePopup::setupUI()
     signatureLabel->setMaximumWidth(280);
     signatureLabel->setMinimumHeight(100);
 
-    // 邮箱标签
+           // 邮箱标签
     QHBoxLayout *email_hlay = new QHBoxLayout;
     QLabel *email_pro = new QLabel("邮箱：");
     email_pro->setStyleSheet("color:#FF6600;");
@@ -1029,22 +1068,20 @@ void ProfilePopup::setupUI()
     email_hlay->addWidget(emailLabel);
     email_hlay->addStretch();
 
-    // 编辑资料按钮
+           // 编辑资料按钮
     editButton = new QPushButton("编辑资料", this);
     editButton->setFixedHeight(36);
 
-    // 布局设置
-
-    // 顶部信息区域（头像+基本信息）
+           // 顶部信息区域（头像+基本信息）
     QHBoxLayout *topLayout = new QHBoxLayout();
     topLayout->addWidget(avatarLabel);
     topLayout->setSpacing(10);
 
-    // 右侧信息垂直布局
+           // 右侧信息垂直布局
     QVBoxLayout *infoLayout = new QVBoxLayout();
     infoLayout->setSpacing(2);
 
-    // 姓名和性别在同一行
+           // 姓名和性别在同一行
     QHBoxLayout *nameGenderLayout = new QHBoxLayout();
     nameGenderLayout->addWidget(nameLabel);
     nameGenderLayout->addWidget(genderLabel);
@@ -1060,7 +1097,7 @@ void ProfilePopup::setupUI()
     topLayout->addLayout(infoLayout);
     topLayout->setContentsMargins(0, 0, 0, 0);
 
-    // 主布局
+           // 主布局
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->addLayout(topLayout);
     mainLayout->addSpacing(10);
@@ -1085,6 +1122,7 @@ void ProfilePopup::setupConnections()
     });
 }
 
+
 ProfilePopup::ProfilePopup(QWidget *parent)
     : QWidget(nullptr)
 {
@@ -1105,47 +1143,64 @@ void ProfilePopup::paintEvent(QPaintEvent *event)
 
     painter.fillRect(rect(), Qt::transparent);
 
-    // 绘制圆角背景
+           // 绘制圆角背景
     QPainterPath path;
     path.addRoundedRect(rect(), 30, 30);
 
     painter.fillPath(path, QColor(0xFF, 0xCC, 0xFF));  // #FF99CC
 
-    // 绘制边框
+           // 绘制边框
     painter.setPen(QPen(QColor("#D1D1D1"), 1));
     painter.drawPath(path);
 
-    // 绘制子控件
+           // 绘制子控件
     QWidget::paintEvent(event);
 }
 
 // 设置信息的接口实现
-void ProfilePopup::setAvatar(const QPixmap &avatar)
+void ProfilePopup::setAvatar(const QString &avatar)
 {
-    if (avatar.isNull()) return;
+    QPixmap pixmap;
 
-    // 创建圆形头像
-    QPixmap circularAvatar(70, 70);
-    circularAvatar.fill(Qt::transparent);
+    if (avatar.isEmpty() || avatar.startsWith(":/")) {
+        pixmap = QPixmap(avatar);
+    }
+    else{
+        QByteArray data = QByteArray::fromBase64(avatar.toUtf8());
+        pixmap.loadFromData(data);
+    }
 
-    QPainter painter(&circularAvatar);
+           // 如果加载失败，使用默认头像
+    if (pixmap.isNull()) {
+        pixmap = QPixmap(":/Resources/main/header-default.png");
+        if (pixmap.isNull()) {
+            // 创建纯色圆形默认头像
+            pixmap = QPixmap(70, 70);
+            pixmap.fill(QColor("#07C160"));
+        }
+    }
+
+           // 创建圆形头像
+    QPixmap circular(70, 70);
+    circular.fill(Qt::transparent);
+
+    QPainter painter(&circular);
     painter.setRenderHint(QPainter::Antialiasing);
 
     QPainterPath path;
     path.addEllipse(0, 0, 70, 70);
     painter.setClipPath(path);
 
-    QPixmap scaled = avatar.scaled(70, 70, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
-    painter.drawPixmap(0, 0, 70, 70, scaled);
+    painter.drawPixmap(0, 0, pixmap.scaled(70, 70, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation));
 
-    avatarLabel->setPixmap(circularAvatar);
+    avatarLabel->setPixmap(circular);
 }
 
 void ProfilePopup::setName(const QString &name)
 {
     nameLabel->setText(name);
 
-    // 如果名字太长，添加省略号
+           // 如果名字太长，添加省略号
     QFontMetrics metrics(nameLabel->font());
     QString elidedText = metrics.elidedText(name, Qt::ElideRight, 150);
     nameLabel->setText(elidedText);
@@ -1199,7 +1254,7 @@ void ProfilePopup::setSignature(const QString &signature)
     QString text = signature.isEmpty() ? "这个人很懒，什么都没有留下~" : signature;
     signatureLabel->setText("个性签名：" + text);
 
-    // 设置tooltip显示完整签名
+           // 设置tooltip显示完整签名
     if (text.length() > 30) {
         signatureLabel->setToolTip(text);
     }
@@ -1208,19 +1263,500 @@ void ProfilePopup::setSignature(const QString &signature)
 void ProfilePopup::setEmail(const QString &email)
 {
     QString text = email.isEmpty() ? "未设置" : email;
-    emailLabel->setText("邮箱：" + text);
+    emailLabel->setText(text);
 
     if (!email.isEmpty()) {
         emailLabel->setToolTip(email);
     }
 }
 
+void ProfilePopup::setUserInfo(std::shared_ptr<UserInfo> info)
+{
+    // uid
+    userIdLabel->setText("ID: " + QString::number(info->id));
+
+    // 头像
+    setAvatar(info->avatar);
+
+    // 名称
+    nameLabel->setText(info->name);
+    // 性别
+    if (info->sex == 1){
+        genderLabel->setText("♂");
+    }else{
+        genderLabel->setText("♀");
+    }
+    // 个性签名
+    signatureLabel->setText(info->desc.isEmpty() ? "这个人很懒，什么都没有留下~" : info->desc);
+    // 邮箱
+    emailLabel->setText(info->email);
+    // 状态
+    if (info->status == 1) {
+        statusLabel->setText("🟢 在线");
+        statusLabel->setStyleSheet("color: #07C160; font-size: 12px;");
+    } else {
+        statusLabel->setText("⚫ 离线");
+        statusLabel->setStyleSheet("color: #999999; font-size: 12px;");
+    }
+}
+
+void ProfilePopup::do_edit_profile(std::shared_ptr<UserInfo> info)
+{
+    setUserInfo(info);
+    UserManager::GetInstance()->SetBaseInfo(info);
+    QJsonObject obj;
+    obj["uid"] = info->id;
+    obj["email"] = info->email;
+    obj["avatar"] = info->avatar;
+    obj["sex"] = info->sex;
+    obj["desc"] = info->desc;
+    obj["name"] = info->name;
+    QJsonDocument doc(obj);
+    emit TcpManager::GetInstance()->on_send_data(RequestType::ID_SYNC_PERSONAL_INFORMATION_REQ,doc.toJson(QJsonDocument::Compact));
+}
+
+
+EditProfileDialog::EditProfileDialog(QWidget *parent)
+    : QDialog(parent)
+{
+    setWindowTitle("编辑个人资料");
+    setModal(true);  // 模态对话框
+    setFixedSize(400, 430);  // 固定大小
+
+    initUI();
+    setupConnections();
+
+           // 居中显示
+    QScreen *screen = QGuiApplication::primaryScreen();
+    if (screen) {
+        QRect screenRect = screen->availableGeometry();
+        move(screenRect.center() - rect().center());
+    }
+}
+
+EditProfileDialog::EditProfileDialog(QWidget *parent, ProfilePopup *popup)
+    : QDialog(nullptr)
+    , profilePopup(popup)
+{
+    setWindowTitle("编辑个人资料");
+    setModal(true);  // 模态对话框
+    setFixedSize(400, 430);  // 固定大小
+
+    initUI();
+    setupConnections();
+
+           // 居中显示
+    QScreen *screen = QGuiApplication::primaryScreen();
+    if (screen) {
+        QRect screenRect = screen->availableGeometry();
+        move(screenRect.center() - rect().center());
+    }
+}
+
+void EditProfileDialog::initUI()
+{
+    // 设置对话框样式
+    setStyleSheet(R"(
+        QDialog {
+            background: #FFFFFF;
+            border: 1px solid #E0E0E0;
+            border-radius: 12px;
+        }
+
+        QLabel {
+            color: #333333;
+            font-size: 13px;
+        }
+
+        QLineEdit, QTextEdit {
+            border: 1px solid #D1D1D1;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 13px;
+            background: #FFFFFF;
+            selection-background-color: #07C160;
+        }
+
+        QLineEdit:focus, QTextEdit:focus {
+            border: 1px solid #07C160;
+            outline: none;
+        }
+
+        QPushButton {
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: 500;
+            min-width: 80px;
+        }
+
+        QPushButton#saveButton {
+            background: #07C160;
+            color: white;
+        }
+
+        QPushButton#saveButton:hover {
+            background: #06AD56;
+        }
+
+        QPushButton#saveButton:pressed {
+            background: #059C4D;
+        }
+
+        QPushButton#cancelButton {
+            background: #F5F5F5;
+            color: #666666;
+        }
+
+        QPushButton#cancelButton:hover {
+            background: #E8E8E8;
+        }
+
+        QPushButton#changeAvatarBtn {
+            background: #F5F5F5;
+            color: #07C160;
+            border: 1px dashed #D1D1D1;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        QPushButton#changeAvatarBtn:hover {
+            background: #E8F5E9;
+            border-color: #07C160;
+        }
+
+        QRadioButton {
+            spacing: 8px;
+            font-size: 13px;
+        }
+    )");
+
+           // 创建布局
+    QVBoxLayout *mainLayout = new QVBoxLayout(this);
+    mainLayout->setContentsMargins(30, 30, 30, 20);
+    mainLayout->setSpacing(20);
+
+           // 头像区域
+    QHBoxLayout *avatarLayout = new QHBoxLayout();
+    avatarLayout->setSpacing(20);
+
+    avatarLabel = new QLabel(this);
+    avatarLabel->setFixedSize(100, 100);
+    avatarLabel->setStyleSheet(R"(
+        QLabel {
+            border-radius: 50px;
+            border: 3px solid #E0E0E0;
+            background: #F5F5F5;
+        }
+    )");
+    avatarLabel->setAlignment(Qt::AlignCenter);
+
+    changeAvatarBtn = new QPushButton("更换头像", this);
+    changeAvatarBtn->setObjectName("changeAvatarBtn");
+    changeAvatarBtn->setFixedSize(100, 32);
+
+    avatarLayout->addWidget(avatarLabel);
+
+    QVBoxLayout *avatarRightLayout = new QVBoxLayout();
+    avatarRightLayout->addStretch();
+    avatarRightLayout->addWidget(changeAvatarBtn);
+    avatarRightLayout->addStretch();
+
+    avatarLayout->addLayout(avatarRightLayout);
+    avatarLayout->addStretch();
+
+    mainLayout->addLayout(avatarLayout);
+
+           // 表单区域
+    QGridLayout *formLayout = new QGridLayout();
+    formLayout->setSpacing(15);
+    formLayout->setContentsMargins(0, 0, 0, 0);
+
+           // 姓名
+    nameLabel = new QLabel("姓名：", this);
+    nameLabel->setFixedWidth(80);
+    nameEdit = new QLineEdit(this);
+    nameEdit->setPlaceholderText("请输入姓名");
+    formLayout->addWidget(nameLabel, 0, 0);
+    formLayout->addWidget(nameEdit, 0, 1);
+
+           // 邮箱
+    emailLabel = new QLabel("邮箱：", this);
+    emailEdit = new QLineEdit(this);
+    emailEdit->setPlaceholderText("请输入邮箱地址");
+    formLayout->addWidget(emailLabel, 1, 0);
+    formLayout->addWidget(emailEdit, 1, 1);
+
+           // 性别
+    genderLabel = new QLabel("性别：", this);
+
+    QHBoxLayout *genderLayout = new QHBoxLayout();
+    genderLayout->setSpacing(20);
+
+    maleRadio = new QRadioButton("男性", this);
+    femaleRadio = new QRadioButton("女性", this);
+    maleRadio->setChecked(true);  // 默认男性
+
+    genderGroup = new QButtonGroup(this);
+    genderGroup->addButton(maleRadio);
+    genderGroup->addButton(femaleRadio);
+
+    genderLayout->addWidget(maleRadio);
+    genderLayout->addWidget(femaleRadio);
+    genderLayout->addStretch();
+
+    formLayout->addWidget(genderLabel, 2, 0);
+    formLayout->addLayout(genderLayout, 2, 1);
+
+           // 个性签名
+    signatureLabel = new QLabel("个性签名：", this);
+    signatureEdit = new QTextEdit(this);
+    signatureEdit->setPlaceholderText("请输入个性签名...");
+    signatureEdit->setMaximumHeight(80);
+    signatureEdit->setMinimumHeight(60);
+
+    formLayout->addWidget(signatureLabel, 3, 0, Qt::AlignTop);
+    formLayout->addWidget(signatureEdit, 3, 1);
+
+           // 设置列拉伸
+    formLayout->setColumnStretch(0, 0);  // 标签列不拉伸
+    formLayout->setColumnStretch(1, 1);  // 输入框列拉伸
+
+    mainLayout->addLayout(formLayout);
+
+           // 按钮区域
+    QHBoxLayout *buttonLayout = new QHBoxLayout();
+    buttonLayout->addStretch();
+
+    cancelButton = new QPushButton("取消", this);
+    cancelButton->setObjectName("cancelButton");
+    cancelButton->setFixedSize(100, 36);
+
+    saveButton = new QPushButton("保存", this);
+    saveButton->setObjectName("saveButton");
+    saveButton->setFixedSize(100, 36);
+
+    buttonLayout->addWidget(cancelButton);
+    buttonLayout->addSpacing(15);
+    buttonLayout->addWidget(saveButton);
+    buttonLayout->addStretch();
+
+    mainLayout->addStretch();
+    mainLayout->addLayout(buttonLayout);
+}
+
+void EditProfileDialog::setupConnections()
+{
+    connect(changeAvatarBtn, &QPushButton::clicked, this, &EditProfileDialog::do_select_avatar);
+    connect(saveButton, &QPushButton::clicked, this, &EditProfileDialog::do_save_clicked);
+    connect(cancelButton, &QPushButton::clicked, this, &EditProfileDialog::do_cancel_clicked);
+    connect(this,&EditProfileDialog::on_update_profile,profilePopup,&ProfilePopup::do_edit_profile);
+}
+
+void EditProfileDialog::setUserInfo(const QString &name,
+                                    const QString &email,
+                                    const QString &signature,
+                                    int sex,
+                                    const QString &avatar)
+{
+    nameEdit->setText(name);
+    emailEdit->setText(email);
+    signatureEdit->setText(signature);
+
+    if (sex == 1) {
+        maleRadio->setChecked(true);
+    } else {
+        femaleRadio->setChecked(true);
+    }
+    setAvatar(avatar);
+}
+
+void EditProfileDialog::setUserInfo(std::shared_ptr<UserInfo> info)
+{
+    nameEdit->setText(info->name);
+    emailEdit->setText(info->email);
+    signatureEdit->setText(info->desc);
+    if (info->sex == 1) {
+        maleRadio->setChecked(true);
+    } else {
+        femaleRadio->setChecked(true);
+    }
+    setAvatar(info->avatar);
+}
+
+void EditProfileDialog::do_select_avatar()
+{
+    QString fileName = QFileDialog::getOpenFileName(this,
+                                                    "选择头像",
+                                                    QDir::homePath(),
+                                                    "图片文件 (*.png *.jpg *.jpeg *.bmp *.gif *.webp)");
+    QPixmap pixmap = ImageCropperDialog::getCroppedImage(fileName,600,400,CropperShape::CIRCLE,QSize());
+
+    if (!fileName.isEmpty()) {
+        if (!pixmap.isNull()) {
+            avatarPath = fileName;
+            currentAvatar = pixmap;
+
+            // 创建圆形头像
+            QPixmap circularAvatar = pixmap.scaled(100, 100, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+
+            QPixmap rounded(100, 100);
+            rounded.fill(Qt::transparent);
+
+            QPainter painter(&rounded);
+            painter.setRenderHint(QPainter::Antialiasing);
+
+            QPainterPath path;
+            path.addEllipse(0, 0, 100, 100);
+            painter.setClipPath(path);
+            painter.drawPixmap(0, 0, circularAvatar);
+
+            avatarLabel->setPixmap(rounded);
+        } else {
+            QMessageBox::warning(this, "错误", "无法加载图片文件！");
+        }
+    }
+}
+
+void EditProfileDialog::do_save_clicked()
+{
+
+    auto info = std::make_shared<UserInfo>();
+    QString name = nameEdit->text().trimmed();
+    QString email = emailEdit->text().trimmed();
+    QString desc = signatureEdit->toPlainText().trimmed();
+    int sex = this->maleRadio->isChecked();
+    // 验证
+    if (name.isEmpty()) {
+        QMessageBox::warning(this, "提示", "姓名不能为空！");
+        nameEdit->setFocus();
+        return;
+    }
+
+    if (!email.isEmpty()) {
+        // 简单的邮箱格式验证
+        if (!email.contains('@') || !email.contains('.')) {
+            QMessageBox::warning(this, "提示", "邮箱格式不正确！");
+            emailEdit->setFocus();
+            return;
+        }
+    }
+    info->name = name;
+    info->email = email;
+    info->desc = desc;
+    info->sex = sex;
+    info->avatar = pixmapToBase64(avatarLabel->pixmap());
+
+    UserManager::GetInstance()->SetBaseInfo(info);
+
+           // 保存成功，发射信号
+    emit on_update_profile(info);
+    emit SignalRouter::GetInstance().on_update_avatar(info->avatar);
+
+    accept();  // 关闭对话框
+}
+
+void EditProfileDialog::do_cancel_clicked()
+{
+    reject();  // 关闭对话框
+}
+
+// 获取信息的函数
+QString EditProfileDialog::getName() const
+{
+    return nameEdit->text().trimmed();
+}
+
+QString EditProfileDialog::getEmail() const
+{
+    return emailEdit->text().trimmed();
+}
+
+QString EditProfileDialog::getSignature() const
+{
+    return signatureEdit->toPlainText().trimmed();
+}
+
+int EditProfileDialog::getSex() const
+{
+    return maleRadio->isChecked() == 1 ;
+}
+
+QPixmap EditProfileDialog::getAvatar() const
+{
+    return currentAvatar;
+}
+
+void EditProfileDialog::setAvatar(const QString &avatar) const
+{
+    QPixmap pixmap;
+
+    if (avatar.isEmpty() || avatar.startsWith(":/")) {
+        pixmap = QPixmap(avatar);
+    }
+    else{
+        QByteArray data = QByteArray::fromBase64(avatar.toUtf8());
+        pixmap.loadFromData(data);
+    }
+
+           // 如果加载失败，使用默认头像
+    if (pixmap.isNull()) {
+        pixmap = QPixmap(":/Resources/main/header-default.png");
+        if (pixmap.isNull()) {
+            // 创建纯色圆形默认头像
+            pixmap = QPixmap(100, 100);
+            pixmap.fill(QColor("#07C160"));
+        }
+    }
+
+           // 创建圆形头像
+    QPixmap circular(100, 100);
+    circular.fill(Qt::transparent);
+
+    QPainter painter(&circular);
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    QPainterPath path;
+    path.addEllipse(0, 0, 100, 100);
+    painter.setClipPath(path);
+
+    painter.drawPixmap(0, 0, pixmap.scaled(100, 100, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation));
+
+    avatarLabel->setPixmap(circular);
+}
+
+void EditProfileDialog::setProfile(ProfilePopup *profile)
+{
+    this->profilePopup = profile;
+}
+
 
 ClearAvatarLabel::ClearAvatarLabel(QWidget *parent)
-     : QLabel(parent)
+    : QLabel(parent)
 {
     setFixedSize(30, 30);
+    connect(&SignalRouter::GetInstance(),&SignalRouter::on_update_avatar,this,&ClearAvatarLabel::do_update_avatar);
     this->installEventFilter(this);
+}
+
+void ClearAvatarLabel::do_update_avatar(const QString &avatar)
+{
+    // 直接使用 toUtf8() 更安全
+    QByteArray imageData = QByteArray::fromBase64(avatar.toUtf8());
+
+    if (!imageData.isEmpty()) {
+        QPixmap pix;
+        if (pix.loadFromData(imageData)) {
+            setPixmap(pix);
+            update();
+            return;
+        }
+    }
+
+    // 如果失败，设置空
+    setPixmap(QPixmap());
+    update();
 }
 
 void ClearAvatarLabel::paintEvent(QPaintEvent *event)
@@ -1230,29 +1766,27 @@ void ClearAvatarLabel::paintEvent(QPaintEvent *event)
     painter.setRenderHint(QPainter::Antialiasing, true);
     painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
 
-    // 绘制头像
+           // 绘制头像
     if (!pixmap().isNull()) {
         // 获取高质量图片并缩放到合适尺寸
         // QPixmap originalPixmap = getHighQualityPixmap();
         QPixmap scaledPixmap = pixmap().scaled(size(), Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
 
-        // 圆形裁剪
+               // 圆形裁剪
         QPainterPath path;
         path.addEllipse(rect());
         painter.setClipPath(path);
 
-        // 计算居中位置
+               // 计算居中位置
         int x = (scaledPixmap.width() - width()) / 2;
         int y = (scaledPixmap.height() - height()) / 2;
 
-        // 绘制图片（居中裁剪）
+               // 绘制图片（居中裁剪）
         painter.drawPixmap(rect(), scaledPixmap, QRect(x, y, width(), height()));
     }
 
-    // 绘制边框
+           // 绘制边框
     painter.setClipping(false);
     painter.setPen(QPen(QColor("#3b3b3b"), 1));
     painter.drawEllipse(rect().adjusted(1, 1, -1, -1));
-
 }
-
