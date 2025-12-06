@@ -12,8 +12,12 @@
 #include <spdlog/spdlog.h>
 
 Session::Session(boost::asio::io_context &ioc, std::shared_ptr<Server> server)
-    : _socket(ioc), _server(server), _stop(false), _head_parse(false), _uid(0),
-      _last_heartbeat(std::time(nullptr)) {
+    : _socket(ioc)
+    , _server(server)
+    , _stop(false)
+    , _head_parse(false)
+    , _uid(0)
+    , _last_heartbeat(std::time(nullptr)) {
     _session_id = boost::uuids::to_string(boost::uuids::random_generator()());
     _recv_head_node = std::make_shared<MsgNode>(HEAD_TOTAL_LEN);
 }
@@ -39,8 +43,8 @@ void Session::Close() {
     }
 
     // 安全关闭socket
-    boost::system::error_code ec =
-        _socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+    boost::system::error_code ec;
+    ec = _socket.close(ec);
     if (ec) {
         SPDLOG_WARN("Socket shutdown error: {}", ec.message());
     }
@@ -50,7 +54,9 @@ void Session::Close() {
         SPDLOG_WARN("Socket close error: {}", ec.message());
     }
     SPDLOG_INFO("Session {} disconnected!", _session_id);
+}
 
+void Session::DealExceptionSession() {
     auto uid_str = std::to_string(_uid);
     auto lock_key = LOCK_PREFIX + uid_str;
     auto identifier = RedisManager::GetInstance()->AcquireLock(
@@ -80,13 +86,8 @@ void Session::Close() {
 
     // 删除session
     RedisManager::GetInstance()->Del(USER_SESSION_PREFIX + uid_str);
-    // 减少登录计数
-    RedisManager::GetInstance()->Decr(LOGIN_COUNT_PREFIX +
-                                      _server->GetServerName());
     // 删除用户服务器信息
     RedisManager::GetInstance()->Del(USERIP_PREFIX + std::to_string(_uid));
-    // 删除用户token
-    RedisManager::GetInstance()->Del(USER_TOKEN_PREFIX + std::to_string(_uid));
     // 修改用户的状态
     RedisManager::GetInstance()->Set(USER_STATUS_PREFIX + std::to_string(_uid),
                                      std::to_string(0));
@@ -128,6 +129,7 @@ void Session::HandleWrite(boost::system::error_code ec,
         if (ec) {
             SPDLOG_WARN("Handle Write Filed,Errir is {}", ec.what());
             Close();
+            DealExceptionSession();
         }
         std::lock_guard<std::mutex> lock(_send_lock);
         _send_queue.pop();
@@ -143,6 +145,7 @@ void Session::HandleWrite(boost::system::error_code ec,
     } catch (std::exception &e) {
         SPDLOG_WARN("Exception code:{}", e.what());
         Close();
+        DealExceptionSession();
     }
 }
 
@@ -175,16 +178,19 @@ void Session::AsyncHead(std::size_t len) {
                                 error.message(), bytes_transferred);
                 }
                 Close();
+                DealExceptionSession();
                 return;
             }
             if (bytes_transferred < HEAD_TOTAL_LEN) {
                 SPDLOG_WARN("Read Length not matched");
                 Close();
+                DealExceptionSession();
                 return;
             }
             if (!_server->CheckValid(_session_id)) {
                 SPDLOG_WARN("Invalid SessionId");
                 Close();
+                DealExceptionSession();
                 return;
             }
 
@@ -219,11 +225,13 @@ void Session::AsyncBody(std::size_t len) {
                                 error.message(), bytes_transferred);
                 }
                 Close();
+                DealExceptionSession();
                 return;
             }
             if (bytes_transferred < HEAD_TOTAL_LEN) {
                 SPDLOG_WARN("Read Length not matched");
                 Close();
+                DealExceptionSession();
                 return;
             }
             if (!_server->CheckValid(_session_id)) {
@@ -262,4 +270,5 @@ bool Session::IsHeartbeatExpired(std::time_t &now) {
 
 LogicNode::LogicNode(std::shared_ptr<Session> session,
                      std::shared_ptr<RecvNode> recv_node)
-    : _session(session), _recv_node(recv_node) {}
+    : _session(session)
+    , _recv_node(recv_node) {}

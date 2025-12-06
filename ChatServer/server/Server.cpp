@@ -1,6 +1,8 @@
 #include "Server.h"
 #include "../global/ConfigManager.h"
 #include "../global/UserManager.h"
+#include "../global/const.h"
+#include "../redis/RedisManager.h"
 #include "../session/Session.h"
 #include "AsioPool.h"
 #include "LogicSystem.h"
@@ -8,6 +10,7 @@
 #include <chrono>
 #include <mutex>
 #include <spdlog/spdlog.h>
+#include <unordered_map>
 
 Server::Server(net::io_context &ioc, uint16_t port)
     : _ioc(ioc)
@@ -79,27 +82,38 @@ bool Server::CheckValid(const std::string &session_id) {
 }
 
 void Server::on_timer(const boost::system::error_code &ec) {
-
-    std::vector<std::string> expired_sessions;
-    auto now = std::time(nullptr);
-    int count = 0;
-    {
-        std::lock_guard<std::mutex> lock(_mutex);
-
-        for (auto it = _sessions.begin(); it != _sessions.end(); ++it) {
-            auto b_expired = it->second->IsHeartbeatExpired(now);
-            if (b_expired) {
-                expired_sessions.push_back(it->first);
-                continue;
-            }
-        }
+    if (ec) {
+        SPDLOG_WARN("Timer error:{}", ec.message());
+        return;
     }
 
-    for (const auto &sid : expired_sessions) {
-        auto it = _sessions.find(sid);
-        if (it != _sessions.end()) {
+    std::vector<std::shared_ptr<Session>> expired_sessions;
+    std::unordered_map<std::string, std::shared_ptr<Session>> sessions_copy;
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        sessions_copy = _sessions;
+    }
+    int count = 0;
+    auto now = std::time(nullptr);
+    for (auto it = sessions_copy.begin(); it != sessions_copy.end(); ++it) {
+        auto b_expired = it->second->IsHeartbeatExpired(now);
+        if (b_expired) {
             it->second->Close();
+            expired_sessions.push_back(it->second);
+            // 在这里不可以直接DealExceptionExpired，内部会调用ClearSession,导致迭代器失效
+            continue;
         }
+        count++;
+    }
+
+    auto &cfg = ConfigManager::GetInstance();
+    auto self_name = cfg["SelfServer"]["name"];
+    auto count_str = std::to_string(count);
+
+    RedisManager::GetInstance()->HSet(LOGIN_COUNT_PREFIX, self_name, count_str);
+
+    for (const auto &session : expired_sessions) {
+        session->DealExceptionSession();
     }
 
     _timer.expires_after(std::chrono::seconds(30));

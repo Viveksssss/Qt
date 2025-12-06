@@ -14,45 +14,43 @@
 #include <spdlog/spdlog.h>
 #include <string>
 
-void LogicSystem::SetServer(std::shared_ptr<Server> server) noexcept
-{
+void LogicSystem::SetServer(std::shared_ptr<Server> server) noexcept {
     this->_server = server;
 }
 
-std::string thread_id_to_string(std::thread::id id)
-{
+std::string thread_id_to_string(std::thread::id id) {
     std::stringstream ss;
     ss << id;
     return ss.str();
 }
 
-void LogicSystem::PostMsgToQueue(std::shared_ptr<LogicNode> msg)
-{
+void LogicSystem::PostMsgToQueue(std::shared_ptr<LogicNode> msg) {
     std::unique_lock<std::mutex> lock(_mutex);
     _queue.push(msg);
     _cv.notify_one();
 }
 
-void LogicSystem::RegisterCallBacks()
-{
+void LogicSystem::RegisterCallBacks() {
     /**
      * @brief 登陆请求回调函数
      *
      */
     _function_callbacks[MsgId::ID_CHAT_LOGIN] = [this](std::shared_ptr<Session>
                                                            session,
-                                                    uint16_t msg_id,
-                                                    const std::string& msg) {
+                                                       uint16_t msg_id,
+                                                       const std::string &msg) {
         json j = json::parse(msg);
         auto uid = j["uid"].get<int>();
         auto token = j["token"].get<std::string>();
         SPDLOG_INFO("Thread: {},User {} Login with token {}",
-            thread_id_to_string(std::this_thread::get_id()), uid, token);
+                    thread_id_to_string(std::this_thread::get_id()), uid,
+                    token);
 
         json jj;
         Defer defer([this, &jj, session]() {
             std::string return_str = jj.dump();
-            session->Send(return_str, static_cast<int>(MsgId::ID_CHAT_LOGIN_RSP));
+            session->Send(return_str,
+                          static_cast<int>(MsgId::ID_CHAT_LOGIN_RSP));
         });
 
         std::string uid_str = std::to_string(uid);
@@ -90,11 +88,12 @@ void LogicSystem::RegisterCallBacks()
 
         // 获取申请列表
         std::vector<std::shared_ptr<UserInfo>> apply_list;
-        bool b_apply = MysqlManager::GetInstance()->GetFriendApplyList(uid_str, apply_list);
+        bool b_apply = MysqlManager::GetInstance()->GetFriendApplyList(
+            uid_str, apply_list);
         if (b_apply && apply_list.size() > 0) {
             // 我们这里规定哪怕数据库操作成功，但是没有数据也算失败，就直接跳过，避免多余判断。
             json apply_friends;
-            for (auto& apply_user : apply_list) {
+            for (auto &apply_user : apply_list) {
                 json apply_friend;
                 apply_friend["uid"] = apply_user->uid;
                 apply_friend["name"] = apply_user->name;
@@ -113,11 +112,14 @@ void LogicSystem::RegisterCallBacks()
             uid_str, notification_list);
         if (b_notify && notification_list.size() > 0) {
             json notifications;
-            for (auto& notification : notification_list) {
+            for (auto &notification : notification_list) {
                 json item;
                 item["uid"] = notification->uid;
-                item["type"] = notification->status; // 用status代表type借用UserInfo的结构。
-                item["message"] = notification->desc; // 用desc代表message借用UserInfo的结构。
+                item["type"] =
+                    notification
+                        ->status; // 用status代表type借用UserInfo的结构。
+                item["message"] =
+                    notification->desc; // 用desc代表message借用UserInfo的结构。
                 item["time"] = notification->back; // 备用字段表示时间。
                 notifications.push_back(item);
             }
@@ -126,10 +128,11 @@ void LogicSystem::RegisterCallBacks()
 
         // 获取会话列表
         std::vector<std::shared_ptr<SessionInfo>> session_list;
-        bool b_session = MysqlManager::GetInstance()->GetSeessionList(uid_str, session_list);
+        bool b_session =
+            MysqlManager::GetInstance()->GetSeessionList(uid_str, session_list);
         if (b_session && session_list.size() > 0) {
             json conversations;
-            for (auto& session_item : session_list) {
+            for (auto &session_item : session_list) {
                 json conversation;
                 conversation["uid"] = session_item->uid;
                 conversation["from_uid"] = session_item->from_uid;
@@ -150,17 +153,20 @@ void LogicSystem::RegisterCallBacks()
         std::vector<std::shared_ptr<UserInfo>> friend_list;
         std::vector<int> online_friends;
 
-        bool b_friend = MysqlManager::GetInstance()->GetFriendList(uid_str, friend_list);
+        bool b_friend =
+            MysqlManager::GetInstance()->GetFriendList(uid_str, friend_list);
         online_friends.resize(friend_list.size());
         if (b_friend && friend_list.size() > 0) {
             json friends;
             for (std::size_t i = 0; i < friend_list.size(); i++) {
-                auto& friend_user = friend_list[i];
+                auto &friend_user = friend_list[i];
                 json friend_item;
                 // 查询状态
-                std::string status_key = USER_STATUS_PREFIX + std::to_string(friend_user->uid);
+                std::string status_key =
+                    USER_STATUS_PREFIX + std::to_string(friend_user->uid);
                 std::string status_value;
-                bool b_status = RedisManager::GetInstance()->Get(status_key, status_value);
+                bool b_status =
+                    RedisManager::GetInstance()->Get(status_key, status_value);
                 if (b_status) {
                     friend_item["status"] = std::stoi(status_value);
                     online_friends[i] = friend_item["status"];
@@ -185,7 +191,7 @@ void LogicSystem::RegisterCallBacks()
             uid_str, unread_messages);
         if (b_unread && unread_messages.size() > 0) {
             json messages = json::array();
-            for (auto& message : unread_messages) {
+            for (auto &message : unread_messages) {
                 json message_item;
                 message_item["id"] = message->id();
                 message_item["from_id"] = message->from_id();
@@ -195,7 +201,8 @@ void LogicSystem::RegisterCallBacks()
                 message_item["content_type"] = message->content().type();
                 message_item["content_data"] = message->content().data();
                 SPDLOG_INFO("data:{}", message->content().data());
-                message_item["content_mime_type"] = message->content().mime_type();
+                message_item["content_mime_type"] =
+                    message->content().mime_type();
                 message_item["content_fid"] = message->content().fid();
                 messages.push_back(message_item);
             }
@@ -211,11 +218,11 @@ void LogicSystem::RegisterCallBacks()
 
         std::string uid_ip_value = "";
         std::string uid_ip_key = USERIP_PREFIX + uid_str;
-        bool b_ip = RedisManager::GetInstance()->GetInstance()->Get(uid_ip_key,
-            uid_ip_value);
+        bool b_ip = RedisManager::GetInstance()->GetInstance()->Get(
+            uid_ip_key, uid_ip_value);
         if (b_ip) {
             // 查询到了ip地址，说明用户已经在线了。
-            auto& cfg = ConfigManager::GetInstance();
+            auto &cfg = ConfigManager::GetInstance();
             auto self_name = cfg["SelfServer"]["name"];
             if (uid_ip_value == self_name) {
                 // 如果是当前服务器，直接踢掉
@@ -228,7 +235,8 @@ void LogicSystem::RegisterCallBacks()
                 // 不在本服务器，grpc通知剔除
                 message::KickUserReq kick_req;
                 kick_req.set_uid(uid);
-                ChatGrpcClient::GetInstance()->NotifyKickUser(uid_ip_value, kick_req);
+                ChatGrpcClient::GetInstance()->NotifyKickUser(uid_ip_value,
+                                                              kick_req);
             }
         }
 
@@ -239,52 +247,60 @@ void LogicSystem::RegisterCallBacks()
         // 登陆成功，通知所有在线好友
         // 上面得到了好友列表，这里通知所有在线好友
         for (std::size_t i = 0; i < friend_list.size(); i++) {
-            auto& friend_uid = friend_list[i]->uid;
+            auto &friend_uid = friend_list[i]->uid;
             std::string ip_key = USERIP_PREFIX + std::to_string(friend_uid);
             std::string ip_value;
             bool b_ip = RedisManager::GetInstance()->Get(ip_key, ip_value);
             if (b_ip) {
                 if (online_friends[i] == 1) {
-                    auto& cfg = ConfigManager::GetInstance();
+                    auto &cfg = ConfigManager::GetInstance();
                     auto self_name = cfg["SelfServer"]["name"];
                     if (ip_value == self_name) {
-                        auto session2 = UserManager::GetInstance()->GetSession(friend_uid);
+                        auto session2 =
+                            UserManager::GetInstance()->GetSession(friend_uid);
                         if (session2) {
                             SPDLOG_INFO("FROM UID:{},to:{}", uid, friend_uid);
                             json j;
                             j["error"] = ErrorCodes::SUCCESS;
                             j["uid"] = uid;
-                            j["message"] = "😁好友" + user_info->name + "上线了😄";
-                            j["type"] = static_cast<int>(NotificationCodes::ID_NOTIFY_FRIEND_ONLINE);
+                            j["message"] =
+                                "😁好友" + user_info->name + "上线了😄";
+                            j["type"] = static_cast<int>(
+                                NotificationCodes::ID_NOTIFY_FRIEND_ONLINE);
                             j["status"] = 1;
                             // 当前时间
                             auto now = std::chrono::system_clock::now();
-                            auto time_t = std::chrono::system_clock::to_time_t(now);
+                            auto time_t =
+                                std::chrono::system_clock::to_time_t(now);
 
                             std::stringstream ss;
-                            ss << std::put_time(std::localtime(&time_t), "%Y-%m-%d %H:%M:%S");
+                            ss << std::put_time(std::localtime(&time_t),
+                                                "%Y-%m-%d %H:%M:%S");
                             j["time"] = ss.str();
                             j["icon"] = user_info->icon;
-                            session2->Send(j.dump(), static_cast<int>(MsgId::ID_NOTIFY));
+                            session2->Send(j.dump(),
+                                           static_cast<int>(MsgId::ID_NOTIFY));
                         }
                     } else {
                         NotifyFriendOnlineRequest request;
                         request.set_fromuid(uid);
                         request.set_touid(friend_uid);
                         request.set_name(user_info->name);
-                        request.set_type(
-                            static_cast<int>(NotificationCodes::ID_NOTIFY_FRIEND_ONLINE));
-                        request.set_message("😁好友" + user_info->name + "上线了😄");
+                        request.set_type(static_cast<int>(
+                            NotificationCodes::ID_NOTIFY_FRIEND_ONLINE));
+                        request.set_message("😁好友" + user_info->name +
+                                            "上线了😄");
                         request.set_icon(user_info->icon);
                         // 当前时间
                         auto now = std::chrono::system_clock::now();
                         auto time_t = std::chrono::system_clock::to_time_t(now);
                         std::stringstream ss;
-                        ss << std::put_time(std::localtime(&time_t), "%Y-%m-%d %H:%M:%S");
+                        ss << std::put_time(std::localtime(&time_t),
+                                            "%Y-%m-%d %H:%M:%S");
                         request.set_time(ss.str());
 
-                        ChatGrpcClient::GetInstance()->NotifyFriendOnline(ip_value,
-                            request);
+                        ChatGrpcClient::GetInstance()->NotifyFriendOnline(
+                            ip_value, request);
                     }
                 }
             }
@@ -292,7 +308,8 @@ void LogicSystem::RegisterCallBacks()
 
         // 更新登陆数量
         auto server_name = ConfigManager::GetInstance()["SelfServer"]["name"];
-        auto count_str = RedisManager::GetInstance()->HGet(LOGIN_COUNT_PREFIX, server_name);
+        auto count_str =
+            RedisManager::GetInstance()->HGet(LOGIN_COUNT_PREFIX, server_name);
         int count = 0;
         if (!count_str.empty()) {
             count = std::stoi(count_str);
@@ -300,12 +317,13 @@ void LogicSystem::RegisterCallBacks()
         count++;
         count_str = std::to_string(count);
         RedisManager::GetInstance()->HSet(LOGIN_COUNT_PREFIX, server_name,
-            count_str);
+                                          count_str);
 
         // session绑定uid
         session->SetUid(uid);
         // 设置session
-        RedisManager::GetInstance()->Set(USER_SESSION_PREFIX + uid_str, session->GetSessionId());
+        RedisManager::GetInstance()->Set(USER_SESSION_PREFIX + uid_str,
+                                         session->GetSessionId());
         // 绑定连接的服务器名称和用户uid
         std::string ip_key = USERIP_PREFIX + uid_str;
         RedisManager::GetInstance()->Set(ip_key, server_name);
@@ -322,14 +340,15 @@ void LogicSystem::RegisterCallBacks()
      */
     _function_callbacks[MsgId::ID_SEARCH_USER_REQ] =
         [this](std::shared_ptr<Session> session, uint16_t msg_id,
-            const std::string& msg) {
+               const std::string &msg) {
             json j = json::parse(msg);
             j["error"] = static_cast<int>(ErrorCodes::SUCCESS);
             SPDLOG_INFO("json:{}", j.dump());
             auto uid_str = j["toUid"].get<std::string>();
             Defer defer([this, session, &j]() {
                 SPDLOG_INFO("j.size:{},j.dump:{}", j.dump().size(), j.dump());
-                session->Send(j.dump(), static_cast<int>(MsgId::ID_SEARCH_USER_RSP));
+                session->Send(j.dump(),
+                              static_cast<int>(MsgId::ID_SEARCH_USER_RSP));
             });
 
             bool only_digit = IsPureDigit(uid_str);
@@ -341,12 +360,13 @@ void LogicSystem::RegisterCallBacks()
      */
     _function_callbacks[MsgId::ID_ADD_FRIEND_REQ] =
         [this](std::shared_ptr<Session> session, uint16_t msg_id,
-            const std::string& msg) {
+               const std::string &msg) {
             json j = json::parse(msg);
             j["error"] = ErrorCodes::SUCCESS;
             Defer defer([this, &j, session]() {
                 // 回复请求方的信息
-                session->Send(j.dump(), static_cast<int>(MsgId::ID_ADD_FRIEND_RSP));
+                session->Send(j.dump(),
+                              static_cast<int>(MsgId::ID_ADD_FRIEND_RSP));
             });
             auto toUid = j["toUid"].get<int>();
             auto fromUid = j["fromUid"].get<int>();
@@ -381,20 +401,23 @@ void LogicSystem::RegisterCallBacks()
                     static_cast<int>(NotificationCodes::ID_NOTIFY_MAKE_FRIENDS),
                     "成功和" + fromName + "成为好友");
                 // 给对方发送请求信息
-                auto& cfg = ConfigManager::GetInstance();
+                auto &cfg = ConfigManager::GetInstance();
                 auto self_name = cfg["SelfServer"]["name"];
 
                 auto to_key = USERIP_PREFIX + uid_str;
                 std::string to_ip_value;
-                bool b_ip = RedisManager::GetInstance()->Get(to_key, to_ip_value);
+                bool b_ip =
+                    RedisManager::GetInstance()->Get(to_key, to_ip_value);
                 if (b_ip) {
                     if (to_ip_value == self_name) {
-                        auto session2 = UserManager::GetInstance()->GetSession(toUid);
+                        auto session2 =
+                            UserManager::GetInstance()->GetSession(toUid);
                         if (session2) {
                             SPDLOG_INFO("FROM UID:{},to:{}", fromUid, toUid);
                             session2->Send(
                                 jj.dump(),
-                                static_cast<int>(MsgId::ID_NOTIFY_AUTH_FRIEND_REQ));
+                                static_cast<int>(
+                                    MsgId::ID_NOTIFY_AUTH_FRIEND_REQ));
                         }
                         return;
                     } else {
@@ -404,11 +427,11 @@ void LogicSystem::RegisterCallBacks()
                         req.set_fromname(fromName);
                         req.set_fromsex(fromSex);
                         req.set_fromicon(fromIcon);
-                        req.set_type(
-                            static_cast<int>(NotificationCodes::ID_NOTIFY_MAKE_FRIENDS));
+                        req.set_type(static_cast<int>(
+                            NotificationCodes::ID_NOTIFY_MAKE_FRIENDS));
                         req.set_message("成功和" + fromName + "成为好友");
-                        ChatGrpcClient::GetInstance()->NotifyMakeFriends(to_ip_value,
-                            req);
+                        ChatGrpcClient::GetInstance()->NotifyMakeFriends(
+                            to_ip_value, req);
                     }
                 } else {
                     // 这里没有查询到，不发送无妨。因为已经存入数据库，用户登录就可以直接获取。
@@ -430,19 +453,21 @@ void LogicSystem::RegisterCallBacks()
             }
 
             // 给对方发送请求信息
-            auto& cfg = ConfigManager::GetInstance();
+            auto &cfg = ConfigManager::GetInstance();
             auto self_name = cfg["SelfServer"]["name"];
             if (to_ip_value == self_name) {
                 auto session2 = UserManager::GetInstance()->GetSession(toUid);
                 if (session2) {
                     SPDLOG_INFO("FROM UID:{},to:{}", fromUid, toUid);
-                    SPDLOG_INFO("FROM SESSION:{},to:{}", session->GetSessionId(),
-                        session2->GetSessionId());
+                    SPDLOG_INFO("FROM SESSION:{},to:{}",
+                                session->GetSessionId(),
+                                session2->GetSessionId());
                     json jj;
                     jj["error"] = ErrorCodes::SUCCESS;
                     jj["from_uid"] = fromUid;
                     jj["from_name"] = fromName;
-                    session2->Send(jj.dump(),
+                    session2->Send(
+                        jj.dump(),
                         static_cast<int>(MsgId::ID_NOTIFY_ADD_FRIEND_REQ));
                 }
                 return;
@@ -460,7 +485,7 @@ void LogicSystem::RegisterCallBacks()
 
     _function_callbacks[MsgId::ID_AUTH_FRIEND_REQ] =
         [this](std::shared_ptr<Session> session, uint16_t msg_id,
-            const std::string& msg) {
+               const std::string &msg) {
             json j = json::parse(msg);
             j["error"] = ErrorCodes::SUCCESS;
             j["ok"] = false; // 标记失败
@@ -480,7 +505,8 @@ void LogicSystem::RegisterCallBacks()
             Defer defer([this, &j, session]() {
                 // 这是给fromUid的回复信息
                 // 目地是如果同意，那么就返回好友的信息
-                session->Send(j.dump(), static_cast<int>(MsgId::ID_AUTH_FRIEND_RSP));
+                session->Send(j.dump(),
+                              static_cast<int>(MsgId::ID_AUTH_FRIEND_RSP));
             });
 
             auto toUid = j["to_uid"].get<int>();
@@ -494,7 +520,8 @@ void LogicSystem::RegisterCallBacks()
             bool accept = j["accept"].get<bool>();
             // 不需要解析其他的信息，只需要按需发给对方即可
             // fromUid接受或者拒绝，服务器回复给toUid
-            std::string base_key = USER_BASE_INFO_PREFIX + std::to_string(toUid);
+            std::string base_key =
+                USER_BASE_INFO_PREFIX + std::to_string(toUid);
             auto apply_info = std::make_shared<UserInfo>();
             bool b_info = GetBaseInfo(base_key, toUid, apply_info);
             if (!b_info) {
@@ -503,12 +530,14 @@ void LogicSystem::RegisterCallBacks()
                 if (!accept) {
                     MysqlManager::GetInstance()->AddNotification(
                         std::to_string(toUid),
-                        static_cast<int>(NotificationCodes::ID_NOTIFY_NOT_FRIENDS),
+                        static_cast<int>(
+                            NotificationCodes::ID_NOTIFY_NOT_FRIENDS),
                         "😭" + fromName + "拒绝了您的好友申请😭");
                 } else {
                     MysqlManager::GetInstance()->AddNotification(
                         std::to_string(toUid),
-                        static_cast<int>(NotificationCodes::ID_NOTIFY_MAKE_FRIENDS),
+                        static_cast<int>(
+                            NotificationCodes::ID_NOTIFY_MAKE_FRIENDS),
                         "😄" + fromName + "同意了您的好友申请😄");
                 }
                 return;
@@ -520,12 +549,15 @@ void LogicSystem::RegisterCallBacks()
                 j["to_email"] = apply_info->email;
                 j["to_icon"] = apply_info->icon;
                 j["to_desc"] = apply_info->desc;
-                j["to_meseage"] = apply_info->back; // 备用字段，用来展示最近消息
+                j["to_meseage"] =
+                    apply_info->back; // 备用字段，用来展示最近消息
                 j["ok"] = true;
                 if (!accept) {
-                    j["type"] = static_cast<int>(NotificationCodes::ID_NOTIFY_NOT_FRIENDS);
+                    j["type"] = static_cast<int>(
+                        NotificationCodes::ID_NOTIFY_NOT_FRIENDS);
                 } else {
-                    j["type"] = static_cast<int>(NotificationCodes::ID_NOTIFY_MAKE_FRIENDS);
+                    j["type"] = static_cast<int>(
+                        NotificationCodes::ID_NOTIFY_MAKE_FRIENDS);
                 }
             }
             if (accept) {
@@ -548,26 +580,30 @@ void LogicSystem::RegisterCallBacks()
                 if (accept) {
                     bool ok = MysqlManager::GetInstance()->AddNotification(
                         std::to_string(toUid),
-                        static_cast<int>(NotificationCodes::ID_NOTIFY_MAKE_FRIENDS),
+                        static_cast<int>(
+                            NotificationCodes::ID_NOTIFY_MAKE_FRIENDS),
                         "😄" + fromName + "已经和您成为好友😄");
                 } else {
                     bool ok = MysqlManager::GetInstance()->AddNotification(
                         std::to_string(toUid),
-                        static_cast<int>(NotificationCodes::ID_NOTIFY_NOT_FRIENDS),
+                        static_cast<int>(
+                            NotificationCodes::ID_NOTIFY_NOT_FRIENDS),
                         "😭" + fromName + "拒绝了您的好友请求😭");
                 }
                 return;
             }
-            auto& cfg = ConfigManager::GetInstance();
+            auto &cfg = ConfigManager::GetInstance();
             auto self_name = cfg["SelfServer"]["name"];
             if (to_ip_value == self_name) {
                 auto session2 = UserManager::GetInstance()->GetSession(toUid);
                 if (session2) {
                     SPDLOG_INFO("FROM UID:{},to:{}", fromUid, toUid);
-                    SPDLOG_INFO("FROM SESSION:{},to:{}", session->GetSessionId(),
-                        session2->GetSessionId());
+                    SPDLOG_INFO("FROM SESSION:{},to:{}",
+                                session->GetSessionId(),
+                                session2->GetSessionId());
                     j["from_status"] = 1;
-                    session2->Send(j.dump(),
+                    session2->Send(
+                        j.dump(),
                         static_cast<int>(MsgId::ID_NOTIFY_AUTH_FRIEND_REQ));
                 }
             } else {
@@ -580,15 +616,16 @@ void LogicSystem::RegisterCallBacks()
                 req.set_fromstatus(fromStatus);
                 req.set_fromdesc(fromDesc);
                 if (!accept) {
-                    req.set_type(
-                        static_cast<int>(NotificationCodes::ID_NOTIFY_NOT_FRIENDS));
+                    req.set_type(static_cast<int>(
+                        NotificationCodes::ID_NOTIFY_NOT_FRIENDS));
                     req.set_message(fromName + "拒绝了你的好友申请");
                 } else {
-                    req.set_type(
-                        static_cast<int>(NotificationCodes::ID_NOTIFY_MAKE_FRIENDS));
+                    req.set_type(static_cast<int>(
+                        NotificationCodes::ID_NOTIFY_MAKE_FRIENDS));
                     req.set_message(fromName + "同意了您的好友申请");
                 }
-                ChatGrpcClient::GetInstance()->NotifyMakeFriends(to_ip_value, req);
+                ChatGrpcClient::GetInstance()->NotifyMakeFriends(to_ip_value,
+                                                                 req);
             }
         };
     /**
@@ -597,17 +634,17 @@ void LogicSystem::RegisterCallBacks()
      */
     _function_callbacks[MsgId::ID_TEXT_CHAT_MSG_REQ] =
         [this](std::shared_ptr<Session> session, uint16_t msg_id,
-            const std::string& msg) {
+               const std::string &msg) {
             json j;
             j["error"] = ErrorCodes::SUCCESS;
             Defer defer([this, &j, session]() {
                 session->Send(j.dump(),
-                    static_cast<int>(MsgId::ID_TEXT_CHAT_MSG_RSP));
+                              static_cast<int>(MsgId::ID_TEXT_CHAT_MSG_RSP));
             });
             im::MessageItem pb;
             pb.ParseFromString(msg);
 
-            auto& cfg = ConfigManager::GetInstance();
+            auto &cfg = ConfigManager::GetInstance();
             auto self_name = cfg["SelfServer"]["name"];
             auto to_uid = pb.to_id();
             std::string to_key = USERIP_PREFIX + std::to_string(to_uid);
@@ -623,16 +660,19 @@ void LogicSystem::RegisterCallBacks()
                 return;
             } else {
                 if (to_ip_value == self_name) {
-                    auto session2 = UserManager::GetInstance()->GetSession(to_uid);
+                    auto session2 =
+                        UserManager::GetInstance()->GetSession(to_uid);
                     if (session2) {
                         SPDLOG_INFO("FROM UID:{},to:{}", pb.from_id(), to_uid);
-                        SPDLOG_INFO("FROM SESSION:{},to:{}", session->GetSessionId(),
-                            session2->GetSessionId());
-                        session2->Send(
-                            msg, static_cast<int>(MsgId::ID_NOTIFY_TEXT_CHAT_MSG_REQ));
+                        SPDLOG_INFO("FROM SESSION:{},to:{}",
+                                    session->GetSessionId(),
+                                    session2->GetSessionId());
+                        session2->Send(msg,
+                                       static_cast<int>(
+                                           MsgId::ID_NOTIFY_TEXT_CHAT_MSG_REQ));
                         bool ok = MysqlManager::GetInstance()->AddMessage(
-                            pb.id(), pb.from_id(), pb.to_id(), pb.timestamp(), pb.env(),
-                            pb.content().type(), pb.content().data(),
+                            pb.id(), pb.from_id(), pb.to_id(), pb.timestamp(),
+                            pb.env(), pb.content().type(), pb.content().data(),
                             pb.content().mime_type(), pb.content().fid(), 1);
                     }
                 } else {
@@ -640,26 +680,27 @@ void LogicSystem::RegisterCallBacks()
                     req.set_fromuid(pb.from_id());
                     req.set_touid(pb.to_id());
                     req.set_data(msg);
-                    ChatGrpcClient::GetInstance()->NotifyTextChatMessage(to_ip_value,
-                        req);
+                    ChatGrpcClient::GetInstance()->NotifyTextChatMessage(
+                        to_ip_value, req);
                 }
             }
         };
 
     _function_callbacks[MsgId::ID_SYNC_CONVERSATIONS_REQ] =
         [this](std::shared_ptr<Session> session, uint16_t msg_id,
-            const std::string& msg) {
+               const std::string &msg) {
             json j;
             try {
                 j = json::parse(msg);
-            } catch (const std::exception& e) {
+            } catch (const std::exception &e) {
                 SPDLOG_WARN("SyncConversations parse error: {}", e.what());
                 json err;
                 err["error"] = ErrorCodes::ERROR_JSON;
                 return;
             }
 
-            if (!j.contains("conversations") || !j["conversations"].is_array()) {
+            if (!j.contains("conversations") ||
+                !j["conversations"].is_array()) {
                 SPDLOG_WARN("SyncConversations missing conversations array");
                 return;
             }
@@ -668,37 +709,43 @@ void LogicSystem::RegisterCallBacks()
             int owner_uid = j.value("uid", 0);
             std::string owner_uid_str = std::to_string(owner_uid);
 
-            for (const auto& item : j["conversations"]) {
+            for (const auto &item : j["conversations"]) {
                 try {
                     auto conv = std::make_shared<SessionInfo>();
                     conv->uid = item.value("uid", 0);
                     conv->from_uid = item.value("from_uid", 0);
                     conv->to_uid = item.value("to_uid", 0);
-                    conv->create_time = item.value("create_time", std::string());
-                    conv->update_time = item.value("update_time", std::string());
+                    conv->create_time =
+                        item.value("create_time", std::string());
+                    conv->update_time =
+                        item.value("update_time", std::string());
                     conv->name = item.value("name", std::string());
                     conv->icon = item.value("icon", std::string());
                     conv->status = item.value("status", 0);
                     conv->deleted = item.value("deleted", 0);
                     conv->pined = item.value("pined", 0);
                     conv->processed = item.value("processed", false);
-                    // 客户端可能携带本地 processed 字段，用于 UI，本段不用写入 DB
+                    // 客户端可能携带本地 processed 字段，用于 UI，本段不用写入
+                    // DB
 
                     // 将会话写入数据库
                     // 假定 MysqlManager 提供 AddConversation(owner_uid,
                     // std::shared_ptr<SessionInfo>)
                     // 如果项目中签名不同，请根据实际签名调整此处调用。
                     bool ok = MysqlManager::GetInstance()->AddConversation(
-                        conv->uid, conv->from_uid, conv->to_uid, conv->create_time,
-                        conv->update_time, conv->name, conv->icon, conv->status,
-                        conv->deleted, conv->pined, conv->processed);
+                        conv->uid, conv->from_uid, conv->to_uid,
+                        conv->create_time, conv->update_time, conv->name,
+                        conv->icon, conv->status, conv->deleted, conv->pined,
+                        conv->processed);
                     if (!ok) {
-                        SPDLOG_WARN("AddConversation failed owner:{} conv_uid:{}",
+                        SPDLOG_WARN(
+                            "AddConversation failed owner:{} conv_uid:{}",
                             owner_uid, conv->uid);
                         // 不中断，继续处理剩余会话
                     }
-                } catch (const std::exception& e) {
-                    SPDLOG_WARN("Exception when processing conversation item: {}",
+                } catch (const std::exception &e) {
+                    SPDLOG_WARN(
+                        "Exception when processing conversation item: {}",
                         e.what());
                     // 继续处理下一个
                 }
@@ -707,16 +754,15 @@ void LogicSystem::RegisterCallBacks()
 
     _function_callbacks[MsgId::ID_HEART_BEAT_REQ] =
         [this](std::shared_ptr<Session> session, uint16_t msg_id,
-            const std::string& msg) {
+               const std::string &msg) {
             json j = json::parse(msg);
             auto uid = j["fromuid"].get<int>();
             j["error"] = ErrorCodes::SUCCESS;
             session->Send(j.dump(), static_cast<int>(MsgId::ID_HEARTBEAT_RSP));
-    };
+        };
 }
 
-void LogicSystem::DealMsg()
-{
+void LogicSystem::DealMsg() {
     while (true) {
         std::unique_lock<std::mutex> lock(_mutex);
         _cv.wait(lock, [this]() { return _stop || !_queue.empty(); });
@@ -735,9 +781,9 @@ void LogicSystem::DealMsg()
                 auto it = _function_callbacks.find(
                     static_cast<MsgId>(msg->_recv_node->_msg_id));
                 if (it != _function_callbacks.end()) {
-                    it->second(
-                        msg->_session, msg->_recv_node->_msg_id,
-                        std::string(msg->_recv_node->_data, msg->_recv_node->_total_len));
+                    it->second(msg->_session, msg->_recv_node->_msg_id,
+                               std::string(msg->_recv_node->_data,
+                                           msg->_recv_node->_total_len));
                 }
             }
         }
@@ -745,8 +791,7 @@ void LogicSystem::DealMsg()
 }
 
 bool LogicSystem::GetBaseInfo(std::string base_key, int uid,
-    std::shared_ptr<UserInfo>& userinfo)
-{
+                              std::shared_ptr<UserInfo> &userinfo) {
     std::string info_str = "";
     bool b_base = RedisManager::GetInstance()->Get(base_key, info_str);
     if (b_base) {
@@ -757,7 +802,8 @@ bool LogicSystem::GetBaseInfo(std::string base_key, int uid,
         userinfo->sex = j["sex"].get<int>();
         std::string status_key = USER_STATUS_PREFIX + std::to_string(uid);
         std::string status_value;
-        bool b_status = RedisManager::GetInstance()->Get(status_key, status_value);
+        bool b_status =
+            RedisManager::GetInstance()->Get(status_key, status_value);
         if (b_status) {
             if (status_value == "0" || status_value == "") {
                 userinfo->status = 0;
@@ -784,7 +830,8 @@ bool LogicSystem::GetBaseInfo(std::string base_key, int uid,
         j["desc"] = userinfo->desc;
         std::string status_key = USER_STATUS_PREFIX + std::to_string(uid);
         std::string status_value;
-        bool b_status = RedisManager::GetInstance()->Get(status_key, status_value);
+        bool b_status =
+            RedisManager::GetInstance()->Get(status_key, status_value);
         if (b_status) {
             if (status_value == "0" || status_value == "") {
                 j["status"] = 0;
@@ -800,17 +847,15 @@ bool LogicSystem::GetBaseInfo(std::string base_key, int uid,
     return true;
 }
 
-bool LogicSystem::IsPureDigit(const std::string& str)
-{
+bool LogicSystem::IsPureDigit(const std::string &str) {
     if (str.empty())
         return false;
     return std::all_of(str.begin(), str.end(),
-        [](char c) { return std::isdigit(c); });
+                       [](char c) { return std::isdigit(c); });
 }
 
-void LogicSystem::GetSearchedUsers(const std::string& uid, json& j,
-    bool only_digit)
-{
+void LogicSystem::GetSearchedUsers(const std::string &uid, json &j,
+                                   bool only_digit) {
     // 根据only决定使用uid还是name搜索
     j["error"] = ErrorCodes::SUCCESS;
     std::string base_key = USER_BASE_INFO_PREFIX + uid;
@@ -853,12 +898,13 @@ void LogicSystem::GetSearchedUsers(const std::string& uid, json& j,
         bool b_base = RedisManager::GetInstance()->Get(name_key, name_str);
         if (b_base) {
             users = json::parse(name_str);
-            for (auto& user : users) {
+            for (auto &user : users) {
                 user["status"] = 1;
             }
             return;
         } else {
-            std::vector<std::shared_ptr<UserInfo>> user_infos = MysqlManager::GetInstance()->GetUser(uid);
+            std::vector<std::shared_ptr<UserInfo>> user_infos =
+                MysqlManager::GetInstance()->GetUser(uid);
             if (user_infos.empty()) {
                 j["error"] = ErrorCodes::ERROR_UID_INVALID;
                 return;
@@ -884,8 +930,7 @@ void LogicSystem::GetSearchedUsers(const std::string& uid, json& j,
 
 LogicSystem::LogicSystem(std::size_t size)
     : _stop(false)
-    , _size(size)
-{
+    , _size(size) {
     RegisterCallBacks();
     _work_threads.reserve(size);
     for (std::size_t i = 0; i < size; ++i) {
@@ -893,11 +938,10 @@ LogicSystem::LogicSystem(std::size_t size)
     }
 }
 
-LogicSystem::~LogicSystem()
-{
+LogicSystem::~LogicSystem() {
     _stop = true;
     _cv.notify_all();
-    for (auto& p : _work_threads) {
+    for (auto &p : _work_threads) {
         p.join();
     }
 

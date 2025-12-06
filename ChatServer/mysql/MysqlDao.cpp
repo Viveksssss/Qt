@@ -3,6 +3,8 @@
 #include "../data/im.pb.h"
 #include "../global/ConfigManager.h"
 #include "../global/const.h"
+#include <chrono>
+#include <cstdlib>
 #include <exception>
 #include <mysql++/connection.h>
 #include <mysql++/exceptions.h>
@@ -10,7 +12,9 @@
 #include <mysql++/result.h>
 #include <spdlog/spdlog.h>
 
-MysqlPool::MysqlPool(const std::string& url, const std::string& user, const std::string& password, const std::string& schedma, const std::string& port, int poolSize)
+MysqlPool::MysqlPool(const std::string &url, const std::string &user,
+                     const std::string &password, const std::string &schedma,
+                     const std::string &port, int poolSize)
     : _url(url)
     , _user(user)
     , _password(password)
@@ -18,39 +22,118 @@ MysqlPool::MysqlPool(const std::string& url, const std::string& user, const std:
     , _port(port)
     , _poolSize(poolSize)
     , _stop(false)
-{
+    , _last_operate_time()
+    , _failed_count(0) {
     for (std::size_t i = 0; i < _poolSize; ++i) {
         try {
             auto conn = std::make_unique<mysqlpp::Connection>();
-            if (conn->connect(_schedma.c_str(), _url.c_str(), _user.c_str(), _password.c_str(), std::stoi(_port))) {
+            if (conn->connect(_schedma.c_str(), _url.c_str(), _user.c_str(),
+                              _password.c_str(), std::stoi(_port))) {
                 _connections.push(std::move(conn));
             } else {
-                SPDLOG_ERROR("Failed To Create Database Connection: {}", conn->error());
+                SPDLOG_ERROR("Failed To Create Database Connection: {}",
+                             conn->error());
+                _failed_count++;
             }
-        } catch (const mysqlpp::Exception& e) {
+        } catch (const mysqlpp::Exception &e) {
             SPDLOG_ERROR("Failed to connect to mysql:{}", e.what());
+            _failed_count++;
         }
     }
+    auto currentTime = std::chrono::system_clock::now().time_since_epoch();
+    long long timestamp =
+        std::chrono::duration_cast<std::chrono::seconds>(currentTime).count();
+    _last_operate_time = timestamp;
 
     if (_connections.size() < _poolSize) {
         SPDLOG_WARN("Connection Pool Initialized With Only {}/{} Connections",
-            _connections.size(), _poolSize);
+                    _connections.size(), _poolSize);
     } else {
         SPDLOG_INFO("Mysql Connection Pool Initialized");
     }
-}
 
-MysqlPool::~MysqlPool()
-{
-    Close();
-}
-
-std::unique_ptr<mysqlpp::Connection> MysqlPool::GetConnection() noexcept
-{
-    std::unique_lock<std::mutex> lock(_mutex);
-    _cv.wait(lock, [this] {
-        return _stop || !_connections.empty();
+    _check_thread = std::thread([this]() {
+        int count = 0;
+        while (!_stop) {
+            if (count >= 60 * 5) {
+                count = 0;
+                checkConnection();
+            }
+            count++;
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
     });
+    _check_thread.detach();
+}
+
+long long MysqlPool::GetLastOperateTime() { return _last_operate_time; }
+
+void MysqlPool::checkConnection() {
+    std::lock_guard<std::mutex> lock(_mutex);
+    auto currentTime = std::chrono::system_clock::now().time_since_epoch();
+
+    long long timestamp =
+        std::chrono::duration_cast<std::chrono::seconds>(currentTime).count();
+
+    if (timestamp - _last_operate_time >= 30) {
+        _last_operate_time = timestamp;
+        if (_connections.empty() && !_failed_count) {
+            return;
+        }
+        int target = _connections.size();
+        for (int i = 0; i < target; ++i) {
+            bool health = true;
+            auto conn = std::move(_connections.front());
+            _connections.pop();
+            try {
+                mysqlpp::Query query = conn->query();
+                query << "SELECT 1";
+                query.parse();
+                auto res = query.store();
+            } catch (const std::exception &e) {
+                SPDLOG_ERROR("MySQL++ exception: {}", e.what());
+                _failed_count++;
+                health = false;
+            }
+            if (health) {
+                _connections.push(std::move(conn));
+                _cv.notify_one();
+            }
+        }
+
+        while (_failed_count > 0) {
+            auto b_ok = Reconnect();
+            if (b_ok) {
+                _failed_count--;
+            } else {
+                break;
+            }
+        }
+    }
+}
+
+bool MysqlPool::Reconnect() {
+    SPDLOG_INFO("RETRY");
+    try {
+        auto conn = std::make_unique<mysqlpp::Connection>();
+        if (conn->connect(_schedma.c_str(), _url.c_str(), _user.c_str(),
+                          _password.c_str(), std::stoi(_port))) {
+            _connections.push(std::move(conn));
+            _cv.notify_one();
+            return true;
+        }
+        SPDLOG_WARN("Reconnect to MYSQL failed:{}", conn->error());
+        return false;
+    } catch (const std::exception &e) {
+        SPDLOG_WARN("Reconnect to MYSQL failed:{}", e.what());
+        return false;
+    }
+}
+MysqlPool::~MysqlPool() { Close(); }
+
+std::unique_ptr<mysqlpp::Connection> MysqlPool::GetConnection() noexcept {
+    std::unique_lock<std::mutex> lock(_mutex);
+    _cv.wait(lock, [this] { return _stop || !_connections.empty(); });
     if (_stop) {
         return nullptr;
     }
@@ -59,8 +142,8 @@ std::unique_ptr<mysqlpp::Connection> MysqlPool::GetConnection() noexcept
     return conn;
 }
 
-void MysqlPool::ReturnConnection(std::unique_ptr<mysqlpp::Connection> conn) noexcept
-{
+void MysqlPool::ReturnConnection(
+    std::unique_ptr<mysqlpp::Connection> conn) noexcept {
     std::unique_lock<std::mutex> lock(_mutex);
     if (_stop) {
         return;
@@ -69,8 +152,7 @@ void MysqlPool::ReturnConnection(std::unique_ptr<mysqlpp::Connection> conn) noex
     _cv.notify_one();
 }
 
-void MysqlPool::Close() noexcept
-{
+void MysqlPool::Close() noexcept {
     std::unique_lock<std::mutex> lock(_mutex);
     _stop = true;
     _cv.notify_all();
@@ -80,35 +162,53 @@ void MysqlPool::Close() noexcept
     }
 }
 
-MysqlDao::MysqlDao()
-{
-    auto& cfgMgr = ConfigManager::GetInstance();
-    const auto& host = cfgMgr["Mysql"]["host"];
-    const auto& port = cfgMgr["Mysql"]["port"];
-    const auto& schema = cfgMgr["Mysql"]["schema"];
-    const auto& password = cfgMgr["Mysql"]["password"];
-    const auto& user = cfgMgr["Mysql"]["user"];
+MysqlDao::MysqlDao() {
+    auto &cfgMgr = ConfigManager::GetInstance();
+    const auto &host = cfgMgr["Mysql"]["host"];
+    const auto &port = cfgMgr["Mysql"]["port"];
+    const auto &schema = cfgMgr["Mysql"]["schema"];
+    const auto &password = cfgMgr["Mysql"]["password"];
+    const auto &user = cfgMgr["Mysql"]["user"];
     _pool = std::make_unique<MysqlPool>(host, user, password, schema, port);
 }
 
-MysqlDao::~MysqlDao()
-{
-    _pool->Close();
-}
+MysqlDao::~MysqlDao() { _pool->Close(); }
 
-int MysqlDao::TestUidAndEmail(const std::string& uid, const std::string& email)
-{
+bool MysqlDao::test() {
     auto conn = _pool->GetConnection();
     if (!conn) {
         return -1;
     }
-    Defer defer([this, &conn] {
-        _pool->ReturnConnection(std::move(conn));
-    });
+    Defer defer([this, &conn] { _pool->ReturnConnection(std::move(conn)); });
 
     try {
         mysqlpp::Query query = conn->query();
-        query << "select * from user where uid = ? or email = ?";
+        query << "SELECT NOW()";
+
+        mysqlpp::StoreQueryResult res = query.store();
+
+        std::size_t count = res.num_rows();
+        if (count != 1) {
+            return -1;
+        }
+        return true;
+    } catch (const std::exception &e) {
+        SPDLOG_ERROR("MySQL++ exception in TestUidAndEmail: {}", e.what());
+        return false;
+    }
+}
+
+int MysqlDao::TestUidAndEmail(const std::string &uid,
+                              const std::string &email) {
+    auto conn = _pool->GetConnection();
+    if (!conn) {
+        return -1;
+    }
+    Defer defer([this, &conn] { _pool->ReturnConnection(std::move(conn)); });
+
+    try {
+        mysqlpp::Query query = conn->query();
+        query << "select * from user where uid = %0q or email = %1q";
         query.parse();
 
         mysqlpp::StoreQueryResult res = query.store(uid, email);
@@ -118,28 +218,27 @@ int MysqlDao::TestUidAndEmail(const std::string& uid, const std::string& email)
             return -1;
         }
         return 1;
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         SPDLOG_ERROR("MySQL++ exception in TestUidAndEmail: {}", e.what());
         return -1;
     }
 }
 
-int MysqlDao::RegisterUser(const std::string& name, const std::string& email, const std::string& password)
-{
+int MysqlDao::RegisterUser(const std::string &name, const std::string &email,
+                           const std::string &password) {
     auto conn = _pool->GetConnection();
     if (!conn) {
         return -1;
     }
-    Defer defer([&conn, this] {
-        _pool->ReturnConnection(std::move(conn));
-    });
+    Defer defer([&conn, this] { _pool->ReturnConnection(std::move(conn)); });
 
     try {
         mysqlpp::Transaction trans(*conn);
         mysqlpp::Query query = conn->query();
 
         // 先检查是否用户已经存在
-        query << "SELECT id FROM user WHERE name = ? OR email = ? FOR UPDATE";
+        query << "SELECT id FROM user WHERE name = %0q OR email = %1q FOR "
+                 "UPDATE";
         auto check_result = query.store(name, email);
 
         if (check_result && check_result.num_rows() > 0) {
@@ -148,7 +247,8 @@ int MysqlDao::RegisterUser(const std::string& name, const std::string& email, co
         }
 
         // 如果不存在就插入，注册成功
-        query << "INSERT INTO user (name, email, password) VALUES (?, ?, ?)";
+        query << "INSERT INTO user (name, email, password) VALUES (%0q, %1q, "
+                 "%2q)";
         auto insert_result = query.execute(name, email, password);
 
         if (insert_result) {
@@ -160,21 +260,19 @@ int MysqlDao::RegisterUser(const std::string& name, const std::string& email, co
             return -1;
         }
 
-    } catch (const mysqlpp::Exception& e) {
+    } catch (const mysqlpp::Exception &e) {
         SPDLOG_ERROR("Exception: {}", e.what());
         return -1;
     }
 }
 
-int MysqlDao::ResetPassword(const std::string& email, const std::string& password)
-{
+int MysqlDao::ResetPassword(const std::string &email,
+                            const std::string &password) {
     auto conn = _pool->GetConnection();
     if (!conn) {
         return -1;
     }
-    Defer defer([this, &conn]() {
-        _pool->ReturnConnection(std::move(conn));
-    });
+    Defer defer([this, &conn]() { _pool->ReturnConnection(std::move(conn)); });
     if (!conn) {
         SPDLOG_ERROR("Failed to get connection from pool");
         return -1;
@@ -183,7 +281,7 @@ int MysqlDao::ResetPassword(const std::string& email, const std::string& passwor
     try {
         // 使用 mysql++ 预处理语句
         mysqlpp::Query query = conn->query();
-        query << "UPDATE user SET password = ? WHERE email = ?";
+        query << "UPDATE user SET password = %0q WHERE email = %1q";
 
         // 执行预处理更新
         mysqlpp::SimpleResult res = query.execute(password, email);
@@ -191,7 +289,9 @@ int MysqlDao::ResetPassword(const std::string& email, const std::string& passwor
         if (res) {
             int affected_rows = res.rows();
             if (affected_rows > 0) {
-                SPDLOG_INFO("Password reset successfully for email: {}, affected rows: {}", email, affected_rows);
+                SPDLOG_INFO("Password reset successfully for email: {}, "
+                            "affected rows: {}",
+                            email, affected_rows);
                 return 1; // 成功重置密码
             } else {
                 SPDLOG_WARN("No user found with email: {}", email);
@@ -202,29 +302,27 @@ int MysqlDao::ResetPassword(const std::string& email, const std::string& passwor
             return -1;
         }
 
-    } catch (const mysqlpp::BadQuery& e) {
+    } catch (const mysqlpp::BadQuery &e) {
         SPDLOG_ERROR("Bad query in ResetPassword: {}", e.what());
         return -1;
-    } catch (const mysqlpp::Exception& e) {
+    } catch (const mysqlpp::Exception &e) {
         SPDLOG_ERROR("MySQL++ exception in ResetPassword: {}", e.what());
         return -1;
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         SPDLOG_ERROR("Exception in ResetPassword: {}", e.what());
         return -1;
     }
 }
 
-bool MysqlDao::CheckPwd(const std::string& user, const std::string& password, UserInfo& userInfo)
-{
+bool MysqlDao::CheckPwd(const std::string &user, const std::string &password,
+                        UserInfo &userInfo) {
     // chatServer暂时用不到。
     auto conn = _pool->GetConnection();
     if (!conn) {
         return false;
     }
 
-    Defer defer([this, &conn]() {
-        _pool->ReturnConnection(std::move(conn));
-    });
+    Defer defer([this, &conn]() { _pool->ReturnConnection(std::move(conn)); });
 
     if (!conn) {
         SPDLOG_ERROR("Failed to get connection from pool");
@@ -232,7 +330,8 @@ bool MysqlDao::CheckPwd(const std::string& user, const std::string& password, Us
     }
     try {
         mysqlpp::Query query = conn->query();
-        query << "Select * from user where (uid = %0q or email = %1q) and password = %2q";
+        query << "Select * from user where (uid = %0q or email = %1q) and "
+                 "password = %2q";
         query.parse();
         mysqlpp::StoreQueryResult res = query.store(user, user, password);
         std::size_t count = res.num_rows();
@@ -240,20 +339,20 @@ bool MysqlDao::CheckPwd(const std::string& user, const std::string& password, Us
             return false;
         }
         return true;
-    } catch (const mysqlpp::BadQuery& e) {
+    } catch (const mysqlpp::BadQuery &e) {
         SPDLOG_ERROR("Bad query in CheckPwd: {}", e.what());
         return false;
-    } catch (const mysqlpp::Exception& e) {
+    } catch (const mysqlpp::Exception &e) {
         SPDLOG_ERROR("MySQL++ exception in CheckPwd: {}", e.what());
         return false;
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         SPDLOG_ERROR("Exception in CheckPwd: {}", e.what());
         return false;
     }
 }
 
-bool MysqlDao::AddFriendApply(const std::string& fromUid, const std::string& toUid)
-{
+bool MysqlDao::AddFriendApply(const std::string &fromUid,
+                              const std::string &toUid) {
     if (fromUid == toUid) {
         return false; // 不允许自己添加自己
     }
@@ -263,19 +362,19 @@ bool MysqlDao::AddFriendApply(const std::string& fromUid, const std::string& toU
         return false;
     }
 
-    Defer defer([this, &conn]() {
-        _pool->ReturnConnection(std::move(conn));
-    });
+    Defer defer([this, &conn]() { _pool->ReturnConnection(std::move(conn)); });
 
     try {
         mysqlpp::Query query = conn->query();
-        query << "INSERT IGNORE INTO friend_apply (from_uid,to_uid) VALUES(%0,%1) ";
+        query << "INSERT IGNORE INTO friend_apply (from_uid,to_uid) "
+                 "VALUES(%0,%1) ";
         query.parse();
 
-        mysqlpp::SimpleResult res = query.execute(std::stoi(fromUid), std::stoi(toUid));
+        mysqlpp::SimpleResult res =
+            query.execute(std::stoi(fromUid), std::stoi(toUid));
         int rowCount = res.rows();
         return rowCount >= 0;
-    } catch (const mysqlpp::Exception& e) {
+    } catch (const mysqlpp::Exception &e) {
         SPDLOG_ERROR("MySQL++ exception: {}", e.what());
         return false;
     }
@@ -283,8 +382,7 @@ bool MysqlDao::AddFriendApply(const std::string& fromUid, const std::string& toU
     return true;
 }
 
-std::shared_ptr<UserInfo> MysqlDao::GetUser(int uid)
-{
+std::shared_ptr<UserInfo> MysqlDao::GetUser(int uid) {
     auto conn = _pool->GetConnection();
     if (!conn) {
         SPDLOG_ERROR("Failed to get connection from pool");
@@ -317,7 +415,7 @@ std::shared_ptr<UserInfo> MysqlDao::GetUser(int uid)
             return nullptr;
         }
 
-    } catch (const mysqlpp::Exception& e) {
+    } catch (const mysqlpp::Exception &e) {
         SPDLOG_ERROR("MySQL++ exception: {}", e.what());
         if (conn)
             _pool->ReturnConnection(std::move(conn));
@@ -325,23 +423,22 @@ std::shared_ptr<UserInfo> MysqlDao::GetUser(int uid)
     }
 }
 
-std::vector<std::shared_ptr<UserInfo>> MysqlDao::GetUser(const std::string& name)
-{
+std::vector<std::shared_ptr<UserInfo>>
+MysqlDao::GetUser(const std::string &name) {
     auto conn = _pool->GetConnection();
     if (!conn) {
         SPDLOG_ERROR("Failed to get connection from pool");
         return {};
     }
 
-    Defer defer([this, &conn]() {
-        _pool->ReturnConnection(std::move(conn));
-    });
+    Defer defer([this, &conn]() { _pool->ReturnConnection(std::move(conn)); });
 
     try {
         mysqlpp::Query query = conn->query();
 
         // 使用预处理语句进行模糊查询
-        query << "SELECT * FROM user WHERE name LIKE " << mysqlpp::quote << ("%" + name + "%");
+        query << "SELECT * FROM user WHERE name LIKE " << mysqlpp::quote
+              << ("%" + name + "%");
 
         mysqlpp::StoreQueryResult res = query.store();
         std::vector<std::shared_ptr<UserInfo>> users;
@@ -357,38 +454,38 @@ std::vector<std::shared_ptr<UserInfo>> MysqlDao::GetUser(const std::string& name
                 user_info->email = ValueOrEmpty(std::string(res[i]["email"]));
                 user_info->icon = ValueOrEmpty(std::string(res[i]["icon"]));
                 user_info->desc = ValueOrEmpty(std::string(res[i]["desc"]));
-                // user_info->nick = ValueOrEmpty(std::string(res[i]["nick"]));
+                // user_info->nick =
+                // ValueOrEmpty(std::string(res[i]["nick"]));
 
                 users.push_back(user_info);
             }
-            SPDLOG_DEBUG("Found {} users matching pattern: '{}'", users.size(), name);
+            SPDLOG_DEBUG("Found {} users matching pattern: '{}'", users.size(),
+                         name);
         }
         return users;
-    } catch (const mysqlpp::Exception& e) {
+    } catch (const mysqlpp::Exception &e) {
         SPDLOG_ERROR("MySQL++ exception: {}", e.what());
         return {};
     }
 }
 
-bool MysqlDao::GetFriendApplyList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& applyList)
-{
+bool MysqlDao::GetFriendApplyList(
+    const std::string &uid, std::vector<std::shared_ptr<UserInfo>> &applyList) {
     auto conn = _pool->GetConnection();
     if (!conn) {
         SPDLOG_ERROR("Failed to get connection from pool");
         return false;
     }
 
-    Defer defer([this, &conn]() {
-        _pool->ReturnConnection(std::move(conn));
-    });
+    Defer defer([this, &conn]() { _pool->ReturnConnection(std::move(conn)); });
 
     try {
         mysqlpp::Query query = conn->query();
         query << "SELECT u.uid, u.name, u.icon, u.desc, u.sex, fa.time "
               << "FROM user u, friend_apply fa "
               << "WHERE u.uid = fa.from_uid " // 获取申请发送者的信息
-              << "AND fa.to_uid = %0q " // 当前用户是接收方
-              << "AND fa.status = 0 " // status = 0 表示等待处理
+              << "AND fa.to_uid = %0q "       // 当前用户是接收方
+              << "AND fa.status = 0 "         // status = 0 表示等待处理
               << "ORDER BY fa.time desc";
         query.parse();
         mysqlpp::StoreQueryResult res = query.store(uid);
@@ -408,55 +505,52 @@ bool MysqlDao::GetFriendApplyList(const std::string& uid, std::vector<std::share
             return true;
         }
         return false;
-    } catch (const mysqlpp::Exception& e) {
+    } catch (const mysqlpp::Exception &e) {
         SPDLOG_ERROR("MySQL++ exception: {}", e.what());
         return false;
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         SPDLOG_ERROR("Exception: {}", e.what());
         return false;
     }
 }
 
-bool MysqlDao::CheckApplied(const std::string& fromUid, const std::string& toUid)
-{
+bool MysqlDao::CheckApplied(const std::string &fromUid,
+                            const std::string &toUid) {
     auto conn = _pool->GetConnection();
     if (!conn) {
         SPDLOG_ERROR("Failed to get connection from pool");
         return false;
     }
-    Defer defer([this, &conn]() {
-        _pool->ReturnConnection(std::move(conn));
-    });
+    Defer defer([this, &conn]() { _pool->ReturnConnection(std::move(conn)); });
 
     try {
         mysqlpp::Query query = conn->query();
-        query << "SELECT COUNT(*) as cnt from friend_apply where from_uid = %0q and to_uid = %1q";
+        query << "SELECT COUNT(*) as cnt from friend_apply where from_uid = "
+                 "%0q and to_uid = %1q";
         query.parse();
-        mysqlpp::StoreQueryResult res = query.store(std::stoi(fromUid), std::stoi(toUid));
+        mysqlpp::StoreQueryResult res =
+            query.store(std::stoi(fromUid), std::stoi(toUid));
         if (res && res.num_rows() == 1) {
             int count = res[0]["cnt"];
             return count > 0;
         }
         return false;
-    } catch (const mysqlpp::Exception& e) {
+    } catch (const mysqlpp::Exception &e) {
         SPDLOG_ERROR("MySQL++ exception: {}", e.what());
         return false;
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         SPDLOG_ERROR("Exception: {}", e.what());
         return false;
     }
 }
 
-bool MysqlDao::ChangeMessageStatus(const std::string& uid, int status)
-{
+bool MysqlDao::ChangeMessageStatus(const std::string &uid, int status) {
     auto conn = _pool->GetConnection();
     if (!conn) {
         SPDLOG_ERROR("Failed to get connection from pool");
         return false;
     }
-    Defer defer([this, &conn]() {
-        _pool->ReturnConnection(std::move(conn));
-    });
+    Defer defer([this, &conn]() { _pool->ReturnConnection(std::move(conn)); });
 
     try {
         mysqlpp::Query query = conn->query();
@@ -466,7 +560,9 @@ bool MysqlDao::ChangeMessageStatus(const std::string& uid, int status)
         if (res) {
             int affected_rows = res.rows();
             if (affected_rows > 0) {
-                SPDLOG_INFO("Message status changed successfully for uid: {}, status: {}", uid, status);
+                SPDLOG_INFO("Message status changed successfully for uid: {}, "
+                            "status: {}",
+                            uid, status);
                 return true;
             } else {
                 SPDLOG_WARN("No message found with uid: {}", uid);
@@ -476,17 +572,17 @@ bool MysqlDao::ChangeMessageStatus(const std::string& uid, int status)
             SPDLOG_ERROR("Failed to change message status: {}", query.error());
             return false;
         }
-    } catch (const mysqlpp::Exception& e) {
+    } catch (const mysqlpp::Exception &e) {
         SPDLOG_ERROR("MySQL++ exception: {}", e.what());
         return false;
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         SPDLOG_ERROR("Exception: {}", e.what());
         return false;
     }
 }
 
-bool MysqlDao::ChangeApplyStatus(const std::string& fromUid, const std::string& toUid, int status)
-{
+bool MysqlDao::ChangeApplyStatus(const std::string &fromUid,
+                                 const std::string &toUid, int status) {
     if (!status || fromUid == toUid) {
         return false;
     }
@@ -495,22 +591,25 @@ bool MysqlDao::ChangeApplyStatus(const std::string& fromUid, const std::string& 
         SPDLOG_ERROR("Failed to get connection from pool");
         return false;
     }
-    Defer defer([this, &conn]() {
-        _pool->ReturnConnection(std::move(conn));
-    });
+    Defer defer([this, &conn]() { _pool->ReturnConnection(std::move(conn)); });
 
     try {
         mysqlpp::Query query = conn->query();
-        query << "UPDATE friend_apply SET status = %0q WHERE from_uid = %1q AND to_uid = %2q";
+        query << "UPDATE friend_apply SET status = %0q WHERE from_uid = %1q "
+                 "AND to_uid = %2q";
         query.parse();
-        mysqlpp::SimpleResult res = query.execute(status, std::stoi(fromUid), std::stoi(toUid));
+        mysqlpp::SimpleResult res =
+            query.execute(status, std::stoi(fromUid), std::stoi(toUid));
         if (res) {
             int affected_rows = res.rows();
             if (affected_rows > 0) {
-                SPDLOG_INFO("Apply status changed successfully for from_uid: {}, to_uid: {}, status: {}", fromUid, toUid, status);
+                SPDLOG_INFO("Apply status changed successfully for from_uid: "
+                            "{}, to_uid: {}, status: {}",
+                            fromUid, toUid, status);
                 return true;
             } else {
-                SPDLOG_WARN("No apply found with from_uid: {}, to_uid: {}", fromUid, toUid);
+                SPDLOG_WARN("No apply found with from_uid: {}, to_uid: {}",
+                            fromUid, toUid);
                 return false;
             }
         } else {
@@ -518,17 +617,17 @@ bool MysqlDao::ChangeApplyStatus(const std::string& fromUid, const std::string& 
             return false;
         }
 
-    } catch (const mysqlpp::Exception& e) {
+    } catch (const mysqlpp::Exception &e) {
         SPDLOG_ERROR("MySQL++ exception: {}", e.what());
         return false;
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         SPDLOG_ERROR("Exception: {}", e.what());
         return false;
     }
 }
 
-bool MysqlDao::CheckIsFriend(const std::string& fromUid, const std::string& toUid)
-{
+bool MysqlDao::CheckIsFriend(const std::string &fromUid,
+                             const std::string &toUid) {
     if (fromUid == toUid) {
         return true;
     }
@@ -537,51 +636,56 @@ bool MysqlDao::CheckIsFriend(const std::string& fromUid, const std::string& toUi
         SPDLOG_ERROR("Failed to get connection from pool");
         return false;
     }
-    Defer defer([this, &conn]() {
-        _pool->ReturnConnection(std::move(conn));
-    });
+    Defer defer([this, &conn]() { _pool->ReturnConnection(std::move(conn)); });
     try {
         mysqlpp::Query query = conn->query();
-        query << "SELECT COUNT(*) as cnt from friends where (self_id = %0q and friend_id = %1q)"
+        query << "SELECT COUNT(*) as cnt from friends where (self_id = %0q "
+                 "and "
+                 "friend_id = %1q)"
               << "OR (self_id = %1q and friend_id = %0q)";
         query.parse();
-        mysqlpp::StoreQueryResult res = query.store(std::stoi(fromUid), std::stoi(toUid));
+        mysqlpp::StoreQueryResult res =
+            query.store(std::stoi(fromUid), std::stoi(toUid));
         if (res && !res.empty()) {
             int count = res[0]["cnt"];
             return count == 2;
         }
         return false;
-    } catch (const mysqlpp::Exception& e) {
+    } catch (const mysqlpp::Exception &e) {
         SPDLOG_ERROR("MySQL++ exception: {}", e.what());
         return false;
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         SPDLOG_ERROR("Exception: {}", e.what());
         return false;
     }
 }
 
-bool MysqlDao::AddNotification(const std::string& uid, int type, const std::string& message)
-{
+bool MysqlDao::AddNotification(const std::string &uid, int type,
+                               const std::string &message) {
     auto conn = _pool->GetConnection();
     if (!conn) {
         SPDLOG_ERROR("Failed to get connection from pool");
         return false;
     }
-    Defer defer([this, &conn]() {
-        _pool->ReturnConnection(std::move(conn));
-    });
+    Defer defer([this, &conn]() { _pool->ReturnConnection(std::move(conn)); });
     try {
         mysqlpp::Query query = conn->query();
-        query << "INSERT INTO notifications (uid,type,message) VALUES(%0q,%1q,%2q)";
+        query << "INSERT INTO notifications (uid,type,message) "
+                 "VALUES(%0q,%1q,%2q)";
         query.parse();
-        mysqlpp::SimpleResult res = query.execute(std::stoi(uid), type, message);
+        mysqlpp::SimpleResult res =
+            query.execute(std::stoi(uid), type, message);
         if (res) {
             int affected_rows = res.rows();
             if (affected_rows > 0) {
-                SPDLOG_INFO("Notification added successfully for uid: {}, type: {}, message: {}", uid, type, message);
+                SPDLOG_INFO("Notification added successfully for uid: {}, "
+                            "type: {}, message: {}",
+                            uid, type, message);
                 return true;
             } else {
-                SPDLOG_WARN("Failed to add notification for uid: {}, type: {}, message: {}", uid, type, message);
+                SPDLOG_WARN("Failed to add notification for uid: {}, type: {}, "
+                            "message: {}",
+                            uid, type, message);
                 return false;
             }
         } else {
@@ -589,28 +693,28 @@ bool MysqlDao::AddNotification(const std::string& uid, int type, const std::stri
 
             return false;
         }
-    } catch (const mysqlpp::Exception& e) {
+    } catch (const mysqlpp::Exception &e) {
         SPDLOG_ERROR("MySQL++ exception: {}", e.what());
         return false;
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         SPDLOG_ERROR("Exception: {}", e.what());
         return false;
     }
 }
 
-bool MysqlDao::GetNotificationList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& notificationList)
-{
+bool MysqlDao::GetNotificationList(
+    const std::string &uid,
+    std::vector<std::shared_ptr<UserInfo>> &notificationList) {
     auto conn = _pool->GetConnection();
     if (!conn) {
         SPDLOG_ERROR("Failed to get connection from pool");
         return false;
     }
-    Defer defer([this, &conn]() {
-        _pool->ReturnConnection(std::move(conn));
-    });
+    Defer defer([this, &conn]() { _pool->ReturnConnection(std::move(conn)); });
     try {
         mysqlpp::Query query = conn->query();
-        query << "SELECT u.uid,u.name,u.icon,u.sex,n.type,n.message,n.time from"
+        query << "SELECT u.uid,u.name,u.icon,u.sex,n.type,n.message,n.time "
+                 "from"
               << " user u, notifications n"
               << " WHERE u.uid = n.uid AND u.uid = %0q"
               << " AND n.status = 0"
@@ -634,17 +738,17 @@ bool MysqlDao::GetNotificationList(const std::string& uid, std::vector<std::shar
             return true;
         }
         return false;
-    } catch (const mysqlpp::Exception& e) {
+    } catch (const mysqlpp::Exception &e) {
         SPDLOG_ERROR("MySQL++ exception: {}", e.what());
         return false;
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         SPDLOG_ERROR("Exception: {}", e.what());
         return false;
     }
 }
 
-bool MysqlDao::MakeFriends(const std::string& fromUid, const std::string& toUid)
-{
+bool MysqlDao::MakeFriends(const std::string &fromUid,
+                           const std::string &toUid) {
     if (fromUid == toUid) {
         return false;
     }
@@ -654,52 +758,56 @@ bool MysqlDao::MakeFriends(const std::string& fromUid, const std::string& toUid)
         SPDLOG_ERROR("Failed to get connection from pool");
         return false;
     }
-    Defer defer([this, &conn]() {
-        _pool->ReturnConnection(std::move(conn));
-    });
+    Defer defer([this, &conn]() { _pool->ReturnConnection(std::move(conn)); });
     try {
         mysqlpp::Transaction trans(*conn);
         // 添加好友应该是双向的，所以需要插入两条记录
         mysqlpp::Query query1 = conn->query();
-        query1 << "INSERT IGNORE INTO friends (self_id,friend_id) VALUES(%0q,%1q),"
+        query1 << "INSERT IGNORE INTO friends (self_id,friend_id) "
+                  "VALUES(%0q,%1q),"
                << "(%1q,%0q)";
         query1.parse();
-        mysqlpp::SimpleResult res1 = query1.execute(std::stoi(fromUid), std::stoi(toUid));
+        mysqlpp::SimpleResult res1 =
+            query1.execute(std::stoi(fromUid), std::stoi(toUid));
         if (res1) {
             int affected_rows1 = res1.rows();
             if (affected_rows1 > 0) {
                 trans.commit();
-                SPDLOG_INFO("Friends added successfully for from_uid: {}, to_uid: {}", fromUid, toUid);
+                SPDLOG_INFO("Friends added successfully for from_uid: {}, "
+                            "to_uid: {}",
+                            fromUid, toUid);
                 return true;
             } else {
                 trans.rollback();
-                SPDLOG_WARN("Failed to add friends for from_uid: {}, to_uid: {}", fromUid, toUid);
+                SPDLOG_WARN(
+                    "Failed to add friends for from_uid: {}, to_uid: {}",
+                    fromUid, toUid);
                 return false;
             }
         } else {
             trans.rollback();
-            SPDLOG_ERROR("Failed to add friends for from_uid: {}, to_uid: {}", fromUid, toUid);
+            SPDLOG_ERROR("Failed to add friends for from_uid: {}, to_uid: {}",
+                         fromUid, toUid);
             return false;
         }
-    } catch (const mysqlpp::Exception& e) {
+    } catch (const mysqlpp::Exception &e) {
         SPDLOG_ERROR("MySQL++ exception: {}", e.what());
         return false;
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         SPDLOG_ERROR("Exception: {}", e.what());
         return false;
     }
 }
 
-bool MysqlDao::GetFriendList(const std::string& uid, std::vector<std::shared_ptr<UserInfo>>& friendList)
-{
+bool MysqlDao::GetFriendList(
+    const std::string &uid,
+    std::vector<std::shared_ptr<UserInfo>> &friendList) {
     auto conn = _pool->GetConnection();
     if (!conn) {
         SPDLOG_ERROR("Failed to get connection from pool");
         return false;
     }
-    Defer defer([this, &conn]() {
-        _pool->ReturnConnection(std::move(conn));
-    });
+    Defer defer([this, &conn]() { _pool->ReturnConnection(std::move(conn)); });
     try {
         mysqlpp::Query query = conn->query();
         // 使用显式JOIN，更清晰
@@ -727,99 +835,137 @@ bool MysqlDao::GetFriendList(const std::string& uid, std::vector<std::shared_ptr
             return true;
         }
         return false;
-    } catch (const mysqlpp::Exception& e) {
+    } catch (const mysqlpp::Exception &e) {
         SPDLOG_ERROR("MySQL++ exception: {}", e.what());
         return false;
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         SPDLOG_ERROR("Exception: {}", e.what());
         return false;
     }
 }
 
-bool MysqlDao::AddMessage(const std::string& uid, int from_uid, int to_uid, const std::string& timestamp, int env, int content_type, const std::string& content_data, const std::string& content_mime_type, const std::string& content_fid, int status)
-{
+bool MysqlDao::AddMessage(const std::string &uid, int from_uid, int to_uid,
+                          const std::string &timestamp, int env,
+                          int content_type, const std::string &content_data,
+                          const std::string &content_mime_type,
+                          const std::string &content_fid, int status) {
     auto conn = _pool->GetConnection();
     if (!conn) {
         SPDLOG_ERROR("Failed to get connection from pool");
         return false;
     }
-    Defer defer([this, &conn]() {
-        _pool->ReturnConnection(std::move(conn));
-    });
+    Defer defer([this, &conn]() { _pool->ReturnConnection(std::move(conn)); });
     try {
         mysqlpp::Query query = conn->query();
-        query << "INSERT INTO messages (uid,from_uid,to_uid,timestamp,env,content_type,content_data,content_mime_type,content_fid,status) VALUES(%0q,%1q,%2q,%3q,%4q,%5q,%6q,%7q,%8q,%9q)";
+        query << "INSERT INTO messages "
+                 "(uid,from_uid,to_uid,timestamp,env,content_type,content_"
+                 "data,"
+                 "content_mime_type,content_fid,status) "
+                 "VALUES(%0q,%1q,%2q,%3q,%4q,%5q,%6q,%7q,%8q,%9q)";
         query.parse();
-        mysqlpp::SimpleResult res = query.execute(uid, from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, content_fid, status);
+        mysqlpp::SimpleResult res =
+            query.execute(uid, from_uid, to_uid, timestamp, env, content_type,
+                          content_data, content_mime_type, content_fid, status);
         if (res) {
             int affected_rows = res.rows();
             if (affected_rows > 0) {
-                SPDLOG_INFO("Message added successfully for from_uid: {}, to_uid: {}, timestamp: {}, env: {}, content_type: {}, content_data: {}, content_mime_type: {}, fid: {}, status: {}", from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, content_fid, status);
+                SPDLOG_INFO(
+                    "Message added successfully for from_uid: {}, to_uid: "
+                    "{}, "
+                    "timestamp: {}, env: {}, content_type: {}, "
+                    "content_data: "
+                    "{}, content_mime_type: {}, fid: {}, status: {}",
+                    from_uid, to_uid, timestamp, env, content_type,
+                    content_data, content_mime_type, content_fid, status);
                 return true;
             } else {
-                SPDLOG_WARN("Failed to add message for from_uid: {}, to_uid: {}, timestamp: {}, env: {}, content_type: {}, content_data: {}, content_mime_type: {}, fid: {}, status: {}", from_uid, to_uid, timestamp, env, content_type, content_data, content_mime_type, content_fid, status);
+                SPDLOG_WARN(
+                    "Failed to add message for from_uid: {}, to_uid: {}, "
+                    "timestamp: {}, env: {}, content_type: {}, "
+                    "content_data: "
+                    "{}, content_mime_type: {}, fid: {}, status: {}",
+                    from_uid, to_uid, timestamp, env, content_type,
+                    content_data, content_mime_type, content_fid, status);
                 return false;
             }
         } else {
             SPDLOG_ERROR("Failed to add message: {}", query.error());
             return false;
         }
-    } catch (const mysqlpp::Exception& e) {
+    } catch (const mysqlpp::Exception &e) {
         SPDLOG_ERROR("MySQL++ exception: {}", e.what());
         return false;
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         SPDLOG_ERROR("Exception: {}", e.what());
         return false;
     }
 }
 
-bool MysqlDao::AddConversation(const std::string& uid, int from_uid, int to_uid, const std::string& create_time, const std::string& update_time, const std::string& name, const std::string& icon, int staus, int deleted, int pined, bool processed)
-{
+bool MysqlDao::AddConversation(const std::string &uid, int from_uid, int to_uid,
+                               const std::string &create_time,
+                               const std::string &update_time,
+                               const std::string &name, const std::string &icon,
+                               int staus, int deleted, int pined,
+                               bool processed) {
     auto conn = _pool->GetConnection();
     if (!conn) {
         SPDLOG_ERROR("Failed to get connection from pool");
         return false;
     }
-    Defer defer([this, &conn]() {
-        _pool->ReturnConnection(std::move(conn));
-    });
+    Defer defer([this, &conn]() { _pool->ReturnConnection(std::move(conn)); });
     try {
         mysqlpp::Query query = conn->query();
-        query << "INSERT INTO conversations (uid,from_uid,to_uid,create_time,update_time,name,icon,status,deleted,pined,processed) VALUES(%0q,%1q,%2q,%3q,%4q,%5q,%6q,%7q,%8q,%9q,%10)";
+        query << "INSERT INTO conversations "
+                 "(uid,from_uid,to_uid,create_time,update_time,name,icon,"
+                 "status,deleted,pined,processed) "
+                 "VALUES(%0q,%1q,%2q,%3q,%4q,%5q,%6q,%7q,%8q,%9q,%10)";
         query.parse();
-        mysqlpp::SimpleResult res = query.execute(uid, from_uid, to_uid, create_time, update_time, name, icon, staus, deleted, pined, processed);
+        mysqlpp::SimpleResult res =
+            query.execute(uid, from_uid, to_uid, create_time, update_time, name,
+                          icon, staus, deleted, pined, processed);
         if (res) {
             int affected_rows = res.rows();
             if (affected_rows > 0) {
-                SPDLOG_INFO("Conversation added successfully for uid: {}, from_uid: {}, to_uid: {}, create_time: {}, update_time: {}, name: {}, icon: {}, status: {}, deleted: {}, pined: {}", uid, from_uid, to_uid, create_time, update_time, name, icon, staus, deleted, pined);
+                SPDLOG_INFO("Conversation added successfully for uid: {}, "
+                            "from_uid: "
+                            "{}, to_uid: {}, create_time: {}, update_time: {}, "
+                            "name: "
+                            "{}, icon: {}, status: {}, deleted: {}, pined: {}",
+                            uid, from_uid, to_uid, create_time, update_time,
+                            name, icon, staus, deleted, pined);
                 return true;
             } else {
-                SPDLOG_WARN("Failed to add conversation for uid: {}, from_uid: {}, to_uid: {}, create_time: {}, update_time: {}, name: {}, icon: {}, status: {}, deleted: {}, pined: {}", uid, from_uid, to_uid, create_time, update_time, name, icon, staus, deleted, pined);
+                SPDLOG_WARN(
+                    "Failed to add conversation for uid: {}, from_uid: {}, "
+                    "to_uid: {}, create_time: {}, update_time: {}, name: "
+                    "{}, "
+                    "icon: {}, status: {}, deleted: {}, pined: {}",
+                    uid, from_uid, to_uid, create_time, update_time, name, icon,
+                    staus, deleted, pined);
                 return false;
             }
         } else {
             SPDLOG_ERROR("Failed to add conversation: {}", query.error());
             return false;
         }
-    } catch (const mysqlpp::Exception& e) {
+    } catch (const mysqlpp::Exception &e) {
         SPDLOG_ERROR("MySQL++ exception: {}", e.what());
         return false;
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         SPDLOG_ERROR("Exception: {}", e.what());
         return false;
     }
 }
 
-bool MysqlDao::GetSeessionList(const std::string& uid, std::vector<std::shared_ptr<SessionInfo>>& sessionList)
-{
+bool MysqlDao::GetSeessionList(
+    const std::string &uid,
+    std::vector<std::shared_ptr<SessionInfo>> &sessionList) {
     auto conn = _pool->GetConnection();
     if (!conn) {
         SPDLOG_ERROR("Failed to get connection from pool");
         return false;
     }
-    Defer defer([this, &conn]() {
-        _pool->ReturnConnection(std::move(conn));
-    });
+    Defer defer([this, &conn]() { _pool->ReturnConnection(std::move(conn)); });
     try {
         mysqlpp::Query query = conn->query();
         query << "SELECT * FROM conversations"
@@ -847,25 +993,24 @@ bool MysqlDao::GetSeessionList(const std::string& uid, std::vector<std::shared_p
             return true;
         }
         return false;
-    } catch (const mysqlpp::Exception& e) {
+    } catch (const mysqlpp::Exception &e) {
         SPDLOG_ERROR("MySQL++ exception: {}", e.what());
         return false;
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         SPDLOG_ERROR("Exception: {}", e.what());
         return false;
     }
 }
 
-bool MysqlDao::GetUnreadMessages(const std::string& uid, std::vector<std::shared_ptr<im::MessageItem>>& unreadMessages)
-{
+bool MysqlDao::GetUnreadMessages(
+    const std::string &uid,
+    std::vector<std::shared_ptr<im::MessageItem>> &unreadMessages) {
     auto conn = _pool->GetConnection();
     if (!conn) {
         SPDLOG_ERROR("Failed to get connection from pool");
         return false;
     }
-    Defer defer([this, &conn]() {
-        _pool->ReturnConnection(std::move(conn));
-    });
+    Defer defer([this, &conn]() { _pool->ReturnConnection(std::move(conn)); });
     try {
         mysqlpp::Transaction trans(*conn);
         mysqlpp::Query query = conn->query();
@@ -873,7 +1018,8 @@ bool MysqlDao::GetUnreadMessages(const std::string& uid, std::vector<std::shared
 
         query << "SELECT * FROM messages"
               << " WHERE to_uid = %0q AND status = 0";
-        query2<<"UPDATE messages SET status = 1 WHERE to_uid = %0q AND status = 0";
+        query2 << "UPDATE messages SET status = 1 WHERE to_uid = %0q AND "
+                  "status = 0";
         query.parse();
         query2.parse();
         mysqlpp::StoreQueryResult res = query.store(std::stoi(uid));
@@ -888,10 +1034,14 @@ bool MysqlDao::GetUnreadMessages(const std::string& uid, std::vector<std::shared
                 message_item->set_to_id(res[i]["to_uid"]);
                 message_item->set_timestamp(res[i]["timestamp"].c_str());
                 message_item->set_env(res[i]["env"]);
-                message_item->mutable_content()->set_type(res[i]["content_type"]);
-                message_item->mutable_content()->set_data(res[i]["content_data"].c_str());
-                message_item->mutable_content()->set_mime_type(res[i]["content_mime_type"].c_str());
-                message_item->mutable_content()->set_fid(res[i]["content_fid"].c_str());
+                message_item->mutable_content()->set_type(
+                    res[i]["content_type"]);
+                message_item->mutable_content()->set_data(
+                    res[i]["content_data"].c_str());
+                message_item->mutable_content()->set_mime_type(
+                    res[i]["content_mime_type"].c_str());
+                message_item->mutable_content()->set_fid(
+                    res[i]["content_fid"].c_str());
                 unreadMessages.push_back(message_item);
             }
             trans.commit();
@@ -899,17 +1049,16 @@ bool MysqlDao::GetUnreadMessages(const std::string& uid, std::vector<std::shared
         }
         trans.rollback();
         return false;
-    } catch (const mysqlpp::Exception& e) {
+    } catch (const mysqlpp::Exception &e) {
         SPDLOG_ERROR("MySQL++ exception: {}", e.what());
         return false;
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         SPDLOG_ERROR("Exception: {}", e.what());
         return false;
     }
 }
 
-std::string MysqlDao::ValueOrEmpty(std::string value)
-{
+std::string MysqlDao::ValueOrEmpty(std::string value) {
     if (value == "null" || value == "NULL" || value == "EMPTY") {
         return "";
     }

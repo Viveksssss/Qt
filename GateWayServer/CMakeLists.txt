@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.10.0)
 project(GateWayServer VERSION 0.1.0 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Set runtime output directory globally to avoid referencing the target before it's created
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR})
@@ -37,6 +38,7 @@ add_executable(GateWayServer
     mysql/MysqlDao.cpp
     grpc/StatusClient.cpp
     grpc/VerifyClient.cpp
+    redis/DistributedLock.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE Boost::headers)
@@ -48,7 +50,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::ABSL)
 target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::REDIS)
 target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::MYSQL)
 target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::SPEEDLOG)
-
+target_link_libraries(${PROJECT_NAME} PRIVATE ${MYSQLPP_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PRIVATE /usr/lib/libmysqlpp.so)
 
 
 set(NO_WARNING_FILES

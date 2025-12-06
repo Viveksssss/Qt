@@ -1,3 +1,4 @@
+#include <boost/mpl/assert.hpp>
 #include <spdlog/spdlog.h>
 #include <string>
 
@@ -6,23 +7,22 @@
 #include "DistributedLock.h"
 #include "RedisManager.h"
 
-RedisManager::~RedisManager()
-{
+RedisManager::~RedisManager() {
     if (_isConnected)
         Close();
 }
 
-RedisManager::RedisManager()
-{
+RedisManager::RedisManager() {
     _host = ConfigManager::GetInstance()["Redis"]["host"];
     _port = std::stoi(ConfigManager::GetInstance()["Redis"]["port"]);
     std::string password = ConfigManager::GetInstance()["Redis"]["password"];
-    _pool = std::make_unique<RedisPool>(std::thread::hardware_concurrency(), _host, _port, password);
+    _pool = std::make_unique<RedisPool>(std::thread::hardware_concurrency(),
+                                        _host, _port, password);
     _isConnected = true;
 }
-bool RedisManager::Get(const std::string& key, std::string& value)
-{
-    auto* reply = execute("GET %s", key.c_str());
+
+bool RedisManager::Get(const std::string &key, std::string &value) {
+    auto *reply = execute("GET %s", key.c_str());
     if (reply == NULL) {
         return false;
     }
@@ -35,9 +35,8 @@ bool RedisManager::Get(const std::string& key, std::string& value)
     return true;
 }
 
-bool RedisManager::Set(const std::string& key, const std::string& value)
-{
-    auto* reply = execute("SET %s %s", key.c_str(), value.c_str());
+bool RedisManager::Set(const std::string &key, const std::string &value) {
+    auto *reply = execute("SET %s %s", key.c_str(), value.c_str());
     if (reply == NULL) {
         return false;
     }
@@ -49,9 +48,8 @@ bool RedisManager::Set(const std::string& key, const std::string& value)
     return true;
 }
 
-bool RedisManager::Auth(const std::string& password)
-{
-    auto* reply = execute("AUTH %s", password.c_str());
+bool RedisManager::Auth(const std::string &password) {
+    auto *reply = execute("AUTH %s", password.c_str());
     if (reply == NULL) {
         return false;
     }
@@ -63,9 +61,8 @@ bool RedisManager::Auth(const std::string& password)
     return true;
 }
 
-bool RedisManager::LPush(const std::string& key, const std::string& value)
-{
-    auto* reply = execute("LPUSH %s %s", key.c_str(), value.c_str());
+bool RedisManager::LPush(const std::string &key, const std::string &value) {
+    auto *reply = execute("LPUSH %s %s", key.c_str(), value.c_str());
     if (reply == NULL) {
         return false;
     }
@@ -77,38 +74,8 @@ bool RedisManager::LPush(const std::string& key, const std::string& value)
     return true;
 }
 
-bool RedisManager::LPop(const std::string& key, std::string& value)
-{
-    auto* reply = execute("LPOP %s", key.c_str());
-    if (reply == NULL) {
-        return false;
-    }
-    if (reply->type == REDIS_REPLY_ERROR) {
-        freeReplyObject(reply);
-        return false;
-    }
-    value = std::string(reply->str, reply->len);
-    freeReplyObject(reply);
-    return true;
-}
-
-bool RedisManager::RPush(const std::string& key, const std::string& value)
-{
-    auto* reply = execute("RPUSH %s %s", key.c_str(), value.c_str());
-    if (reply == NULL) {
-        return false;
-    }
-    if (reply->type == REDIS_REPLY_ERROR) {
-        freeReplyObject(reply);
-        return false;
-    }
-    freeReplyObject(reply);
-    return true;
-}
-
-bool RedisManager::RPop(const std::string& key, std::string& value)
-{
-    auto* reply = execute("RPOP %s", key.c_str());
+bool RedisManager::LPop(const std::string &key, std::string &value) {
+    auto *reply = execute("LPOP %s", key.c_str());
     if (reply == NULL) {
         return false;
     }
@@ -121,9 +88,8 @@ bool RedisManager::RPop(const std::string& key, std::string& value)
     return true;
 }
 
-bool RedisManager::HSet(const std::string& key, const std::string& hkey, const std::string& value)
-{
-    auto* reply = execute("HSET %s %s %s", key.c_str(), hkey.c_str(), value.c_str());
+bool RedisManager::RPush(const std::string &key, const std::string &value) {
+    auto *reply = execute("RPUSH %s %s", key.c_str(), value.c_str());
     if (reply == NULL) {
         return false;
     }
@@ -135,9 +101,24 @@ bool RedisManager::HSet(const std::string& key, const std::string& hkey, const s
     return true;
 }
 
-bool RedisManager::HSet(const char* key, const char* hkey, const char* hvalue, size_t hvaluelen)
-{
-    auto* reply = execute("HSET %s %s %s", key, hkey, hvalue, hvaluelen);
+bool RedisManager::RPop(const std::string &key, std::string &value) {
+    auto *reply = execute("RPOP %s", key.c_str());
+    if (reply == NULL) {
+        return false;
+    }
+    if (reply->type == REDIS_REPLY_ERROR) {
+        freeReplyObject(reply);
+        return false;
+    }
+    value = std::string(reply->str, reply->len);
+    freeReplyObject(reply);
+    return true;
+}
+
+bool RedisManager::HSet(const std::string &key, const std::string &hkey,
+                        const std::string &value) {
+    auto *reply =
+        execute("HSET %s %s %s", key.c_str(), hkey.c_str(), value.c_str());
     if (reply == NULL) {
         return false;
     }
@@ -149,9 +130,9 @@ bool RedisManager::HSet(const char* key, const char* hkey, const char* hvalue, s
     return true;
 }
 
-bool RedisManager::HDel(const std::string& key, const std::string& field)
-{
-    auto* reply = execute("HDEL %s %s", key.c_str(), field.c_str());
+bool RedisManager::HSet(const char *key, const char *hkey, const char *hvalue,
+                        size_t hvaluelen) {
+    auto *reply = execute("HSET %s %s %s", key, hkey, hvalue, hvaluelen);
     if (reply == NULL) {
         return false;
     }
@@ -163,9 +144,22 @@ bool RedisManager::HDel(const std::string& key, const std::string& field)
     return true;
 }
 
-std::string RedisManager::HGet(const std::string& key, const std::string& hkey)
-{
-    auto* reply = execute("HGET %s %s", key.c_str(), hkey.c_str());
+bool RedisManager::HDel(const std::string &key, const std::string &field) {
+    auto *reply = execute("HDEL %s %s", key.c_str(), field.c_str());
+    if (reply == NULL) {
+        return false;
+    }
+    if (reply->type == REDIS_REPLY_ERROR) {
+        freeReplyObject(reply);
+        return false;
+    }
+    freeReplyObject(reply);
+    return true;
+}
+
+std::string RedisManager::HGet(const std::string &key,
+                               const std::string &hkey) {
+    auto *reply = execute("HGET %s %s", key.c_str(), hkey.c_str());
     if (reply == NULL) {
         return "";
     }
@@ -178,9 +172,8 @@ std::string RedisManager::HGet(const std::string& key, const std::string& hkey)
     return value;
 }
 
-bool RedisManager::Del(const std::string& key)
-{
-    auto* reply = execute("DEL %s", key.c_str());
+bool RedisManager::Del(const std::string &key) {
+    auto *reply = execute("DEL %s", key.c_str());
     if (reply == NULL) {
         return false;
     }
@@ -192,9 +185,8 @@ bool RedisManager::Del(const std::string& key)
     return true;
 }
 
-bool RedisManager::Decr(const std::string& key, int amount)
-{
-    redisReply* reply = nullptr;
+bool RedisManager::Decr(const std::string &key, int amount) {
+    redisReply *reply = nullptr;
     if (amount == 1) {
         reply = execute("DECR %s", key.c_str());
     } else {
@@ -210,9 +202,8 @@ bool RedisManager::Decr(const std::string& key, int amount)
     freeReplyObject(reply);
     return true;
 }
-bool RedisManager::Incr(const std::string& key, int amount)
-{
-    redisReply* reply = nullptr;
+bool RedisManager::Incr(const std::string &key, int amount) {
+    redisReply *reply = nullptr;
     if (amount == 1) {
         reply = execute("INCR %s", key.c_str());
     } else {
@@ -229,9 +220,8 @@ bool RedisManager::Incr(const std::string& key, int amount)
     return true;
 }
 
-bool RedisManager::ExistsKey(const std::string& key)
-{
-    auto* reply = execute("EXISTS %s", key.c_str());
+bool RedisManager::ExistsKey(const std::string &key) {
+    auto *reply = execute("EXISTS %s", key.c_str());
     if (reply == NULL) {
         return false;
     }
@@ -244,8 +234,7 @@ bool RedisManager::ExistsKey(const std::string& key)
     return exists;
 }
 
-void RedisManager::Close()
-{
+void RedisManager::Close() {
     if (_pool) {
         _pool->Close();
         _isConnected = false;
@@ -253,21 +242,20 @@ void RedisManager::Close()
     }
 }
 
-std::string RedisManager::AcquireLock(const std::string& key, int timeout, int acquireTimeout)
-{
+std::string RedisManager::AcquireLock(const std::string &key, int timeout,
+                                      int acquireTimeout) {
     auto connection = _pool->GetConnection();
     if (connection == nullptr) {
         return "";
     }
-    Defer defer([&connection, this] {
-        _pool->ReturnConnection(connection);
-    });
+    Defer defer([&connection, this] { _pool->ReturnConnection(connection); });
 
-    return DistributedLock::GetInstance().AcquireLock(connection, key, timeout, acquireTimeout);
+    return DistributedLock::GetInstance().AcquireLock(connection, key, timeout,
+                                                      acquireTimeout);
 }
 
-bool RedisManager::ReleaseLock(const std::string& key, const std::string& identifier)
-{
+bool RedisManager::ReleaseLock(const std::string &key,
+                               const std::string &identifier) {
     if (identifier.empty()) {
         return false;
     }
@@ -275,51 +263,141 @@ bool RedisManager::ReleaseLock(const std::string& key, const std::string& identi
     if (connection == nullptr) {
         return false;
     }
-    Defer defer([&connection, this] {
-        _pool->ReturnConnection(connection);
-    });
-    return DistributedLock::GetInstance().ReleaseLock(connection, key, identifier);
+    Defer defer([&connection, this] { _pool->ReturnConnection(connection); });
+    return DistributedLock::GetInstance().ReleaseLock(connection, key,
+                                                      identifier);
 }
 
-RedisPool::RedisPool(std::size_t size, const std::string& host, int port, const std::string& password)
+RedisPool::RedisPool(std::size_t size, const std::string &host, int port,
+                     const std::string &password)
     : _size(size)
     , _host(host)
     , _port(port)
     , _password(password)
     , _stop(false)
-{
+    , _failed_count(0) {
     bool success = true;
     for (std::size_t i = 0; i < _size; ++i) {
-        auto* context = CreateConnection();
+        auto *context = CreateConnection();
         if (context == nullptr) {
             success = false;
-            break;
+            _failed_count++;
         }
         if (context) {
             _connections.push(context);
         }
     }
+
+    auto currentTime = std::chrono::system_clock::now().time_since_epoch();
+    long long timestamp =
+        std::chrono::duration_cast<std::chrono::seconds>(currentTime).count();
+    _last_operate_time = timestamp;
+
+    _check_thread = std::thread([this] {
+        int count = 0;
+        while (!_stop) {
+            if (count >= 60 * 5) {
+                count = 0;
+                checkConnection();
+            }
+            count++;
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+    });
+    _check_thread.detach();
+
     if (!success) {
         SPDLOG_ERROR("Redis Connect Failed");
-        exit(1);
+    } else {
+        SPDLOG_INFO("Redis Connection Pool Initialized");
     }
 }
 
-RedisPool::~RedisPool()
-{
-    Close();
+void RedisPool::checkConnection() {
+    std::lock_guard<std::mutex> lock(_mutex);
+    auto currentTime = std::chrono::system_clock::now().time_since_epoch();
+
+    long long timestamp =
+        std::chrono::duration_cast<std::chrono::seconds>(currentTime).count();
+
+    if (timestamp - _last_operate_time >= 60) {
+        _last_operate_time = timestamp;
+        if (_connections.empty() && !_failed_count) {
+            return;
+        }
+        int target = _connections.size();
+        for (int i = 0; i < target; ++i) {
+            bool health = true;
+            auto *conn = _connections.front();
+            _connections.pop();
+            redisReply *reply;
+            try {
+                reply = (redisReply *)redisCommand(conn, "PING");
+                if (!reply) {
+                    SPDLOG_WARN("Redis Exception: disconnected ");
+                    _failed_count++;
+                    health = false;
+                }
+                freeReplyObject(reply);
+            } catch (const std::exception &e) {
+                SPDLOG_ERROR("Redis exception: {}", e.what());
+                if (reply) {
+                    freeReplyObject(reply);
+                }
+                _failed_count++;
+                health = false;
+            }
+            if (health) {
+                _connections.push(conn);
+                _cv.notify_one();
+            } else {
+                redisFree(conn);
+            }
+        }
+
+        while (_failed_count > 0) {
+            auto b_ok = Reconnect();
+            if (b_ok) {
+                _failed_count--;
+            } else {
+                SPDLOG_WARN("Retry Redis connection failed");
+                break;
+            }
+        }
+    }
 }
 
-redisContext* RedisPool::CreateConnection()
-{
-    redisContext* context = redisConnect(_host.c_str(), _port);
+bool RedisPool::Reconnect() {
+    SPDLOG_INFO("RETRY");
+    try {
+        auto *context = CreateConnection();
+        if (context == nullptr) {
+            return false;
+        }
+
+        _connections.push(context);
+        _cv.notify_one();
+        SPDLOG_INFO("Reback new Redis Connection");
+
+        return true;
+    } catch (const std::exception &e) {
+        SPDLOG_WARN("Reconnect to Redis failed:{}", e.what());
+        return false;
+    }
+}
+
+RedisPool::~RedisPool() { Close(); }
+
+redisContext *RedisPool::CreateConnection() {
+    redisContext *context = redisConnect(_host.c_str(), _port);
     if (context == NULL || context->err) {
         if (context)
             redisFree(context);
         return nullptr;
     }
     if (!_password.empty()) {
-        auto reply = (redisReply*)redisCommand(context, "AUTH %s", _password.c_str());
+        auto reply =
+            (redisReply *)redisCommand(context, "AUTH %s", _password.c_str());
         if (reply == NULL || reply->type == REDIS_REPLY_ERROR) {
             redisFree(context);
             freeReplyObject(reply);
@@ -329,14 +407,13 @@ redisContext* RedisPool::CreateConnection()
     return context;
 }
 
-redisContext* RedisPool::GetConnection()
-{
+redisContext *RedisPool::GetConnection() {
     std::unique_lock<std::mutex> lock(_mutex);
     _cv.wait(lock, [this] { return !_connections.empty() || _stop; });
     if (_stop) {
         return nullptr;
     }
-    auto* context = _connections.front();
+    auto *context = _connections.front();
     _connections.pop();
     lock.unlock();
     if (context->err) {
@@ -346,8 +423,7 @@ redisContext* RedisPool::GetConnection()
     return context;
 }
 
-void RedisPool::ReturnConnection(redisContext* context)
-{
+void RedisPool::ReturnConnection(redisContext *context) {
     if (context == nullptr)
         return;
     if (context->err) {
@@ -377,8 +453,7 @@ void RedisPool::ReturnConnection(redisContext* context)
     }
 }
 
-void RedisPool::Close()
-{
+void RedisPool::Close() {
     {
         std::unique_lock<std::mutex> lock(_mutex);
         if (_stop) {
@@ -386,7 +461,7 @@ void RedisPool::Close()
         }
         _stop = true;
         while (!_connections.empty()) {
-            auto* context = _connections.front();
+            auto *context = _connections.front();
             _connections.pop();
             if (context) {
                 redisFree(context);
@@ -397,10 +472,10 @@ void RedisPool::Close()
     SPDLOG_INFO("Redis Pool Closed");
 }
 
-void RedisManager::InitCount(const std::string& server_name)
-{
+void RedisManager::InitCount(const std::string &server_name) {
     auto lock_key = LOCK_COUNT;
-    auto identifier = RedisManager::GetInstance()->AcquireLock(lock_key, LOCK_TIMEOUT, ACQUIRE_LOCK_TIMEOUT);
+    auto identifier = RedisManager::GetInstance()->AcquireLock(
+        lock_key, LOCK_TIMEOUT, ACQUIRE_LOCK_TIMEOUT);
 
     Defer defer([identifier] {
         RedisManager::GetInstance()->ReleaseLock(LOCK_COUNT, identifier);
@@ -409,10 +484,10 @@ void RedisManager::InitCount(const std::string& server_name)
     RedisManager::GetInstance()->HSet(LOGIN_COUNT_PREFIX, server_name, "0");
 }
 
-void RedisManager::DelCount(const std::string& server_name)
-{
+void RedisManager::DelCount(const std::string &server_name) {
     auto lock_key = LOCK_COUNT;
-    auto identifier = RedisManager::GetInstance()->AcquireLock(lock_key, LOCK_TIMEOUT, ACQUIRE_LOCK_TIMEOUT);
+    auto identifier = RedisManager::GetInstance()->AcquireLock(
+        lock_key, LOCK_TIMEOUT, ACQUIRE_LOCK_TIMEOUT);
 
     Defer defer([identifier] {
         RedisManager::GetInstance()->ReleaseLock(LOCK_COUNT, identifier);

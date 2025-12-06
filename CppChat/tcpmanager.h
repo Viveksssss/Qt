@@ -72,6 +72,7 @@ signals:
     void on_get_message(const MessageItem&);// to MessageListPart::do_get_message
     void on_get_messages(const std::vector<std::shared_ptr<MessageItem>>&lists);    // to MessageListPart::do_get_messages
     void on_connection_closed();
+    void on_no_connection();
 };
 
 #endif // TCPMANAGER_H

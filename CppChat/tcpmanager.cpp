@@ -491,10 +491,12 @@ void TcpManager::initHandlers()
     _handlers[RequestType::ID_HEARTBEAT_RSP] = [this](RequestType requestType,int len,QByteArray data){
         QJsonDocument jsonDoc = QJsonDocument::fromJson(data);
         if (jsonDoc.isNull()){
+            emit on_switch_login();
             return;
         }
         QJsonObject jsonObj = jsonDoc.object();
         if (!jsonObj.contains("error") || jsonObj["error"].toInt()!=static_cast<int>(ErrorCodes::SUCCESS)){
+            emit on_switch_login();
             return;
         }
         qDebug() << "Received Heartbeat from Server";
@@ -638,6 +640,8 @@ void TcpManager::do_send_data(RequestType requestType, QByteArray data)
         )");
 
         msgBox.exec();
+
+        emit on_no_connection();
         return;
     }
 

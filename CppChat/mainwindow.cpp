@@ -24,9 +24,9 @@ MainWindow::MainWindow(QWidget *parent)
     DataBase::GetInstance().initialization();
     mainScreen = new MainScreen(this);
     setCentralWidget(stack);
-    QTimer::singleShot(50,[](){
-        emit TcpManager::GetInstance()->on_switch_interface();
-    });
+    // QTimer::singleShot(50,[](){
+    //     emit TcpManager::GetInstance()->on_switch_interface();
+    // });
 }
 
 void MainWindow::setupUI()
@@ -89,6 +89,8 @@ void MainWindow::setConnections()
         QJsonDocument doc(j);
         emit TcpManager::GetInstance()->on_send_data(RequestType::ID_HEART_BEAT_REQ,doc.toJson(QJsonDocument::Compact));
     });
+
+    connect(TcpManager::GetInstance().get(),&TcpManager::on_no_connection,_timer,&QTimer::stop);
 }
 
 void MainWindow::filesClean()

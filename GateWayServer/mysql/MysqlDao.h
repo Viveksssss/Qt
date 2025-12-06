@@ -1,11 +1,11 @@
 #ifndef MYSQLDAO_H
 #define MYSQLDAO_H
 
-
 #include <atomic>
 #include <condition_variable>
 #include <memory>
-#include <mysql/mysql.h>
+#include <mysql++/mysql++.h>
+#include <mysql++/ssqls.h>
 #include <queue>
 #include <string>
 #include <thread>
@@ -30,53 +30,55 @@
  */
 
 class MysqlPool {
-public:
-    struct conn_deleter {
-        void operator()(MYSQL* conn) const noexcept
-        {
-            mysql_close(conn);
-            mysql_thread_end();
-        }
-    };
-    MysqlPool(const std::string& url, const std::string& user, const std::string& password, const std::string& schedma, int poolSize = std::thread::hardware_concurrency());
+  public:
+    MysqlPool(const std::string &url, const std::string &user,
+              const std::string &password, const std::string &schedma,
+              const std::string &port = "3306",
+              int poolSize = std::thread::hardware_concurrency());
 
-    std::unique_ptr<MYSQL, MysqlPool::conn_deleter> GetConnection() noexcept;
-    void ReturnConnection(std::unique_ptr<MYSQL, conn_deleter> conn) noexcept;
+    std::unique_ptr<mysqlpp::Connection> GetConnection() noexcept;
+    void ReturnConnection(std::unique_ptr<mysqlpp::Connection> conn) noexcept;
     void Close() noexcept;
+    void checkConnection();
+    bool Reconnect();
+    long long GetLastOperateTime();
     ~MysqlPool();
 
-private:
-private:
-    std::string _url;
+  private:
+    int64_t _last_operate_time;
+    int _failed_count;
+    std::string _schedma;
     std::string _user;
     std::string _password;
-    std::string _schedma;
+    std::string _url;
+    std::string _port;
     std::size_t _poolSize;
-    std::queue<std::unique_ptr<MYSQL, conn_deleter>> _connections;
+    std::queue<std::unique_ptr<mysqlpp::Connection>> _connections;
     std::mutex _mutex;
     std::condition_variable _cv;
     std::atomic<bool> _stop;
+    std::thread _check_thread;
 };
 
 struct UserInfo {
-    std::string host;
-    std::string port;
-    std::string token;
-    std::string email;
     std::string name;
+    std::string pwd;
     int uid;
+    std::string email;
 };
 
 class MysqlDao {
-public:
+  public:
     MysqlDao();
     ~MysqlDao();
-    int TestUidAndEmail(const std::string& uid, const std::string& email);
-    int RegisterUser(const std::string& name, const std::string& email, const std::string& password);
-    int ResetPassword(const std::string& email, const std::string& password);
-    bool CheckPwd(const std::string& user, const std::string& password, UserInfo& userInfo);
+    int TestUidAndEmail(const std::string &uid, const std::string &email);
+    int RegisterUser(const std::string &name, const std::string &email,
+                     const std::string &password);
+    int ResetPassword(const std::string &email, const std::string &password);
+    bool CheckPwd(const std::string &user, const std::string &password,
+                  UserInfo &userInfo);
 
-private:
+  private:
     std::unique_ptr<MysqlPool> _pool;
 };
 

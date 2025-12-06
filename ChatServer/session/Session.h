@@ -14,32 +14,34 @@ namespace net = boost::asio;
 class Session : public std::enable_shared_from_this<Session> {
     friend class LogicSystem;
 
-public:
-    Session(boost::asio::io_context& ioc, std::shared_ptr<Server> server);
+  public:
+    Session(boost::asio::io_context &ioc, std::shared_ptr<Server> server);
     ~Session();
     void Start();
     void Close();
-    void Send(const char* msg, int max_length, uint16_t msg_id);
+    void DealExceptionSession();
+    void Send(const char *msg, int max_length, uint16_t msg_id);
     void Send(std::string msg, uint16_t msg_id);
     void NotifyOffline(int uid);
-    void HandleWrite(boost::system::error_code ec, std::shared_ptr<Session> self);
-    net::ip::tcp::socket& GetSocket() noexcept;
-    std::queue<std::shared_ptr<SendNode>>& GetSendQueue() noexcept;
+    void HandleWrite(boost::system::error_code ec,
+                     std::shared_ptr<Session> self);
+    net::ip::tcp::socket &GetSocket() noexcept;
+    std::queue<std::shared_ptr<SendNode>> &GetSendQueue() noexcept;
 
     void SetUid(int uid) noexcept;
     int GetUid() const noexcept;
     std::string GetSessionId() const noexcept;
-    void SetSessionId(const std::string& session_id) noexcept;
+    void SetSessionId(const std::string &session_id) noexcept;
 
-    void UpdateHeartbeat(); // 更新心跳时间
-    bool IsHeartbeatExpired(std::time_t& now); // 是否过期
+    void UpdateHeartbeat();                    // 更新心跳时间
+    bool IsHeartbeatExpired(std::time_t &now); // 是否过期
     std::time_t _last_heartbeat = 0;
 
-private:
+  private:
     void AsyncHead(std::size_t len);
     void AsyncBody(std::size_t len);
 
-private:
+  private:
     std::shared_ptr<RecvNode> _recv_msg_node;
     std::shared_ptr<MsgNode> _recv_head_node;
     char _data[MAX_LENGTH];
@@ -59,10 +61,10 @@ private:
 class LogicNode {
     friend class LogicSystem;
 
-public:
+  public:
     LogicNode(std::shared_ptr<Session>, std::shared_ptr<RecvNode>);
 
-private:
+  private:
     std::shared_ptr<Session> _session;
     std::shared_ptr<RecvNode> _recv_node;
 };
